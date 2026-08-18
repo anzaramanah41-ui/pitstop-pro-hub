@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as ShellDashboardRouteImport } from './routes/_shell.dashboard'
 import { Route as ShellPelangganRouteImport } from './routes/_shell.pelanggan'
+import { Route as ShellRiwayatRouteImport } from './routes/_shell.riwayat'
 import { Route as ShellServisRouteImport } from './routes/_shell.servis'
 import { Route as ShellSparepartRouteImport } from './routes/_shell.sparepart'
 
@@ -35,6 +36,11 @@ const ShellPelangganRoute = ShellPelangganRouteImport.update({
   path: '/pelanggan',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellRiwayatRoute = ShellRiwayatRouteImport.update({
+  id: '/riwayat',
+  path: '/riwayat',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellServisRoute = ShellServisRouteImport.update({
   id: '/servis',
   path: '/servis',
@@ -50,6 +56,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof ShellDashboardRoute
   '/pelanggan': typeof ShellPelangganRoute
+  '/riwayat': typeof ShellRiwayatRoute
   '/servis': typeof ShellServisRoute
   '/sparepart': typeof ShellSparepartRoute
 }
@@ -57,6 +64,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof ShellDashboardRoute
   '/pelanggan': typeof ShellPelangganRoute
+  '/riwayat': typeof ShellRiwayatRoute
   '/servis': typeof ShellServisRoute
   '/sparepart': typeof ShellSparepartRoute
 }
@@ -66,20 +74,23 @@ export interface FileRoutesById {
   '/_shell': typeof ShellRouteWithChildren
   '/_shell/dashboard': typeof ShellDashboardRoute
   '/_shell/pelanggan': typeof ShellPelangganRoute
+  '/_shell/riwayat': typeof ShellRiwayatRoute
   '/_shell/servis': typeof ShellServisRoute
   '/_shell/sparepart': typeof ShellSparepartRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/pelanggan' | '/servis' | '/sparepart'
+  fullPaths:
+    '/' | '/dashboard' | '/pelanggan' | '/riwayat' | '/servis' | '/sparepart'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/pelanggan' | '/servis' | '/sparepart'
+  to: '/' | '/dashboard' | '/pelanggan' | '/riwayat' | '/servis' | '/sparepart'
   id:
     | '__root__'
     | '/'
     | '/_shell'
     | '/_shell/dashboard'
     | '/_shell/pelanggan'
+    | '/_shell/riwayat'
     | '/_shell/servis'
     | '/_shell/sparepart'
   fileRoutesById: FileRoutesById
@@ -119,6 +130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellPelangganRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/riwayat': {
+      id: '/_shell/riwayat'
+      path: '/riwayat'
+      fullPath: '/riwayat'
+      preLoaderRoute: typeof ShellRiwayatRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/servis': {
       id: '/_shell/servis'
       path: '/servis'
@@ -139,6 +157,7 @@ declare module '@tanstack/react-router' {
 interface ShellRouteChildren {
   ShellDashboardRoute: typeof ShellDashboardRoute
   ShellPelangganRoute: typeof ShellPelangganRoute
+  ShellRiwayatRoute: typeof ShellRiwayatRoute
   ShellServisRoute: typeof ShellServisRoute
   ShellSparepartRoute: typeof ShellSparepartRoute
 }
@@ -146,6 +165,7 @@ interface ShellRouteChildren {
 const ShellRouteChildren: ShellRouteChildren = {
   ShellDashboardRoute: ShellDashboardRoute,
   ShellPelangganRoute: ShellPelangganRoute,
+  ShellRiwayatRoute: ShellRiwayatRoute,
   ShellServisRoute: ShellServisRoute,
   ShellSparepartRoute: ShellSparepartRoute,
 }
