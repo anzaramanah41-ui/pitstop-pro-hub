@@ -79,7 +79,7 @@ function SparepartPage() {
           <div className="flex flex-wrap items-center gap-3">
             <SearchBar value={q} onChange={setQ} placeholder="Cari nama atau kode sparepart..." />
             <Select value={kategori} onValueChange={setKategori}>
-              <SelectTrigger className="w-44 bg-card"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-44 bg-card"><SelectValue placeholder="Semua Kategori" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Semua">Semua Kategori</SelectItem>
                 {KATEGORI.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
