@@ -1,16 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  LayoutDashboard,
-  Users,
-  Wrench,
-  Package,
-  History,
-  Settings,
-  LogOut,
-  UserCircle2,
-  Menu,
-  X,
-} from "lucide-react";
+import { LogOut, UserCircle2, Menu, X, Lock } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
@@ -23,24 +12,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-
-const nav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/pelanggan", label: "Pelanggan", icon: Users },
-  { to: "/servis", label: "Servis", icon: Wrench },
-  { to: "/sparepart", label: "Sparepart & Pricelist", icon: Package },
-  { to: "/riwayat", label: "Riwayat Servis", icon: History },
-  { to: "/pengaturan", label: "Pengaturan", icon: Settings },
-] as const;
+import { LABEL_ROLE, NAV_ROLE, useAuth } from "@/lib/auth";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, keluar } = useAuth();
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  if (!user) return null;
+  const nav = NAV_ROLE[user.role];
 
   return (
     <div className="min-h-screen bg-background lg:flex">
@@ -61,15 +46,21 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-3 border-b border-sidebar-border px-4 py-4">
           <BrandLogo size={38} />
           <div className="leading-tight">
-            <p className="font-display text-sm font-bold tracking-tight text-white">BENGKEL PITSTOP</p>
-            <p className="text-[11px] text-sidebar-foreground/60">Administrasi Bengkel</p>
+            <p className="font-display text-sm font-bold tracking-tight text-white">APPBENK</p>
+            <p className="text-[11px] text-sidebar-foreground/60">Solusi Servis Kendaraan</p>
           </div>
           <button className="ml-auto lg:hidden" onClick={() => setOpen(false)} aria-label="Tutup">
             <X className="size-5" />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        <div className="px-4 py-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-sidebar-accent px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+            Role · {LABEL_ROLE[user.role]}
+          </span>
+        </div>
+
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3 pt-0">
           {nav.map((item) => {
             const active = pathname === item.to;
             return (
@@ -84,14 +75,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                 )}
               >
                 <item.icon className="size-4.5" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.premium && !user.premium && <Lock className="size-3.5 opacity-70" />}
               </Link>
             );
           })}
         </nav>
 
         <div className="border-t border-sidebar-border p-4 text-[11px] text-sidebar-foreground/50">
-          Versi 1.0 · Data demo
+          Versi 2.0 · Mock role & data demo
         </div>
       </aside>
 
@@ -101,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Menu className="size-5" />
           </button>
           <p className="truncate font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {nav.find((n) => n.to === pathname)?.label ?? "Bengkel Pitstop"}
+            {nav.find((n) => n.to === pathname)?.label ?? "AppBenk"}
           </p>
 
           <div className="ml-auto flex items-center gap-2">
@@ -109,25 +101,30 @@ export function AppShell({ children }: { children: ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2 px-2">
                   <span className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                    AD
+                    {user.inisial}
                   </span>
                   <span className="hidden text-left leading-tight sm:block">
-                    <span className="block text-sm font-semibold">Admin Bengkel</span>
-                    <span className="block text-[11px] text-muted-foreground">admin@pitstop.id</span>
+                    <span className="block text-sm font-semibold">{user.nama}</span>
+                    <span className="block text-[11px] text-muted-foreground">{LABEL_ROLE[user.role]}</span>
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuLabel>Akun Saya</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="leading-tight">
+                  Akun Saya
+                  <span className="block text-[11px] font-normal text-muted-foreground">{user.email}</span>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => navigate({ to: "/pengaturan" })}>
-                  <UserCircle2 className="mr-2 size-4" /> Profil
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => navigate({ to: "/pengaturan" })}>
-                  <Settings className="mr-2 size-4" /> Pengaturan
+                <DropdownMenuItem onSelect={() => navigate({ to: "/profil" })}>
+                  <UserCircle2 className="mr-2 size-4" /> Profile
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => navigate({ to: "/" })}>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    keluar();
+                    navigate({ to: "/", replace: true });
+                  }}
+                >
                   <LogOut className="mr-2 size-4" /> Keluar
                 </DropdownMenuItem>
               </DropdownMenuContent>
