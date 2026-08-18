@@ -35,7 +35,8 @@ function PelangganPage() {
   const [form, setForm] = useState<(typeof kosong & { id?: string }) | null>(null);
   const [detail, setDetail] = useState<Pelanggan | null>(null);
   const [hapus, setHapus] = useState<Pelanggan | null>(null);
-  const [error, setError] = useState<Record<string, string>>({});
+  type Err = Partial<Record<"nama" | "telepon" | "kendaraan", string>>;
+  const [error, setError] = useState<Err>({});
 
   const data = useMemo(() => {
     const s = q.toLowerCase();
@@ -46,7 +47,7 @@ function PelangganPage() {
 
   const submit = () => {
     if (!form) return;
-    const err: Record<string, string> = {};
+    const err: Err = {};
     if (!form.nama.trim()) err.nama = "Nama pelanggan wajib diisi";
     if (!form.telepon.trim()) err.telepon = "Nomor telepon wajib diisi";
     if (!form.kendaraan.trim()) err.kendaraan = "Kendaraan wajib diisi";
