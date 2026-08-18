@@ -10,7 +10,7 @@ export function BrandLogo({ className, size = 36 }: { className?: string; size?:
       <img
         src={logo.url}
         alt="Logo Bengkel Pitstop"
-        className="h-full w-full scale-[1.9] object-cover object-[50%_38%]"
+        className="h-full w-full scale-[1.85] object-cover object-[52%_30%]"
       />
     </span>
   );
