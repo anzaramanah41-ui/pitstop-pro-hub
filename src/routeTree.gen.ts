@@ -18,6 +18,7 @@ import { Route as ShellAdminLaporanRouteImport } from './routes/_shell.admin.lap
 import { Route as ShellAdminServisRouteImport } from './routes/_shell.admin.servis'
 import { Route as ShellAdminSparepartRouteImport } from './routes/_shell.admin.sparepart'
 import { Route as ShellOwnerDashboardRouteImport } from './routes/_shell.owner.dashboard'
+import { Route as ShellOwnerKeuntunganRouteImport } from './routes/_shell.owner.keuntungan'
 import { Route as ShellOwnerPelangganRouteImport } from './routes/_shell.owner.pelanggan'
 import { Route as ShellOwnerServisRouteImport } from './routes/_shell.owner.servis'
 import { Route as ShellOwnerSparepartRouteImport } from './routes/_shell.owner.sparepart'
@@ -70,6 +71,11 @@ const ShellAdminSparepartRoute = ShellAdminSparepartRouteImport.update({
 const ShellOwnerDashboardRoute = ShellOwnerDashboardRouteImport.update({
   id: '/owner/dashboard',
   path: '/owner/dashboard',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellOwnerKeuntunganRoute = ShellOwnerKeuntunganRouteImport.update({
+  id: '/owner/keuntungan',
+  path: '/owner/keuntungan',
   getParentRoute: () => ShellRoute,
 } as any)
 const ShellOwnerPelangganRoute = ShellOwnerPelangganRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/admin/servis': typeof ShellAdminServisRoute
   '/admin/sparepart': typeof ShellAdminSparepartRoute
   '/owner/dashboard': typeof ShellOwnerDashboardRoute
+  '/owner/keuntungan': typeof ShellOwnerKeuntunganRoute
   '/owner/pelanggan': typeof ShellOwnerPelangganRoute
   '/owner/servis': typeof ShellOwnerServisRoute
   '/owner/sparepart': typeof ShellOwnerSparepartRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/admin/servis': typeof ShellAdminServisRoute
   '/admin/sparepart': typeof ShellAdminSparepartRoute
   '/owner/dashboard': typeof ShellOwnerDashboardRoute
+  '/owner/keuntungan': typeof ShellOwnerKeuntunganRoute
   '/owner/pelanggan': typeof ShellOwnerPelangganRoute
   '/owner/servis': typeof ShellOwnerServisRoute
   '/owner/sparepart': typeof ShellOwnerSparepartRoute
@@ -168,6 +176,7 @@ export interface FileRoutesById {
   '/_shell/admin/servis': typeof ShellAdminServisRoute
   '/_shell/admin/sparepart': typeof ShellAdminSparepartRoute
   '/_shell/owner/dashboard': typeof ShellOwnerDashboardRoute
+  '/_shell/owner/keuntungan': typeof ShellOwnerKeuntunganRoute
   '/_shell/owner/pelanggan': typeof ShellOwnerPelangganRoute
   '/_shell/owner/servis': typeof ShellOwnerServisRoute
   '/_shell/owner/sparepart': typeof ShellOwnerSparepartRoute
@@ -189,6 +198,7 @@ export interface FileRouteTypes {
     | '/admin/servis'
     | '/admin/sparepart'
     | '/owner/dashboard'
+    | '/owner/keuntungan'
     | '/owner/pelanggan'
     | '/owner/servis'
     | '/owner/sparepart'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/admin/servis'
     | '/admin/sparepart'
     | '/owner/dashboard'
+    | '/owner/keuntungan'
     | '/owner/pelanggan'
     | '/owner/servis'
     | '/owner/sparepart'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/_shell/admin/servis'
     | '/_shell/admin/sparepart'
     | '/_shell/owner/dashboard'
+    | '/_shell/owner/keuntungan'
     | '/_shell/owner/pelanggan'
     | '/_shell/owner/servis'
     | '/_shell/owner/sparepart'
@@ -309,6 +321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellOwnerDashboardRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/owner/keuntungan': {
+      id: '/_shell/owner/keuntungan'
+      path: '/owner/keuntungan'
+      fullPath: '/owner/keuntungan'
+      preLoaderRoute: typeof ShellOwnerKeuntunganRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/owner/pelanggan': {
       id: '/_shell/owner/pelanggan'
       path: '/owner/pelanggan'
@@ -383,6 +402,7 @@ interface ShellRouteChildren {
   ShellAdminServisRoute: typeof ShellAdminServisRoute
   ShellAdminSparepartRoute: typeof ShellAdminSparepartRoute
   ShellOwnerDashboardRoute: typeof ShellOwnerDashboardRoute
+  ShellOwnerKeuntunganRoute: typeof ShellOwnerKeuntunganRoute
   ShellOwnerPelangganRoute: typeof ShellOwnerPelangganRoute
   ShellOwnerServisRoute: typeof ShellOwnerServisRoute
   ShellOwnerSparepartRoute: typeof ShellOwnerSparepartRoute
@@ -402,6 +422,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellAdminServisRoute: ShellAdminServisRoute,
   ShellAdminSparepartRoute: ShellAdminSparepartRoute,
   ShellOwnerDashboardRoute: ShellOwnerDashboardRoute,
+  ShellOwnerKeuntunganRoute: ShellOwnerKeuntunganRoute,
   ShellOwnerPelangganRoute: ShellOwnerPelangganRoute,
   ShellOwnerServisRoute: ShellOwnerServisRoute,
   ShellOwnerSparepartRoute: ShellOwnerSparepartRoute,
