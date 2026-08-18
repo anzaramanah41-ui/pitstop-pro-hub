@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as ShellDashboardRouteImport } from './routes/_shell.dashboard'
 import { Route as ShellPelangganRouteImport } from './routes/_shell.pelanggan'
+import { Route as ShellPengaturanRouteImport } from './routes/_shell.pengaturan'
 import { Route as ShellRiwayatRouteImport } from './routes/_shell.riwayat'
 import { Route as ShellServisRouteImport } from './routes/_shell.servis'
 import { Route as ShellSparepartRouteImport } from './routes/_shell.sparepart'
@@ -36,6 +37,11 @@ const ShellPelangganRoute = ShellPelangganRouteImport.update({
   path: '/pelanggan',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellPengaturanRoute = ShellPengaturanRouteImport.update({
+  id: '/pengaturan',
+  path: '/pengaturan',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellRiwayatRoute = ShellRiwayatRouteImport.update({
   id: '/riwayat',
   path: '/riwayat',
@@ -56,6 +62,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof ShellDashboardRoute
   '/pelanggan': typeof ShellPelangganRoute
+  '/pengaturan': typeof ShellPengaturanRoute
   '/riwayat': typeof ShellRiwayatRoute
   '/servis': typeof ShellServisRoute
   '/sparepart': typeof ShellSparepartRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof ShellDashboardRoute
   '/pelanggan': typeof ShellPelangganRoute
+  '/pengaturan': typeof ShellPengaturanRoute
   '/riwayat': typeof ShellRiwayatRoute
   '/servis': typeof ShellServisRoute
   '/sparepart': typeof ShellSparepartRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   '/_shell': typeof ShellRouteWithChildren
   '/_shell/dashboard': typeof ShellDashboardRoute
   '/_shell/pelanggan': typeof ShellPelangganRoute
+  '/_shell/pengaturan': typeof ShellPengaturanRoute
   '/_shell/riwayat': typeof ShellRiwayatRoute
   '/_shell/servis': typeof ShellServisRoute
   '/_shell/sparepart': typeof ShellSparepartRoute
@@ -81,15 +90,29 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/dashboard' | '/pelanggan' | '/riwayat' | '/servis' | '/sparepart'
+    | '/'
+    | '/dashboard'
+    | '/pelanggan'
+    | '/pengaturan'
+    | '/riwayat'
+    | '/servis'
+    | '/sparepart'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/pelanggan' | '/riwayat' | '/servis' | '/sparepart'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/pelanggan'
+    | '/pengaturan'
+    | '/riwayat'
+    | '/servis'
+    | '/sparepart'
   id:
     | '__root__'
     | '/'
     | '/_shell'
     | '/_shell/dashboard'
     | '/_shell/pelanggan'
+    | '/_shell/pengaturan'
     | '/_shell/riwayat'
     | '/_shell/servis'
     | '/_shell/sparepart'
@@ -130,6 +153,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellPelangganRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/pengaturan': {
+      id: '/_shell/pengaturan'
+      path: '/pengaturan'
+      fullPath: '/pengaturan'
+      preLoaderRoute: typeof ShellPengaturanRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/riwayat': {
       id: '/_shell/riwayat'
       path: '/riwayat'
@@ -157,6 +187,7 @@ declare module '@tanstack/react-router' {
 interface ShellRouteChildren {
   ShellDashboardRoute: typeof ShellDashboardRoute
   ShellPelangganRoute: typeof ShellPelangganRoute
+  ShellPengaturanRoute: typeof ShellPengaturanRoute
   ShellRiwayatRoute: typeof ShellRiwayatRoute
   ShellServisRoute: typeof ShellServisRoute
   ShellSparepartRoute: typeof ShellSparepartRoute
@@ -165,6 +196,7 @@ interface ShellRouteChildren {
 const ShellRouteChildren: ShellRouteChildren = {
   ShellDashboardRoute: ShellDashboardRoute,
   ShellPelangganRoute: ShellPelangganRoute,
+  ShellPengaturanRoute: ShellPengaturanRoute,
   ShellRiwayatRoute: ShellRiwayatRoute,
   ShellServisRoute: ShellServisRoute,
   ShellSparepartRoute: ShellSparepartRoute,
