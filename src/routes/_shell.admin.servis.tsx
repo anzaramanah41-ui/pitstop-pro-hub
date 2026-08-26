@@ -81,9 +81,51 @@ function ServisAdmin() {
 
   const bukaEdit = (s: Servis) => {
     setEdit(s);
-    setForm({ ...kosong, ...s });
+    setForm({
+      pelanggan: s.pelanggan,
+      kendaraan: s.kendaraan,
+      plat: s.plat,
+      jenis: s.jenis,
+      keluhan: s.keluhan,
+      pekerjaan: s.pekerjaan,
+      mekanik: s.mekanik,
+      tanggal: s.tanggal,
+      status: s.status,
+      catatan: s.catatan,
+      biayaJasa: s.biayaJasa,
+      items: s.items.map((i) => ({ ...i })),
+    });
+    setPilihPart("");
     setOpen(true);
   };
+
+  const totalPart = totalItem(form.items);
+
+  const tambahPart = (id: string) => {
+    const sp = sparepart.find((x) => x.id === id);
+    if (!sp) return;
+    setForm((f) => {
+      const ada = f.items.find((i) => i.sparepartId === id);
+      if (ada) {
+        return { ...f, items: f.items.map((i) => (i.sparepartId === id ? { ...i, jumlah: i.jumlah + 1 } : i)) };
+      }
+      return {
+        ...f,
+        items: [...f.items, { sparepartId: sp.id, kode: sp.kode, nama: sp.nama, harga: sp.harga, jumlah: 1 }],
+      };
+    });
+    setPilihPart("");
+  };
+
+  const ubahJumlah = (id: string, jumlah: number) =>
+    setForm((f) => ({
+      ...f,
+      items: f.items.map((i) => (i.sparepartId === id ? { ...i, jumlah: Math.max(1, jumlah || 1) } : i)),
+    }));
+
+  const hapusPart = (id: string) =>
+    setForm((f) => ({ ...f, items: f.items.filter((i) => i.sparepartId !== id) }));
+
 
   const simpan = (e: React.FormEvent) => {
     e.preventDefault();
