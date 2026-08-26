@@ -181,19 +181,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           p.id ? list.map((x) => (x.id === p.id ? ({ ...x, ...p } as Pelanggan) : x)) : [{ ...p, id: uid() } as Pelanggan, ...list],
         ),
       hapusPelanggan: (id) => setPelanggan((l) => l.filter((x) => x.id !== id)),
-      simpanServis: (s) =>
+      simpanServis: (s) => {
+        const items = s.items ?? [];
+        const lama = s.id ? (servis.find((x) => x.id === s.id)?.items ?? []) : [];
+        setSparepart((list) => terapkanSelisih(list, lama, items));
+        const biayaPart = totalItem(items);
+        const ringkas = ringkasanItem(items);
         setServis((list) => {
-          const total = s.biayaJasa + s.biayaPart;
-          if (s.id) return list.map((x) => (x.id === s.id ? { ...x, ...s, total } : x));
+          const total = s.biayaJasa + biayaPart;
+          if (s.id) return list.map((x) => (x.id === s.id ? { ...x, ...s, items, biayaPart, sparepart: ringkas, total } : x));
           const seq = 149 + list.length - servisAwal.length;
           const nomor = `SRV-2026-${String(seq).padStart(4, "0")}`;
           return [
-            { ...s, id: uid(), nomor, total, noTransaksi: `TRX-2026-${String(seq).padStart(4, "0")}` } as Servis,
+            { ...s, items, biayaPart, sparepart: ringkas, id: uid(), nomor, total, noTransaksi: `TRX-2026-${String(seq).padStart(4, "0")}` } as Servis,
             ...list,
           ];
-        }),
+        });
+      },
       ubahStatusServis: (id, status) => setServis((l) => l.map((x) => (x.id === id ? { ...x, status } : x))),
-      hapusServis: (id) => setServis((l) => l.filter((x) => x.id !== id)),
+      hapusServis: (id) => {
+        const lama = servis.find((x) => x.id === id)?.items ?? [];
+        setSparepart((list) => terapkanSelisih(list, lama, []));
+        setServis((l) => l.filter((x) => x.id !== id));
+      },
+
       simpanSparepart: (s) =>
         setSparepart((list) =>
           s.id
