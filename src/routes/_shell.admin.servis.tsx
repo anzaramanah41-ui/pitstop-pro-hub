@@ -50,20 +50,21 @@ const kosong = {
   mekanik: MEKANIK[0]!,
   tanggal: "2026-08-18",
   status: "Menunggu" as StatusServis,
-  sparepart: "",
   catatan: "",
   biayaJasa: 0,
-  biayaPart: 0,
+  items: [] as ItemPart[],
 };
 
 function ServisAdmin() {
-  const { servis, pelanggan, simpanServis, hapusServis, ubahStatusServis } = useStore();
+  const { servis, pelanggan, sparepart, simpanServis, hapusServis, ubahStatusServis } = useStore();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"semua" | StatusServis>("semua");
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Servis | null>(null);
   const [form, setForm] = useState(kosong);
   const [hapus, setHapus] = useState<Servis | null>(null);
+  const [pilihPart, setPilihPart] = useState("");
+
 
   const data = useMemo(() => {
     const s = q.toLowerCase();
