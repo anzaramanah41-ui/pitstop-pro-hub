@@ -18,12 +18,15 @@ import {
   useStore,
   rupiah,
   tanggalPanjang,
+  totalItem,
   MEKANIK,
   JENIS_SERVIS,
   URUTAN_STATUS,
   type Servis,
   type StatusServis,
+  type ItemPart,
 } from "@/lib/store";
+
 
 export const Route = createFileRoute("/_shell/admin/servis")({
   head: () => ({
