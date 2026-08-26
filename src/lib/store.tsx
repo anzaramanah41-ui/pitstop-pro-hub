@@ -26,6 +26,16 @@ export const URUTAN_STATUS: StatusServis[] = [
   "Selesai Dibayar",
 ];
 
+export type ItemPart = {
+  sparepartId: string;
+  kode: string;
+  nama: string;
+  harga: number;
+  jumlah: number;
+};
+
+export type MetodeBayar = "Cash" | "Transfer Bank" | "QRIS";
+
 export type Servis = {
   id: string;
   nomor: string;
@@ -39,12 +49,15 @@ export type Servis = {
   tanggal: string;
   status: StatusServis;
   sparepart: string;
+  items: ItemPart[];
   catatan: string;
   biayaJasa: number;
   biayaPart: number;
   total: number;
   noTransaksi: string;
+  metodeBayar?: MetodeBayar;
 };
+
 
 export type StatusBooking = "Menunggu Konfirmasi" | "Diterima" | "Ditolak";
 
@@ -93,11 +106,13 @@ const pelangganAwal: Pelanggan[] = [
   { id: uid(), nama: "Hendra Wijaya", telepon: "0877-6655-1010", alamat: "Jl. Kopo No. 90, Bandung", kendaraan: "Daihatsu Xenia 2015", plat: "D 6120 MN" },
 ];
 
-const mkServis = (s: Omit<Servis, "id" | "total">): Servis => ({
+const mkServis = (s: Omit<Servis, "id" | "total" | "items"> & { items?: ItemPart[] }): Servis => ({
+  items: [],
   ...s,
   id: uid(),
   total: s.biayaJasa + s.biayaPart,
 });
+
 
 const servisAwal: Servis[] = [
   mkServis({ nomor: "SRV-2026-0148", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Ringan", keluhan: "Mesin kasar saat langsam", pekerjaan: "Servis ringan + ganti busi", mekanik: "Joko", tanggal: "2026-08-18", status: "Diproses", sparepart: "Busi NGK, Oli Federal 0.8L", catatan: "Disarankan ganti filter udara bulan depan", biayaJasa: 70000, biayaPart: 75000, noTransaksi: "TRX-2026-0148" }),
@@ -130,6 +145,24 @@ export const MEKANIK = ["Joko", "Dedi", "Rudi", "Bayu"];
 
 export const KATEGORI_PART = ["Oli", "Mesin", "Rem", "Kelistrikan", "Ban", "Kaki-kaki", "AC"];
 
+export const totalItem = (items: ItemPart[]) => items.reduce((a, i) => a + i.harga * i.jumlah, 0);
+
+export const ringkasanItem = (items: ItemPart[]) =>
+  items.map((i) => `${i.nama} x${i.jumlah}`).join(", ");
+
+/** Terapkan selisih pemakaian sparepart lama → baru ke stok (simulasi). */
+function terapkanSelisih(list: Sparepart[], lama: ItemPart[], baru: ItemPart[]): Sparepart[] {
+  const delta = new Map<string, number>();
+  for (const i of lama) delta.set(i.sparepartId, (delta.get(i.sparepartId) ?? 0) - i.jumlah);
+  for (const i of baru) delta.set(i.sparepartId, (delta.get(i.sparepartId) ?? 0) + i.jumlah);
+  return list.map((sp) => {
+    const d = delta.get(sp.id);
+    if (!d) return sp;
+    return { ...sp, stok: Math.max(0, sp.stok - d), terpakai: Math.max(0, sp.terpakai + d) };
+  });
+}
+
+
 type Store = {
   pelanggan: Pelanggan[];
   servis: Servis[];
@@ -137,14 +170,14 @@ type Store = {
   booking: Booking[];
   simpanPelanggan: (p: Omit<Pelanggan, "id"> & { id?: string }) => void;
   hapusPelanggan: (id: string) => void;
-  simpanServis: (s: Omit<Servis, "id" | "nomor" | "total" | "noTransaksi"> & { id?: string }) => void;
+  simpanServis: (s: Omit<Servis, "id" | "nomor" | "total" | "noTransaksi" | "biayaPart" | "sparepart"> & { id?: string }) => void;
   ubahStatusServis: (id: string, status: StatusServis) => void;
   hapusServis: (id: string) => void;
   simpanSparepart: (s: Omit<Sparepart, "id" | "terpakai"> & { id?: string; terpakai?: number }) => void;
   hapusSparepart: (id: string) => void;
   buatBooking: (b: Omit<Booking, "id" | "nomor" | "status">) => Booking;
   ubahStatusBooking: (id: string, status: StatusBooking) => void;
-  bayarServis: (id: string) => void;
+  bayarServis: (id: string, metode?: MetodeBayar) => void;
 };
 
 const StoreContext = createContext<Store | null>(null);
@@ -166,19 +199,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           p.id ? list.map((x) => (x.id === p.id ? ({ ...x, ...p } as Pelanggan) : x)) : [{ ...p, id: uid() } as Pelanggan, ...list],
         ),
       hapusPelanggan: (id) => setPelanggan((l) => l.filter((x) => x.id !== id)),
-      simpanServis: (s) =>
+      simpanServis: (s) => {
+        const items = s.items ?? [];
+        const lama = s.id ? (servis.find((x) => x.id === s.id)?.items ?? []) : [];
+        setSparepart((list) => terapkanSelisih(list, lama, items));
+        const biayaPart = totalItem(items);
+        const ringkas = ringkasanItem(items);
         setServis((list) => {
-          const total = s.biayaJasa + s.biayaPart;
-          if (s.id) return list.map((x) => (x.id === s.id ? { ...x, ...s, total } : x));
+          const total = s.biayaJasa + biayaPart;
+          if (s.id) return list.map((x) => (x.id === s.id ? { ...x, ...s, items, biayaPart, sparepart: ringkas, total } : x));
           const seq = 149 + list.length - servisAwal.length;
           const nomor = `SRV-2026-${String(seq).padStart(4, "0")}`;
           return [
-            { ...s, id: uid(), nomor, total, noTransaksi: `TRX-2026-${String(seq).padStart(4, "0")}` } as Servis,
+            { ...s, items, biayaPart, sparepart: ringkas, id: uid(), nomor, total, noTransaksi: `TRX-2026-${String(seq).padStart(4, "0")}` } as Servis,
             ...list,
           ];
-        }),
+        });
+      },
       ubahStatusServis: (id, status) => setServis((l) => l.map((x) => (x.id === id ? { ...x, status } : x))),
-      hapusServis: (id) => setServis((l) => l.filter((x) => x.id !== id)),
+      hapusServis: (id) => {
+        const lama = servis.find((x) => x.id === id)?.items ?? [];
+        setSparepart((list) => terapkanSelisih(list, lama, []));
+        setServis((l) => l.filter((x) => x.id !== id));
+      },
+
       simpanSparepart: (s) =>
         setSparepart((list) =>
           s.id
@@ -192,7 +236,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return baru;
       },
       ubahStatusBooking: (id, status) => setBooking((l) => l.map((x) => (x.id === id ? { ...x, status } : x))),
-      bayarServis: (id) => setServis((l) => l.map((x) => (x.id === id ? { ...x, status: "Selesai Dibayar" } : x))),
+      bayarServis: (id, metode) =>
+        setServis((l) => l.map((x) => (x.id === id ? { ...x, status: "Selesai Dibayar", metodeBayar: metode ?? x.metodeBayar } : x))),
+
     }),
     [pelanggan, servis, sparepart, booking],
   );
