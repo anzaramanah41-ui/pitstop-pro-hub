@@ -159,7 +159,7 @@ type Store = {
   hapusSparepart: (id: string) => void;
   buatBooking: (b: Omit<Booking, "id" | "nomor" | "status">) => Booking;
   ubahStatusBooking: (id: string, status: StatusBooking) => void;
-  bayarServis: (id: string) => void;
+  bayarServis: (id: string, metode?: MetodeBayar) => void;
 };
 
 const StoreContext = createContext<Store | null>(null);
