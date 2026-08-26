@@ -152,7 +152,7 @@ type Store = {
   booking: Booking[];
   simpanPelanggan: (p: Omit<Pelanggan, "id"> & { id?: string }) => void;
   hapusPelanggan: (id: string) => void;
-  simpanServis: (s: Omit<Servis, "id" | "nomor" | "total" | "noTransaksi"> & { id?: string }) => void;
+  simpanServis: (s: Omit<Servis, "id" | "nomor" | "total" | "noTransaksi" | "biayaPart" | "sparepart"> & { id?: string }) => void;
   ubahStatusServis: (id: string, status: StatusServis) => void;
   hapusServis: (id: string) => void;
   simpanSparepart: (s: Omit<Sparepart, "id" | "terpakai"> & { id?: string; terpakai?: number }) => void;
