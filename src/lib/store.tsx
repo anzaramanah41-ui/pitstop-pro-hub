@@ -218,7 +218,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return baru;
       },
       ubahStatusBooking: (id, status) => setBooking((l) => l.map((x) => (x.id === id ? { ...x, status } : x))),
-      bayarServis: (id) => setServis((l) => l.map((x) => (x.id === id ? { ...x, status: "Selesai Dibayar" } : x))),
+      bayarServis: (id, metode) =>
+        setServis((l) => l.map((x) => (x.id === id ? { ...x, status: "Selesai Dibayar", metodeBayar: metode ?? x.metodeBayar } : x))),
+
     }),
     [pelanggan, servis, sparepart, booking],
   );
