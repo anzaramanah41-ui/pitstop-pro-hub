@@ -145,6 +145,24 @@ export const MEKANIK = ["Joko", "Dedi", "Rudi", "Bayu"];
 
 export const KATEGORI_PART = ["Oli", "Mesin", "Rem", "Kelistrikan", "Ban", "Kaki-kaki", "AC"];
 
+export const totalItem = (items: ItemPart[]) => items.reduce((a, i) => a + i.harga * i.jumlah, 0);
+
+export const ringkasanItem = (items: ItemPart[]) =>
+  items.map((i) => `${i.nama} x${i.jumlah}`).join(", ");
+
+/** Terapkan selisih pemakaian sparepart lama → baru ke stok (simulasi). */
+function terapkanSelisih(list: Sparepart[], lama: ItemPart[], baru: ItemPart[]): Sparepart[] {
+  const delta = new Map<string, number>();
+  for (const i of lama) delta.set(i.sparepartId, (delta.get(i.sparepartId) ?? 0) - i.jumlah);
+  for (const i of baru) delta.set(i.sparepartId, (delta.get(i.sparepartId) ?? 0) + i.jumlah);
+  return list.map((sp) => {
+    const d = delta.get(sp.id);
+    if (!d) return sp;
+    return { ...sp, stok: Math.max(0, sp.stok - d), terpakai: Math.max(0, sp.terpakai + d) };
+  });
+}
+
+
 type Store = {
   pelanggan: Pelanggan[];
   servis: Servis[];
