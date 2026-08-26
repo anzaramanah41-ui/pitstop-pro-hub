@@ -26,6 +26,16 @@ export const URUTAN_STATUS: StatusServis[] = [
   "Selesai Dibayar",
 ];
 
+export type ItemPart = {
+  sparepartId: string;
+  kode: string;
+  nama: string;
+  harga: number;
+  jumlah: number;
+};
+
+export type MetodeBayar = "Cash" | "Transfer Bank" | "QRIS";
+
 export type Servis = {
   id: string;
   nomor: string;
@@ -39,12 +49,15 @@ export type Servis = {
   tanggal: string;
   status: StatusServis;
   sparepart: string;
+  items: ItemPart[];
   catatan: string;
   biayaJasa: number;
   biayaPart: number;
   total: number;
   noTransaksi: string;
+  metodeBayar?: MetodeBayar;
 };
+
 
 export type StatusBooking = "Menunggu Konfirmasi" | "Diterima" | "Ditolak";
 
