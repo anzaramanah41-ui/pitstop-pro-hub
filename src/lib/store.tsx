@@ -106,11 +106,13 @@ const pelangganAwal: Pelanggan[] = [
   { id: uid(), nama: "Hendra Wijaya", telepon: "0877-6655-1010", alamat: "Jl. Kopo No. 90, Bandung", kendaraan: "Daihatsu Xenia 2015", plat: "D 6120 MN" },
 ];
 
-const mkServis = (s: Omit<Servis, "id" | "total">): Servis => ({
+const mkServis = (s: Omit<Servis, "id" | "total" | "items"> & { items?: ItemPart[] }): Servis => ({
+  items: [],
   ...s,
   id: uid(),
   total: s.biayaJasa + s.biayaPart,
 });
+
 
 const servisAwal: Servis[] = [
   mkServis({ nomor: "SRV-2026-0148", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Ringan", keluhan: "Mesin kasar saat langsam", pekerjaan: "Servis ringan + ganti busi", mekanik: "Joko", tanggal: "2026-08-18", status: "Diproses", sparepart: "Busi NGK, Oli Federal 0.8L", catatan: "Disarankan ganti filter udara bulan depan", biayaJasa: 70000, biayaPart: 75000, noTransaksi: "TRX-2026-0148" }),
