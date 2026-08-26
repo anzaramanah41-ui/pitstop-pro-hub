@@ -296,17 +296,88 @@ function ServisAdmin() {
               <Label>Tanggal</Label>
               <Input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} />
             </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label>Sparepart Dipakai</Label>
-              <Input value={form.sparepart} onChange={(e) => setForm({ ...form, sparepart: e.target.value })} placeholder="Contoh: Busi NGK, Oli 0.8L" />
+            <div className="space-y-2 rounded-lg border p-3 sm:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label className="text-sm font-semibold">Sparepart yang Digunakan</Label>
+                <span className="text-xs text-muted-foreground">Sumber data: Kelola Sparepart</span>
+              </div>
+
+              <Select value={pilihPart} onValueChange={tambahPart}>
+                <SelectTrigger><SelectValue placeholder="Pilih sparepart untuk ditambahkan" /></SelectTrigger>
+                <SelectContent>
+                  {sparepart.map((sp) => (
+                    <SelectItem key={sp.id} value={sp.id}>
+                      {sp.kode} · {sp.nama} — {rupiah(sp.harga)} (stok {sp.stok})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {form.items.length === 0 ? (
+                <p className="rounded-md bg-muted/40 px-3 py-4 text-center text-xs text-muted-foreground">
+                  Belum ada sparepart dipilih.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Sparepart</TableHead>
+                        <TableHead className="text-right">Harga</TableHead>
+                        <TableHead className="w-24">Jumlah</TableHead>
+                        <TableHead className="text-right">Subtotal</TableHead>
+                        <TableHead className="w-10" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {form.items.map((i) => {
+                        const sp = sparepart.find((x) => x.id === i.sparepartId);
+                        const dipakaiAwal = edit?.items.find((o) => o.sparepartId === i.sparepartId)?.jumlah ?? 0;
+                        const stokSetelah = sp ? Math.max(0, sp.stok - (i.jumlah - dipakaiAwal)) : 0;
+                        return (
+                          <TableRow key={i.sparepartId}>
+                            <TableCell>
+                              <span className="block text-sm font-medium">{i.nama}</span>
+                              <span className="block text-xs text-muted-foreground">
+                                {i.kode} · stok {sp?.stok ?? 0} → {stokSetelah}
+                              </span>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-right">{rupiah(i.harga)}</TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={1}
+                                className="h-8"
+                                value={i.jumlah}
+                                onChange={(e) => ubahJumlah(i.sparepartId, Number(e.target.value))}
+                              />
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-right font-semibold">
+                              {rupiah(i.harga * i.jumlah)}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                aria-label={`Hapus ${i.nama}`}
+                                onClick={() => hapusPart(i.sparepartId)}
+                              >
+                                <Trash2 className="size-4 text-destructive" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </div>
+
             <div className="space-y-1.5">
-              <Label>Estimasi Biaya Jasa</Label>
+              <Label>Biaya Jasa</Label>
               <Input type="number" value={form.biayaJasa} onChange={(e) => setForm({ ...form, biayaJasa: Number(e.target.value) })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Estimasi Biaya Sparepart</Label>
-              <Input type="number" value={form.biayaPart} onChange={(e) => setForm({ ...form, biayaPart: Number(e.target.value) })} />
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>
@@ -319,10 +390,21 @@ function ServisAdmin() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Total</Label>
-              <Input readOnly value={rupiah(form.biayaJasa + form.biayaPart)} className="bg-muted" />
+            <div className="rounded-lg border bg-muted/40 p-3 text-sm sm:col-span-2">
+              <div className="flex justify-between py-0.5">
+                <span className="text-muted-foreground">Biaya Jasa</span>
+                <span className="font-medium">{rupiah(form.biayaJasa)}</span>
+              </div>
+              <div className="flex justify-between py-0.5">
+                <span className="text-muted-foreground">Total Sparepart</span>
+                <span className="font-medium">{rupiah(totalPart)}</span>
+              </div>
+              <div className="mt-2 flex justify-between border-t pt-2 font-display text-base font-bold">
+                <span>Total Biaya</span>
+                <span>{rupiah(form.biayaJasa + totalPart)}</span>
+              </div>
             </div>
+
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Catatan</Label>
               <Textarea value={form.catatan} onChange={(e) => setForm({ ...form, catatan: e.target.value })} />
