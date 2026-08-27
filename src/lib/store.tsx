@@ -115,12 +115,12 @@ const mkServis = (s: Omit<Servis, "id" | "total" | "items"> & { items?: ItemPart
 
 
 const servisAwal: Servis[] = [
-  mkServis({ nomor: "SRV-2026-0148", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Ringan", keluhan: "Mesin kasar saat langsam", pekerjaan: "Servis ringan + ganti busi", mekanik: "Joko", tanggal: "2026-08-18", status: "Diproses", sparepart: "Busi NGK, Oli Federal 0.8L", catatan: "Disarankan ganti filter udara bulan depan", biayaJasa: 70000, biayaPart: 75000, noTransaksi: "TRX-2026-0148" }),
-  mkServis({ nomor: "SRV-2026-0147", pelanggan: "Siti Rahmawati", kendaraan: "Yamaha NMAX 2021", plat: "D 5521 KJ", jenis: "Perbaikan Rem", keluhan: "Rem depan kurang pakem", pekerjaan: "Ganti kampas rem depan", mekanik: "Dedi", tanggal: "2026-08-18", status: "Menunggu", sparepart: "Kampas Rem Depan", catatan: "", biayaJasa: 60000, biayaPart: 150000, noTransaksi: "TRX-2026-0147" }),
-  mkServis({ nomor: "SRV-2026-0146", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Ganti Oli", keluhan: "Ganti oli rutin bulanan", pekerjaan: "Ganti oli mesin", mekanik: "Joko", tanggal: "2026-08-12", status: "Menunggu Pembayaran", sparepart: "Oli AHM MPX 0.8L", catatan: "", biayaJasa: 25000, biayaPart: 48000, noTransaksi: "TRX-2026-0146" }),
-  mkServis({ nomor: "SRV-2026-0145", pelanggan: "Agus Prasetyo", kendaraan: "Toyota Avanza 2017", plat: "D 9087 PL", jenis: "Kaki-kaki", keluhan: "Bunyi pada kaki-kaki", pekerjaan: "Ganti link stabilizer", mekanik: "Rudi", tanggal: "2026-08-17", status: "Selesai Dibayar", sparepart: "Link Stabilizer x2", catatan: "Sudah test drive, aman", biayaJasa: 130000, biayaPart: 350000, noTransaksi: "TRX-2026-0145" }),
+  mkServis({ nomor: "SRV-2026-0148", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Ringan", keluhan: "Mesin kasar saat langsam", pekerjaan: "Servis ringan + ganti busi", mekanik: "Joko", tanggal: "2026-08-18", status: "Diproses", sparepart: "Busi NGK, Oli Federal 0.8L", catatan: "Disarankan ganti filter udara bulan depan", items: [{ sparepartId: "sp-002", kode: "SP-002", nama: "Busi NGK CPR9EA", harga: 27000, jumlah: 1 }, { sparepartId: "sp-001", kode: "SP-001", nama: "Oli Mesin AHM MPX 0.8L", harga: 48000, jumlah: 1 }], biayaJasa: 70000, biayaPart: 75000, noTransaksi: "TRX-2026-0148" }),
+  mkServis({ nomor: "SRV-2026-0147", pelanggan: "Siti Rahmawati", kendaraan: "Yamaha NMAX 2021", plat: "D 5521 KJ", jenis: "Perbaikan Rem", keluhan: "Rem depan kurang pakem", pekerjaan: "Ganti kampas rem depan", mekanik: "Dedi", tanggal: "2026-08-18", status: "Menunggu", sparepart: "Kampas Rem Depan", catatan: "", items: [{ sparepartId: "sp-003", kode: "SP-003", nama: "Kampas Rem Depan NMAX", harga: 95000, jumlah: 1 }], biayaJasa: 60000, biayaPart: 95000, noTransaksi: "TRX-2026-0147" }),
+  mkServis({ nomor: "SRV-2026-0146", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Ganti Oli", keluhan: "Ganti oli rutin bulanan", pekerjaan: "Ganti oli mesin", mekanik: "Joko", tanggal: "2026-08-12", status: "Menunggu Pembayaran", sparepart: "Oli AHM MPX 0.8L", catatan: "", items: [{ sparepartId: "sp-001", kode: "SP-001", nama: "Oli Mesin AHM MPX 0.8L", harga: 48000, jumlah: 1 }], biayaJasa: 25000, biayaPart: 48000, noTransaksi: "TRX-2026-0146" }),
+  mkServis({ nomor: "SRV-2026-0145", pelanggan: "Agus Prasetyo", kendaraan: "Toyota Avanza 2017", plat: "D 9087 PL", jenis: "Kaki-kaki", keluhan: "Bunyi pada kaki-kaki", pekerjaan: "Ganti link stabilizer", mekanik: "Rudi", tanggal: "2026-08-17", status: "Selesai Dibayar", sparepart: "Link Stabilizer x2", catatan: "Sudah test drive, aman", items: [{ sparepartId: "sp-007", kode: "SP-007", nama: "Link Stabilizer Avanza", harga: 175000, jumlah: 2 }], biayaJasa: 130000, biayaPart: 350000, noTransaksi: "TRX-2026-0145" }),
   mkServis({ nomor: "SRV-2026-0144", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Ringan", keluhan: "Rantai kendur dan berisik", pekerjaan: "Setel & lumasi rantai", mekanik: "Dedi", tanggal: "2026-07-28", status: "Selesai Dibayar", sparepart: "Chain Lube", catatan: "Rantai mulai aus", biayaJasa: 35000, biayaPart: 20000, noTransaksi: "TRX-2026-0144" }),
-  mkServis({ nomor: "SRV-2026-0143", pelanggan: "Hendra Wijaya", kendaraan: "Daihatsu Xenia 2015", plat: "D 6120 MN", jenis: "Servis AC", keluhan: "AC kurang dingin", pekerjaan: "Servis AC + isi freon", mekanik: "Rudi", tanggal: "2026-08-14", status: "Selesai Dibayar", sparepart: "Freon R134a", catatan: "", biayaJasa: 230000, biayaPart: 120000, noTransaksi: "TRX-2026-0143" }),
+  mkServis({ nomor: "SRV-2026-0143", pelanggan: "Hendra Wijaya", kendaraan: "Daihatsu Xenia 2015", plat: "D 6120 MN", jenis: "Servis AC", keluhan: "AC kurang dingin", pekerjaan: "Servis AC + isi freon", mekanik: "Rudi", tanggal: "2026-08-14", status: "Selesai Dibayar", sparepart: "Freon R134a", catatan: "", items: [{ sparepartId: "sp-008", kode: "SP-008", nama: "Freon R134a", harga: 120000, jumlah: 1 }], biayaJasa: 230000, biayaPart: 120000, noTransaksi: "TRX-2026-0143" }),
 ];
 
 const bookingAwal: Booking[] = [
@@ -131,14 +131,14 @@ const bookingAwal: Booking[] = [
 ];
 
 const sparepartAwal: Sparepart[] = [
-  { id: uid(), kode: "SP-001", nama: "Oli Mesin AHM MPX 0.8L", kategori: "Oli", harga: 48000, stok: 34, terpakai: 22 },
-  { id: uid(), kode: "SP-002", nama: "Busi NGK CPR9EA", kategori: "Mesin", harga: 27000, stok: 18, terpakai: 14 },
-  { id: uid(), kode: "SP-003", nama: "Kampas Rem Depan NMAX", kategori: "Rem", harga: 95000, stok: 6, terpakai: 9 },
-  { id: uid(), kode: "SP-004", nama: "Filter Udara Beat", kategori: "Mesin", harga: 62000, stok: 0, terpakai: 12 },
-  { id: uid(), kode: "SP-005", nama: "Aki GS Astra NS40", kategori: "Kelistrikan", harga: 610000, stok: 4, terpakai: 3 },
-  { id: uid(), kode: "SP-006", nama: "Ban Luar IRC 80/90-14", kategori: "Ban", harga: 215000, stok: 11, terpakai: 7 },
-  { id: uid(), kode: "SP-007", nama: "Link Stabilizer Avanza", kategori: "Kaki-kaki", harga: 175000, stok: 8, terpakai: 5 },
-  { id: uid(), kode: "SP-008", nama: "Freon R134a", kategori: "AC", harga: 120000, stok: 15, terpakai: 10 },
+  { id: "sp-001", kode: "SP-001", nama: "Oli Mesin AHM MPX 0.8L", kategori: "Oli", harga: 48000, stok: 34, terpakai: 22 },
+  { id: "sp-002", kode: "SP-002", nama: "Busi NGK CPR9EA", kategori: "Mesin", harga: 27000, stok: 18, terpakai: 14 },
+  { id: "sp-003", kode: "SP-003", nama: "Kampas Rem Depan NMAX", kategori: "Rem", harga: 95000, stok: 6, terpakai: 9 },
+  { id: "sp-004", kode: "SP-004", nama: "Filter Udara Beat", kategori: "Mesin", harga: 62000, stok: 0, terpakai: 12 },
+  { id: "sp-005", kode: "SP-005", nama: "Aki GS Astra NS40", kategori: "Kelistrikan", harga: 610000, stok: 4, terpakai: 3 },
+  { id: "sp-006", kode: "SP-006", nama: "Ban Luar IRC 80/90-14", kategori: "Ban", harga: 215000, stok: 11, terpakai: 7 },
+  { id: "sp-007", kode: "SP-007", nama: "Link Stabilizer Avanza", kategori: "Kaki-kaki", harga: 175000, stok: 8, terpakai: 5 },
+  { id: "sp-008", kode: "SP-008", nama: "Freon R134a", kategori: "AC", harga: 120000, stok: 15, terpakai: 10 },
 ];
 
 export const MEKANIK = ["Joko", "Dedi", "Rudi", "Bayu"];
