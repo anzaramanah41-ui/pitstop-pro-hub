@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarPlus, Activity, Wallet, History, ArrowRight } from "lucide-react";
+import { CalendarPlus, Activity, Wallet, History, ArrowRight, Receipt, Download } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { StatusBadge, BookingBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,9 @@ function DashboardPelanggan() {
   const bookingSaya = booking.filter((b) => b.pelanggan === nama);
   const aktif = servisSaya.filter((s) => !["Selesai Dibayar"].includes(s.status));
   const tagihan = servisSaya.filter((s) => s.status === "Menunggu Pembayaran");
+  const pembayaran = servisSaya
+    .filter((s) => ["Menunggu Pembayaran", "Selesai Dibayar"].includes(s.status))
+    .slice(0, 3);
 
   const stats = [
     { label: "Booking Aktif", value: bookingSaya.filter((b) => b.status !== "Ditolak").length, hint: "booking tercatat" },
