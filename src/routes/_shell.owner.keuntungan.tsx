@@ -68,6 +68,20 @@ function KeuntunganOwner() {
         }
       />
 
+      <Card className="border-l-4 border-l-warning bg-warning/5">
+        <CardContent className="flex flex-wrap items-start gap-3 p-4">
+          <Badge variant="outline" className="gap-1 border-warning/50 text-warning-foreground">
+            Perlu Review · Coming Soon
+          </Badge>
+          <p className="min-w-56 flex-1 text-sm text-muted-foreground">
+            Konsep sementara: <span className="font-medium text-foreground">Keuntungan = Pendapatan − Biaya</span>.
+            Angka di bawah masih memakai estimasi modal sparepart 70% dari harga jual. Perhitungan final akan
+            bersumber dari transaksi pembayaran yang sudah lunas setelah struktur pembayaran & biaya disepakati.
+          </p>
+        </CardContent>
+      </Card>
+
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ["Pendapatan", rupiah(pendapatan), "total transaksi servis"],

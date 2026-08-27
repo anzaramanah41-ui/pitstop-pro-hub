@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, UserCircle2, Menu, X, Lock } from "lucide-react";
+import { LogOut, UserCircle2, Menu, X, Lock, Repeat2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
@@ -12,20 +12,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { LABEL_ROLE, NAV_ROLE, useAuth } from "@/lib/auth";
+import { HOME_ROLE, LABEL_ROLE, NAV_ROLE, useAuth } from "@/lib/auth";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, keluar } = useAuth();
+  const { user, keluar, mode, gantiMode } = useAuth();
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
   if (!user) return null;
-  const nav = NAV_ROLE[user.role];
+  const owner = user.role === "owner";
+  const modeAdmin = owner && mode === "admin";
+  const nav = modeAdmin ? NAV_ROLE.admin : NAV_ROLE[user.role];
+  const labelMode = modeAdmin ? "Mode Admin Bengkel" : "Mode Owner";
 
   return (
     <div className="min-h-screen bg-background lg:flex">
@@ -58,6 +61,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-sidebar-accent px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
             Role · {LABEL_ROLE[user.role]}
           </span>
+          {owner && (
+            <span className="mt-2 block text-[11px] font-medium text-sidebar-foreground/70">{labelMode}</span>
+          )}
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-3 pt-0">
@@ -118,6 +124,24 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <DropdownMenuItem onSelect={() => navigate({ to: "/profil" })}>
                   <UserCircle2 className="mr-2 size-4" /> Profile
                 </DropdownMenuItem>
+                {owner && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-[11px] font-normal text-muted-foreground">
+                      {labelMode}
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        const next = modeAdmin ? "owner" : "admin";
+                        gantiMode(next);
+                        navigate({ to: next === "admin" ? HOME_ROLE.admin : HOME_ROLE.owner });
+                      }}
+                    >
+                      <Repeat2 className="mr-2 size-4" />
+                      {modeAdmin ? "Switch to Owner Mode" : "Switch to Admin Mode"}
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={() => {

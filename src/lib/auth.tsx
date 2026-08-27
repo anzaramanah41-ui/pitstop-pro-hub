@@ -103,8 +103,14 @@ export const HOME_ROLE: Record<Role, string> = {
 export const IZIN_ROLE: Record<Role, string[]> = {
   pelanggan: ["/pelanggan", "/profil"],
   admin: ["/admin", "/profil"],
-  owner: ["/owner", "/profil"],
+  // Owner = Admin Bengkel + Owner
+  owner: ["/owner", "/admin", "/profil"],
 };
+
+/** Mode tampilan khusus Owner: navigasi Owner atau navigasi Admin Bengkel. */
+export type ModeOwner = "owner" | "admin";
+
+const KEY_MODE = "appbenk.mode";
 
 export function bolehAkses(role: Role, pathname: string) {
   return IZIN_ROLE[role].some((p) => pathname === p || pathname.startsWith(p + "/"));
@@ -114,6 +120,8 @@ const KEY = "appbenk.session";
 
 type AuthCtx = {
   user: SessionUser | null;
+  mode: ModeOwner;
+  gantiMode: (m: ModeOwner) => void;
   masuk: (email: string, password: string) => SessionUser | null;
   keluar: () => void;
   aktifkanPremium: () => void;
@@ -132,9 +140,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
+  const [mode, setMode] = useState<ModeOwner>(() => {
+    if (typeof window === "undefined") return "owner";
+    return window.localStorage.getItem(KEY_MODE) === "admin" ? "admin" : "owner";
+  });
+
   const value = useMemo<AuthCtx>(
     () => ({
       user,
+      mode,
+      gantiMode: (m) => {
+        setMode(m);
+        try {
+          window.localStorage.setItem(KEY_MODE, m);
+        } catch {
+          /* abaikan */
+        }
+      },
       masuk: (email, password) => {
         const found = AKUN_DEMO.find(
           (a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password,
@@ -169,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return next;
         }),
     }),
-    [user],
+    [user, mode],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
