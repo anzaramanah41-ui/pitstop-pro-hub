@@ -74,7 +74,48 @@ function DashboardPelanggan() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Receipt className="size-4 text-primary" /> Pembayaran Terbaru
+          </CardTitle>
+          <Button asChild variant="ghost" size="sm" className="gap-1 text-primary">
+            <Link to="/pelanggan/pembayaran">
+              Semua <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {pembayaran.length === 0 ? (
+            <EmptyState title="Belum ada pembayaran" description="Tagihan muncul setelah servis selesai dikerjakan." />
+          ) : (
+            pembayaran.map((s) => (
+              <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{s.noTransaksi} · {s.nomor}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {tanggalPanjang(s.tanggal)} · {s.kendaraan} · {rupiah(s.total)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={s.status} />
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/pelanggan/pembayaran" search={{ trx: s.noTransaksi }}>Lihat Pembayaran</Link>
+                  </Button>
+                  <Button asChild size="sm" className="gap-1.5">
+                    <Link to="/pelanggan/pembayaran" search={{ trx: s.noTransaksi }}>
+                      <Download className="size-4" /> Download Nota
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-2">
+
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-base">Booking Saya</CardTitle>
