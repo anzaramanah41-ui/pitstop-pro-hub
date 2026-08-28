@@ -237,7 +237,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       ubahStatusBooking: (id, status) => setBooking((l) => l.map((x) => (x.id === id ? { ...x, status } : x))),
       bayarServis: (id, metode) =>
-        setServis((l) => l.map((x) => (x.id === id ? { ...x, status: "Selesai Dibayar", metodeBayar: metode ?? x.metodeBayar } : x))),
+        setServis((l) => l.map((x) => {
+          if (x.id !== id) return x;
+          const m = metode ?? x.metodeBayar;
+          return { ...x, status: "Selesai Dibayar" as StatusServis, ...(m ? { metodeBayar: m } : {}) };
+        })),
 
     }),
     [pelanggan, servis, sparepart, booking],

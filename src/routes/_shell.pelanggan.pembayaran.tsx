@@ -15,9 +15,8 @@ import { unduhNota } from "@/lib/nota";
 import { useStore, rupiah, tanggalPanjang, type MetodeBayar, type Servis } from "@/lib/store";
 
 export const Route = createFileRoute("/_shell/pelanggan/pembayaran")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    trx: typeof search.trx === "string" ? search.trx : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { trx?: string } =>
+    typeof search["trx"] === "string" ? { trx: search["trx"] } : {},
   head: () => ({
     meta: [
       { title: "Pembayaran — AppBenk" },
