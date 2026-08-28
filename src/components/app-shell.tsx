@@ -59,31 +59,37 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-sidebar-accent px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
             Role · {LABEL_ROLE[user.role]}
           </span>
-          {owner && (
-            <span className="mt-2 block text-[11px] font-medium text-sidebar-foreground/70">{labelMode}</span>
-          )}
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3 pt-0">
-          {nav.map((item) => {
-            const active = pathname === item.to;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <item.icon className="size-4.5" />
-                <span className="flex-1">{item.label}</span>
-                {item.premium && !user.premium && <Lock className="size-3.5 opacity-70" />}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 space-y-4 overflow-y-auto p-3 pt-0">
+          {groups.map((group, i) => (
+            <div key={group.label ?? `g-${i}`} className="space-y-1">
+              {group.label && (
+                <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
+                  {group.label}
+                </p>
+              )}
+              {group.items.map((item) => {
+                const active = pathname === item.to;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    )}
+                  >
+                    <item.icon className="size-4.5" />
+                    <span className="flex-1">{item.label}</span>
+                    {item.premium && !user.premium && <Lock className="size-3.5 opacity-70" />}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="border-t border-sidebar-border p-4 text-[11px] text-sidebar-foreground/50">
