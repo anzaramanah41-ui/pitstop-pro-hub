@@ -83,7 +83,7 @@ function DashboardPelanggan() {
             <Receipt className="size-4 text-primary" /> Pembayaran Terbaru
           </CardTitle>
           <Button asChild variant="ghost" size="sm" className="gap-1 text-primary">
-            <Link to="/pelanggan/pembayaran">
+            <Link to="/pelanggan/pembayaran" search={{}}>
               Semua <ArrowRight className="size-4" />
             </Link>
           </Button>
