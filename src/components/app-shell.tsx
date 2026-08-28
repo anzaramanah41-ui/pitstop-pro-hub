@@ -128,33 +128,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <DropdownMenuItem onSelect={() => navigate({ to: "/profil" })}>
                   <UserCircle2 className="mr-2 size-4" /> Profile
                 </DropdownMenuItem>
-                {owner && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="text-[11px] font-normal text-muted-foreground">
-                      {labelMode}
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        const next = modeAdmin ? "owner" : "admin";
-                        gantiMode(next);
-                        navigate({ to: next === "admin" ? HOME_ROLE.admin : HOME_ROLE.owner });
-                      }}
-                    >
-                      <Repeat2 className="mr-2 size-4" />
-                      {modeAdmin ? "Switch to Owner Mode" : "Switch to Admin Mode"}
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => {
-                    keluar();
-                    navigate({ to: "/", replace: true });
-                  }}
-                >
-                  <LogOut className="mr-2 size-4" /> Keluar
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
