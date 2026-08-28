@@ -18,7 +18,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, keluar } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     setOpen(false);
