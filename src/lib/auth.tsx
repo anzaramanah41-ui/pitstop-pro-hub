@@ -93,6 +93,37 @@ export const NAV_ROLE: Record<Role, NavItem[]> = {
   ],
 };
 
+export type NavGroup = { label?: string; items: NavItem[] };
+
+const ITEM_PROFIL: NavItem = { to: "/profil", label: "Profile", icon: UserCircle2 };
+
+export const NAV_GROUPS: Record<Role, NavGroup[]> = {
+  pelanggan: [{ items: NAV_ROLE.pelanggan }],
+  admin: [{ items: NAV_ROLE.admin }],
+  owner: [
+    { items: [{ to: "/owner/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
+    {
+      label: "Operasional",
+      items: [
+        { to: "/admin/booking", label: "Booking Masuk", icon: Inbox },
+        { to: "/admin/servis", label: "Operasional Servis", icon: Wrench },
+        { to: "/admin/sparepart", label: "Kelola Sparepart", icon: Package },
+      ],
+    },
+    {
+      label: "Laporan",
+      items: [
+        { to: "/admin/laporan", label: "Laporan & Data", icon: FileBarChart },
+        { to: "/owner/servis", label: "Laporan Servis", icon: LineChart },
+        { to: "/owner/sparepart", label: "Laporan Sparepart", icon: Package },
+        { to: "/owner/pelanggan", label: "Laporan Pelanggan", icon: Users },
+        { to: "/owner/keuntungan", label: "Laporan Keuntungan", icon: Crown, premium: true },
+      ],
+    },
+    { label: "Akun", items: [ITEM_PROFIL] },
+  ],
+};
+
 export const HOME_ROLE: Record<Role, string> = {
   pelanggan: "/pelanggan/dashboard",
   admin: "/admin/dashboard",
@@ -107,11 +138,6 @@ export const IZIN_ROLE: Record<Role, string[]> = {
   owner: ["/owner", "/admin", "/profil"],
 };
 
-/** Mode tampilan khusus Owner: navigasi Owner atau navigasi Admin Bengkel. */
-export type ModeOwner = "owner" | "admin";
-
-const KEY_MODE = "appbenk.mode";
-
 export function bolehAkses(role: Role, pathname: string) {
   return IZIN_ROLE[role].some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
@@ -120,8 +146,6 @@ const KEY = "appbenk.session";
 
 type AuthCtx = {
   user: SessionUser | null;
-  mode: ModeOwner;
-  gantiMode: (m: ModeOwner) => void;
   masuk: (email: string, password: string) => SessionUser | null;
   keluar: () => void;
   aktifkanPremium: () => void;
@@ -140,23 +164,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  const [mode, setMode] = useState<ModeOwner>(() => {
-    if (typeof window === "undefined") return "owner";
-    return window.localStorage.getItem(KEY_MODE) === "admin" ? "admin" : "owner";
-  });
-
   const value = useMemo<AuthCtx>(
     () => ({
       user,
-      mode,
-      gantiMode: (m) => {
-        setMode(m);
-        try {
-          window.localStorage.setItem(KEY_MODE, m);
-        } catch {
-          /* abaikan */
-        }
-      },
       masuk: (email, password) => {
         const found = AKUN_DEMO.find(
           (a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password,
@@ -191,7 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return next;
         }),
     }),
-    [user, mode],
+    [user],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
