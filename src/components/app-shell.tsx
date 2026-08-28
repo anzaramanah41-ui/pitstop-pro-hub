@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, UserCircle2, Menu, X, Lock, Repeat2 } from "lucide-react";
+import { UserCircle2, Menu, X, Lock } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
@@ -12,23 +12,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { HOME_ROLE, LABEL_ROLE, NAV_ROLE, useAuth } from "@/lib/auth";
+import { LABEL_ROLE, NAV_GROUPS, useAuth } from "@/lib/auth";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, keluar, mode, gantiMode } = useAuth();
+  const { user, keluar } = useAuth();
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
   if (!user) return null;
-  const owner = user.role === "owner";
-  const modeAdmin = owner && mode === "admin";
-  const nav = modeAdmin ? NAV_ROLE.admin : NAV_ROLE[user.role];
-  const labelMode = modeAdmin ? "Mode Admin Bengkel" : "Mode Owner";
+  const groups = NAV_GROUPS[user.role];
+  const nav = groups.flatMap((g) => g.items);
 
   return (
     <div className="min-h-screen bg-background lg:flex">
