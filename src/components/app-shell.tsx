@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, UserCircle2, Menu, X, Lock, Repeat2 } from "lucide-react";
+import { UserCircle2, Menu, X, Lock } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
@@ -12,23 +12,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { HOME_ROLE, LABEL_ROLE, NAV_ROLE, useAuth } from "@/lib/auth";
+import { LABEL_ROLE, NAV_GROUPS, useAuth } from "@/lib/auth";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, keluar, mode, gantiMode } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
   if (!user) return null;
-  const owner = user.role === "owner";
-  const modeAdmin = owner && mode === "admin";
-  const nav = modeAdmin ? NAV_ROLE.admin : NAV_ROLE[user.role];
-  const labelMode = modeAdmin ? "Mode Admin Bengkel" : "Mode Owner";
+  const groups = NAV_GROUPS[user.role];
+  const nav = groups.flatMap((g) => g.items);
 
   return (
     <div className="min-h-screen bg-background lg:flex">
@@ -61,31 +59,37 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-sidebar-accent px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
             Role · {LABEL_ROLE[user.role]}
           </span>
-          {owner && (
-            <span className="mt-2 block text-[11px] font-medium text-sidebar-foreground/70">{labelMode}</span>
-          )}
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3 pt-0">
-          {nav.map((item) => {
-            const active = pathname === item.to;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <item.icon className="size-4.5" />
-                <span className="flex-1">{item.label}</span>
-                {item.premium && !user.premium && <Lock className="size-3.5 opacity-70" />}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 space-y-4 overflow-y-auto p-3 pt-0">
+          {groups.map((group, i) => (
+            <div key={group.label ?? `g-${i}`} className="space-y-1">
+              {group.label && (
+                <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
+                  {group.label}
+                </p>
+              )}
+              {group.items.map((item) => {
+                const active = pathname === item.to;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    )}
+                  >
+                    <item.icon className="size-4.5" />
+                    <span className="flex-1">{item.label}</span>
+                    {item.premium && !user.premium && <Lock className="size-3.5 opacity-70" />}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="border-t border-sidebar-border p-4 text-[11px] text-sidebar-foreground/50">
@@ -123,33 +127,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => navigate({ to: "/profil" })}>
                   <UserCircle2 className="mr-2 size-4" /> Profile
-                </DropdownMenuItem>
-                {owner && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="text-[11px] font-normal text-muted-foreground">
-                      {labelMode}
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        const next = modeAdmin ? "owner" : "admin";
-                        gantiMode(next);
-                        navigate({ to: next === "admin" ? HOME_ROLE.admin : HOME_ROLE.owner });
-                      }}
-                    >
-                      <Repeat2 className="mr-2 size-4" />
-                      {modeAdmin ? "Switch to Owner Mode" : "Switch to Admin Mode"}
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => {
-                    keluar();
-                    navigate({ to: "/", replace: true });
-                  }}
-                >
-                  <LogOut className="mr-2 size-4" /> Keluar
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
