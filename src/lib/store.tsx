@@ -72,6 +72,12 @@ export type Booking = {
   tanggal: string;
   waktu: string;
   catatan: string;
+  /** Mekanik yang diinginkan pelanggan (opsional). */
+  mekanikDiinginkan?: string;
+  /** Mekanik yang ditugaskan admin (opsional). */
+  mekanikDitugaskan?: string;
+  /** Alasan penolakan booking oleh admin. */
+  alasanTolak?: string;
   status: StatusBooking;
 };
 
