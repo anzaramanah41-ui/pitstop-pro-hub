@@ -72,6 +72,12 @@ export type Booking = {
   tanggal: string;
   waktu: string;
   catatan: string;
+  /** Mekanik yang diinginkan pelanggan (opsional). */
+  mekanikDiinginkan?: string;
+  /** Mekanik yang ditugaskan admin (opsional). */
+  mekanikDitugaskan?: string;
+  /** Alasan penolakan booking oleh admin. */
+  alasanTolak?: string;
   status: StatusBooking;
 };
 
@@ -121,14 +127,17 @@ const servisAwal: Servis[] = [
   mkServis({ nomor: "SRV-2026-0145", pelanggan: "Agus Prasetyo", kendaraan: "Toyota Avanza 2017", plat: "D 9087 PL", jenis: "Kaki-kaki", keluhan: "Bunyi pada kaki-kaki", pekerjaan: "Ganti link stabilizer", mekanik: "Rudi", tanggal: "2026-08-17", status: "Selesai Dibayar", sparepart: "Link Stabilizer x2", catatan: "Sudah test drive, aman", items: [{ sparepartId: "sp-007", kode: "SP-007", nama: "Link Stabilizer Avanza", harga: 175000, jumlah: 2 }], biayaJasa: 130000, biayaPart: 350000, noTransaksi: "TRX-2026-0145" }),
   mkServis({ nomor: "SRV-2026-0144", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Ringan", keluhan: "Rantai kendur dan berisik", pekerjaan: "Setel & lumasi rantai", mekanik: "Dedi", tanggal: "2026-07-28", status: "Selesai Dibayar", sparepart: "Chain Lube", catatan: "Rantai mulai aus", biayaJasa: 35000, biayaPart: 20000, noTransaksi: "TRX-2026-0144" }),
   mkServis({ nomor: "SRV-2026-0143", pelanggan: "Hendra Wijaya", kendaraan: "Daihatsu Xenia 2015", plat: "D 6120 MN", jenis: "Servis AC", keluhan: "AC kurang dingin", pekerjaan: "Servis AC + isi freon", mekanik: "Rudi", tanggal: "2026-08-14", status: "Selesai Dibayar", sparepart: "Freon R134a", catatan: "", items: [{ sparepartId: "sp-008", kode: "SP-008", nama: "Freon R134a", harga: 120000, jumlah: 1 }], biayaJasa: 230000, biayaPart: 120000, noTransaksi: "TRX-2026-0143" }),
+  mkServis({ nomor: "SRV-2025-0121", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Besar", keluhan: "Tarikan berat", pekerjaan: "Overhaul ringan mesin", mekanik: "Joko", tanggal: "2025-11-09", status: "Selesai Dibayar", sparepart: "Busi NGK", catatan: "", items: [{ sparepartId: "sp-002", kode: "SP-002", nama: "Busi NGK CPR9EA", harga: 27000, jumlah: 2 }], biayaJasa: 250000, biayaPart: 54000, noTransaksi: "TRX-2025-0121", metodeBayar: "Cash" }),
+  mkServis({ nomor: "SRV-2025-0118", pelanggan: "Siti Rahmawati", kendaraan: "Yamaha NMAX 2021", plat: "D 5521 KJ", jenis: "Ganti Oli", keluhan: "Servis rutin", pekerjaan: "Ganti oli mesin", mekanik: "Bayu", tanggal: "2025-06-21", status: "Selesai Dibayar", sparepart: "Oli AHM MPX", catatan: "", items: [{ sparepartId: "sp-001", kode: "SP-001", nama: "Oli Mesin AHM MPX 0.8L", harga: 48000, jumlah: 1 }], biayaJasa: 30000, biayaPart: 48000, noTransaksi: "TRX-2025-0118", metodeBayar: "QRIS" }),
 ];
 
 const bookingAwal: Booking[] = [
-  { id: uid(), nomor: "BK-2026-0032", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Besar", keluhan: "Tarikan berat & boros bensin", tanggal: "2026-08-20", waktu: "09:00", catatan: "Mohon dikerjakan pagi", status: "Menunggu Konfirmasi" },
+  { id: uid(), nomor: "BK-2026-0032", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Besar", keluhan: "Tarikan berat & boros bensin", tanggal: "2026-08-20", waktu: "09:00", catatan: "Mohon dikerjakan pagi", mekanikDiinginkan: "Joko", status: "Menunggu Konfirmasi" },
   { id: uid(), nomor: "BK-2026-0031", pelanggan: "Dewi Lestari", kendaraan: "Honda Vario 160", plat: "D 3311 QW", jenis: "Ganti Oli", keluhan: "Ganti oli rutin", tanggal: "2026-08-19", waktu: "13:00", catatan: "", status: "Menunggu Konfirmasi" },
-  { id: uid(), nomor: "BK-2026-0030", pelanggan: "Siti Rahmawati", kendaraan: "Yamaha NMAX 2021", plat: "D 5521 KJ", jenis: "Perbaikan Rem", keluhan: "Rem depan kurang pakem", tanggal: "2026-08-18", waktu: "10:30", catatan: "", status: "Diterima" },
-  { id: uid(), nomor: "BK-2026-0029", pelanggan: "Rizky Ramadhan", kendaraan: "Suzuki Satria FU", plat: "D 7742 ZX", jenis: "Kelistrikan", keluhan: "Lampu utama mati", tanggal: "2026-08-16", waktu: "15:00", catatan: "", status: "Ditolak" },
+  { id: uid(), nomor: "BK-2026-0030", pelanggan: "Siti Rahmawati", kendaraan: "Yamaha NMAX 2021", plat: "D 5521 KJ", jenis: "Perbaikan Rem", keluhan: "Rem depan kurang pakem", tanggal: "2026-08-18", waktu: "10:30", catatan: "", mekanikDiinginkan: "Dedi", mekanikDitugaskan: "Dedi", status: "Diterima" },
+  { id: uid(), nomor: "BK-2026-0029", pelanggan: "Rizky Ramadhan", kendaraan: "Suzuki Satria FU", plat: "D 7742 ZX", jenis: "Kelistrikan", keluhan: "Lampu utama mati", tanggal: "2026-08-16", waktu: "15:00", catatan: "", status: "Ditolak", alasanTolak: "Jadwal servis pada tanggal tersebut sudah penuh. Silakan pilih tanggal lain." },
 ];
+
 
 const sparepartAwal: Sparepart[] = [
   { id: "sp-001", kode: "SP-001", nama: "Oli Mesin AHM MPX 0.8L", kategori: "Oli", harga: 48000, stok: 34, terpakai: 22 },
@@ -142,6 +151,44 @@ const sparepartAwal: Sparepart[] = [
 ];
 
 export const MEKANIK = ["Joko", "Dedi", "Rudi", "Bayu"];
+
+/** Daftar mekanik beserta spesialisasi untuk saran saat booking. */
+export const MEKANIK_DETAIL: { nama: string; spesialis: string }[] = [
+  { nama: "Joko", spesialis: "Mekanik Mesin" },
+  { nama: "Dedi", spesialis: "Mekanik Rem & Kaki-kaki" },
+  { nama: "Rudi", spesialis: "Mekanik AC & Kelistrikan" },
+  { nama: "Bayu", spesialis: "Mekanik Umum" },
+];
+
+export type StatusTiket = "Menunggu" | "Diproses" | "Selesai";
+
+export const KATEGORI_TIKET = [
+  "Booking",
+  "Servis",
+  "Pembayaran",
+  "Sparepart",
+  "Akun",
+  "Masalah Teknis",
+  "Lainnya",
+];
+
+export type Tiket = {
+  id: string;
+  nomor: string;
+  pengirim: string;
+  peran: string;
+  subjek: string;
+  kategori: string;
+  pesan: string;
+  tanggal: string;
+  status: StatusTiket;
+  balasan?: string;
+};
+
+const tiketAwal: Tiket[] = [
+  { id: uid(), nomor: "CS-001", pengirim: "Budi Santoso", peran: "Pelanggan", subjek: "Tidak dapat melakukan booking", kategori: "Booking", pesan: "Saat menekan Kirim Booking, jadwal tidak tersimpan.", tanggal: "2026-08-29", status: "Diproses", balasan: "Tim kami sedang memeriksa kendala ini." },
+  { id: uid(), nomor: "CS-002", pengirim: "Admin Bengkel", peran: "Admin Bengkel", subjek: "Laporan stok tidak sinkron", kategori: "Sparepart", pesan: "Stok sparepart pada laporan berbeda dengan katalog.", tanggal: "2026-08-27", status: "Selesai", balasan: "Sudah diperbaiki pada pembaruan terakhir." },
+];
 
 export const KATEGORI_PART = ["Oli", "Mesin", "Rem", "Kelistrikan", "Ban", "Kaki-kaki", "AC"];
 
