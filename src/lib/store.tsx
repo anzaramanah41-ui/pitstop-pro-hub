@@ -152,6 +152,44 @@ const sparepartAwal: Sparepart[] = [
 
 export const MEKANIK = ["Joko", "Dedi", "Rudi", "Bayu"];
 
+/** Daftar mekanik beserta spesialisasi untuk saran saat booking. */
+export const MEKANIK_DETAIL: { nama: string; spesialis: string }[] = [
+  { nama: "Joko", spesialis: "Mekanik Mesin" },
+  { nama: "Dedi", spesialis: "Mekanik Rem & Kaki-kaki" },
+  { nama: "Rudi", spesialis: "Mekanik AC & Kelistrikan" },
+  { nama: "Bayu", spesialis: "Mekanik Umum" },
+];
+
+export type StatusTiket = "Menunggu" | "Diproses" | "Selesai";
+
+export const KATEGORI_TIKET = [
+  "Booking",
+  "Servis",
+  "Pembayaran",
+  "Sparepart",
+  "Akun",
+  "Masalah Teknis",
+  "Lainnya",
+];
+
+export type Tiket = {
+  id: string;
+  nomor: string;
+  pengirim: string;
+  peran: string;
+  subjek: string;
+  kategori: string;
+  pesan: string;
+  tanggal: string;
+  status: StatusTiket;
+  balasan?: string;
+};
+
+const tiketAwal: Tiket[] = [
+  { id: uid(), nomor: "CS-001", pengirim: "Budi Santoso", peran: "Pelanggan", subjek: "Tidak dapat melakukan booking", kategori: "Booking", pesan: "Saat menekan Kirim Booking, jadwal tidak tersimpan.", tanggal: "2026-08-29", status: "Diproses", balasan: "Tim kami sedang memeriksa kendala ini." },
+  { id: uid(), nomor: "CS-002", pengirim: "Admin Bengkel", peran: "Admin Bengkel", subjek: "Laporan stok tidak sinkron", kategori: "Sparepart", pesan: "Stok sparepart pada laporan berbeda dengan katalog.", tanggal: "2026-08-27", status: "Selesai", balasan: "Sudah diperbaiki pada pembaruan terakhir." },
+];
+
 export const KATEGORI_PART = ["Oli", "Mesin", "Rem", "Kelistrikan", "Ban", "Kaki-kaki", "AC"];
 
 export const totalItem = (items: ItemPart[]) => items.reduce((a, i) => a + i.harga * i.jumlah, 0);
