@@ -299,7 +299,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setBooking((l) => [baru, ...l]);
         return baru;
       },
-      ubahStatusBooking: (id, status) => setBooking((l) => l.map((x) => (x.id === id ? { ...x, status } : x))),
+      ubahStatusBooking: (id, status, alasan) =>
+        setBooking((l) =>
+          l.map((x) =>
+            x.id === id
+              ? { ...x, status, ...(status === "Ditolak" ? { alasanTolak: alasan ?? x.alasanTolak } : { alasanTolak: undefined }) }
+              : x,
+          ),
+        ),
+      tugaskanMekanikBooking: (id, mekanik) =>
+        setBooking((l) => l.map((x) => (x.id === id ? { ...x, mekanikDitugaskan: mekanik } : x))),
       bayarServis: (id, metode) =>
         setServis((l) => l.map((x) => {
           if (x.id !== id) return x;
@@ -308,7 +317,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })),
 
     }),
-    [pelanggan, servis, sparepart, booking],
+    [pelanggan, servis, sparepart, booking, tiket],
+
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
