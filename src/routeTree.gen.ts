@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as ShellProfilRouteImport } from './routes/_shell.profil'
 import { Route as ShellAdminBookingRouteImport } from './routes/_shell.admin.booking'
+import { Route as ShellAdminCsRouteImport } from './routes/_shell.admin.cs'
 import { Route as ShellAdminDashboardRouteImport } from './routes/_shell.admin.dashboard'
 import { Route as ShellAdminLaporanRouteImport } from './routes/_shell.admin.laporan'
 import { Route as ShellAdminServisRouteImport } from './routes/_shell.admin.servis'
@@ -47,6 +48,11 @@ const ShellProfilRoute = ShellProfilRouteImport.update({
 const ShellAdminBookingRoute = ShellAdminBookingRouteImport.update({
   id: '/admin/booking',
   path: '/admin/booking',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellAdminCsRoute = ShellAdminCsRouteImport.update({
+  id: '/admin/cs',
+  path: '/admin/cs',
   getParentRoute: () => ShellRoute,
 } as any)
 const ShellAdminDashboardRoute = ShellAdminDashboardRouteImport.update({
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/profil': typeof ShellProfilRoute
   '/admin/booking': typeof ShellAdminBookingRoute
+  '/admin/cs': typeof ShellAdminCsRoute
   '/admin/dashboard': typeof ShellAdminDashboardRoute
   '/admin/laporan': typeof ShellAdminLaporanRoute
   '/admin/servis': typeof ShellAdminServisRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/profil': typeof ShellProfilRoute
   '/admin/booking': typeof ShellAdminBookingRoute
+  '/admin/cs': typeof ShellAdminCsRoute
   '/admin/dashboard': typeof ShellAdminDashboardRoute
   '/admin/laporan': typeof ShellAdminLaporanRoute
   '/admin/servis': typeof ShellAdminServisRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/_shell': typeof ShellRouteWithChildren
   '/_shell/profil': typeof ShellProfilRoute
   '/_shell/admin/booking': typeof ShellAdminBookingRoute
+  '/_shell/admin/cs': typeof ShellAdminCsRoute
   '/_shell/admin/dashboard': typeof ShellAdminDashboardRoute
   '/_shell/admin/laporan': typeof ShellAdminLaporanRoute
   '/_shell/admin/servis': typeof ShellAdminServisRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/'
     | '/profil'
     | '/admin/booking'
+    | '/admin/cs'
     | '/admin/dashboard'
     | '/admin/laporan'
     | '/admin/servis'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/'
     | '/profil'
     | '/admin/booking'
+    | '/admin/cs'
     | '/admin/dashboard'
     | '/admin/laporan'
     | '/admin/servis'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/_shell'
     | '/_shell/profil'
     | '/_shell/admin/booking'
+    | '/_shell/admin/cs'
     | '/_shell/admin/dashboard'
     | '/_shell/admin/laporan'
     | '/_shell/admin/servis'
@@ -296,6 +308,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/booking'
       fullPath: '/admin/booking'
       preLoaderRoute: typeof ShellAdminBookingRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/admin/cs': {
+      id: '/_shell/admin/cs'
+      path: '/admin/cs'
+      fullPath: '/admin/cs'
+      preLoaderRoute: typeof ShellAdminCsRouteImport
       parentRoute: typeof ShellRoute
     }
     '/_shell/admin/dashboard': {
@@ -416,6 +435,7 @@ declare module '@tanstack/react-router' {
 interface ShellRouteChildren {
   ShellProfilRoute: typeof ShellProfilRoute
   ShellAdminBookingRoute: typeof ShellAdminBookingRoute
+  ShellAdminCsRoute: typeof ShellAdminCsRoute
   ShellAdminDashboardRoute: typeof ShellAdminDashboardRoute
   ShellAdminLaporanRoute: typeof ShellAdminLaporanRoute
   ShellAdminServisRoute: typeof ShellAdminServisRoute
@@ -437,6 +457,7 @@ interface ShellRouteChildren {
 const ShellRouteChildren: ShellRouteChildren = {
   ShellProfilRoute: ShellProfilRoute,
   ShellAdminBookingRoute: ShellAdminBookingRoute,
+  ShellAdminCsRoute: ShellAdminCsRoute,
   ShellAdminDashboardRoute: ShellAdminDashboardRoute,
   ShellAdminLaporanRoute: ShellAdminLaporanRoute,
   ShellAdminServisRoute: ShellAdminServisRoute,
