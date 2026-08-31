@@ -301,11 +301,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       ubahStatusBooking: (id, status, alasan) =>
         setBooking((l) =>
-          l.map((x) =>
-            x.id === id
-              ? { ...x, status, ...(status === "Ditolak" ? { alasanTolak: alasan ?? x.alasanTolak } : { alasanTolak: undefined }) }
-              : x,
-          ),
+          l.map((x) => {
+            if (x.id !== id) return x;
+            const { alasanTolak, ...rest } = x;
+            return status === "Ditolak"
+              ? { ...rest, status, alasanTolak: alasan ?? alasanTolak ?? "" }
+              : { ...rest, status };
+          }),
         ),
       tugaskanMekanikBooking: (id, mekanik) =>
         setBooking((l) => l.map((x) => (x.id === id ? { ...x, mekanikDitugaskan: mekanik } : x))),
