@@ -223,8 +223,11 @@ type Store = {
   simpanSparepart: (s: Omit<Sparepart, "id" | "terpakai"> & { id?: string; terpakai?: number }) => void;
   hapusSparepart: (id: string) => void;
   buatBooking: (b: Omit<Booking, "id" | "nomor" | "status">) => Booking;
-  ubahStatusBooking: (id: string, status: StatusBooking) => void;
+  ubahStatusBooking: (id: string, status: StatusBooking, alasan?: string) => void;
+  tugaskanMekanikBooking: (id: string, mekanik: string) => void;
   bayarServis: (id: string, metode?: MetodeBayar) => void;
+  tiket: Tiket[];
+  buatTiket: (t: Omit<Tiket, "id" | "nomor" | "status" | "tanggal">) => Tiket;
 };
 
 const StoreContext = createContext<Store | null>(null);
@@ -234,6 +237,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [servis, setServis] = useState(servisAwal);
   const [sparepart, setSparepart] = useState(sparepartAwal);
   const [booking, setBooking] = useState(bookingAwal);
+  const [tiket, setTiket] = useState(tiketAwal);
 
   const value = useMemo<Store>(
     () => ({
@@ -241,6 +245,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       servis,
       sparepart,
       booking,
+      tiket,
+      buatTiket: (t) => {
+        const baru: Tiket = {
+          ...t,
+          id: uid(),
+          nomor: `CS-${String(tiket.length + 1).padStart(3, "0")}`,
+          tanggal: new Date().toISOString().slice(0, 10),
+          status: "Menunggu",
+        };
+        setTiket((l) => [baru, ...l]);
+        return baru;
+      },
+
       simpanPelanggan: (p) =>
         setPelanggan((list) =>
           p.id ? list.map((x) => (x.id === p.id ? ({ ...x, ...p } as Pelanggan) : x)) : [{ ...p, id: uid() } as Pelanggan, ...list],
