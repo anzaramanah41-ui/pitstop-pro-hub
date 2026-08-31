@@ -14,6 +14,7 @@ import {
   LineChart,
   Users,
   Crown,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 
@@ -73,6 +74,7 @@ export const NAV_ROLE: Record<Role, NavItem[]> = {
     { to: "/pelanggan/estimasi", label: "Estimasi Servis", icon: Calculator },
     { to: "/pelanggan/pembayaran", label: "Pembayaran", icon: Wallet },
     { to: "/pelanggan/riwayat", label: "Riwayat Servis", icon: History },
+    { to: "/pelanggan/cs", label: "Customer Service", icon: LifeBuoy },
     { to: "/profil", label: "Profile", icon: UserCircle2 },
   ],
   admin: [
@@ -81,6 +83,7 @@ export const NAV_ROLE: Record<Role, NavItem[]> = {
     { to: "/admin/servis", label: "Operasional Servis", icon: Wrench },
     { to: "/admin/sparepart", label: "Kelola Sparepart", icon: Package },
     { to: "/admin/laporan", label: "Laporan & Data", icon: FileBarChart },
+    { to: "/admin/cs", label: "Customer Service", icon: LifeBuoy },
     { to: "/profil", label: "Profile", icon: UserCircle2 },
   ],
   owner: [
@@ -120,7 +123,7 @@ export const NAV_GROUPS: Record<Role, NavGroup[]> = {
         { to: "/owner/keuntungan", label: "Laporan Keuntungan", icon: Crown, premium: true },
       ],
     },
-    { label: "Akun", items: [ITEM_PROFIL] },
+    { label: "Akun", items: [{ to: "/admin/cs", label: "Customer Service", icon: LifeBuoy }, ITEM_PROFIL] },
   ],
 };
 

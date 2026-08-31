@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/lib/auth";
-import { useStore, tanggalPanjang, JENIS_SERVIS } from "@/lib/store";
+import { useStore, tanggalPanjang, JENIS_SERVIS, MEKANIK_DETAIL } from "@/lib/store";
 
 export const Route = createFileRoute("/_shell/pelanggan/booking")({
   head: () => ({
@@ -40,6 +40,7 @@ function BookingPelanggan() {
     tanggal: "",
     waktu: "",
     catatan: "",
+    mekanikDiinginkan: "",
   };
   const [form, setForm] = useState(kosong);
   const [err, setErr] = useState<Partial<Record<keyof typeof kosong, string>>>({});
@@ -114,6 +115,38 @@ function BookingPelanggan() {
                 </div>
               </div>
               <div className="space-y-1.5">
+                <Label>Mekanik yang Diinginkan</Label>
+                <Select
+                  value={form.mekanikDiinginkan || "semua"}
+                  onValueChange={(v) => setForm({ ...form, mekanikDiinginkan: v === "semua" ? "" : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih Mekanik" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="semua">Semua Mekanik</SelectItem>
+                    {MEKANIK_DETAIL.map((m) => (
+                      <SelectItem key={m.nama} value={m.nama}>{m.nama} — {m.spesialis}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  list="saran-mekanik"
+                  value={form.mekanikDiinginkan}
+                  onChange={(e) => setForm({ ...form, mekanikDiinginkan: e.target.value })}
+                  placeholder="Ketik nama mekanik..."
+                  maxLength={60}
+                />
+                <datalist id="saran-mekanik">
+                  {MEKANIK_DETAIL.map((m) => (
+                    <option key={m.nama} value={m.nama}>{m.nama} — {m.spesialis}</option>
+                  ))}
+                </datalist>
+                <p className="text-xs text-muted-foreground">
+                  Opsional. Admin akan mempertimbangkan permintaan ini saat menugaskan mekanik.
+                </p>
+              </div>
+              <div className="space-y-1.5">
                 <Label>Catatan Tambahan</Label>
                 <Textarea value={form.catatan} onChange={(e) => setForm({ ...form, catatan: e.target.value })} placeholder="Opsional" />
               </div>
@@ -139,6 +172,7 @@ function BookingPelanggan() {
                       <TableHead>No. Booking</TableHead>
                       <TableHead>Jenis</TableHead>
                       <TableHead>Jadwal</TableHead>
+                      <TableHead>Mekanik</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -150,7 +184,18 @@ function BookingPelanggan() {
                         <TableCell className="text-muted-foreground">
                           {tanggalPanjang(b.tanggal)} · {b.waktu}
                         </TableCell>
-                        <TableCell><BookingBadge status={b.status} /></TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          <span className="block">Diinginkan: {b.mekanikDiinginkan || "—"}</span>
+                          <span className="block">Ditugaskan: {b.mekanikDitugaskan || "Belum ditentukan"}</span>
+                        </TableCell>
+                        <TableCell>
+                          <BookingBadge status={b.status} />
+                          {b.status === "Ditolak" && b.alasanTolak && (
+                            <span className="mt-1 block max-w-56 text-xs text-destructive">
+                              Alasan: {b.alasanTolak}
+                            </span>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

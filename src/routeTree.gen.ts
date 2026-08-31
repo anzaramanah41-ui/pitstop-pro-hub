@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as ShellProfilRouteImport } from './routes/_shell.profil'
 import { Route as ShellAdminBookingRouteImport } from './routes/_shell.admin.booking'
+import { Route as ShellAdminCsRouteImport } from './routes/_shell.admin.cs'
 import { Route as ShellAdminDashboardRouteImport } from './routes/_shell.admin.dashboard'
 import { Route as ShellAdminLaporanRouteImport } from './routes/_shell.admin.laporan'
 import { Route as ShellAdminServisRouteImport } from './routes/_shell.admin.servis'
@@ -23,6 +24,7 @@ import { Route as ShellOwnerPelangganRouteImport } from './routes/_shell.owner.p
 import { Route as ShellOwnerServisRouteImport } from './routes/_shell.owner.servis'
 import { Route as ShellOwnerSparepartRouteImport } from './routes/_shell.owner.sparepart'
 import { Route as ShellPelangganBookingRouteImport } from './routes/_shell.pelanggan.booking'
+import { Route as ShellPelangganCsRouteImport } from './routes/_shell.pelanggan.cs'
 import { Route as ShellPelangganDashboardRouteImport } from './routes/_shell.pelanggan.dashboard'
 import { Route as ShellPelangganEstimasiRouteImport } from './routes/_shell.pelanggan.estimasi'
 import { Route as ShellPelangganPembayaranRouteImport } from './routes/_shell.pelanggan.pembayaran'
@@ -46,6 +48,11 @@ const ShellProfilRoute = ShellProfilRouteImport.update({
 const ShellAdminBookingRoute = ShellAdminBookingRouteImport.update({
   id: '/admin/booking',
   path: '/admin/booking',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellAdminCsRoute = ShellAdminCsRouteImport.update({
+  id: '/admin/cs',
+  path: '/admin/cs',
   getParentRoute: () => ShellRoute,
 } as any)
 const ShellAdminDashboardRoute = ShellAdminDashboardRouteImport.update({
@@ -98,6 +105,11 @@ const ShellPelangganBookingRoute = ShellPelangganBookingRouteImport.update({
   path: '/pelanggan/booking',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellPelangganCsRoute = ShellPelangganCsRouteImport.update({
+  id: '/pelanggan/cs',
+  path: '/pelanggan/cs',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellPelangganDashboardRoute = ShellPelangganDashboardRouteImport.update({
   id: '/pelanggan/dashboard',
   path: '/pelanggan/dashboard',
@@ -129,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/profil': typeof ShellProfilRoute
   '/admin/booking': typeof ShellAdminBookingRoute
+  '/admin/cs': typeof ShellAdminCsRoute
   '/admin/dashboard': typeof ShellAdminDashboardRoute
   '/admin/laporan': typeof ShellAdminLaporanRoute
   '/admin/servis': typeof ShellAdminServisRoute
@@ -139,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/owner/servis': typeof ShellOwnerServisRoute
   '/owner/sparepart': typeof ShellOwnerSparepartRoute
   '/pelanggan/booking': typeof ShellPelangganBookingRoute
+  '/pelanggan/cs': typeof ShellPelangganCsRoute
   '/pelanggan/dashboard': typeof ShellPelangganDashboardRoute
   '/pelanggan/estimasi': typeof ShellPelangganEstimasiRoute
   '/pelanggan/pembayaran': typeof ShellPelangganPembayaranRoute
@@ -149,6 +163,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/profil': typeof ShellProfilRoute
   '/admin/booking': typeof ShellAdminBookingRoute
+  '/admin/cs': typeof ShellAdminCsRoute
   '/admin/dashboard': typeof ShellAdminDashboardRoute
   '/admin/laporan': typeof ShellAdminLaporanRoute
   '/admin/servis': typeof ShellAdminServisRoute
@@ -159,6 +174,7 @@ export interface FileRoutesByTo {
   '/owner/servis': typeof ShellOwnerServisRoute
   '/owner/sparepart': typeof ShellOwnerSparepartRoute
   '/pelanggan/booking': typeof ShellPelangganBookingRoute
+  '/pelanggan/cs': typeof ShellPelangganCsRoute
   '/pelanggan/dashboard': typeof ShellPelangganDashboardRoute
   '/pelanggan/estimasi': typeof ShellPelangganEstimasiRoute
   '/pelanggan/pembayaran': typeof ShellPelangganPembayaranRoute
@@ -171,6 +187,7 @@ export interface FileRoutesById {
   '/_shell': typeof ShellRouteWithChildren
   '/_shell/profil': typeof ShellProfilRoute
   '/_shell/admin/booking': typeof ShellAdminBookingRoute
+  '/_shell/admin/cs': typeof ShellAdminCsRoute
   '/_shell/admin/dashboard': typeof ShellAdminDashboardRoute
   '/_shell/admin/laporan': typeof ShellAdminLaporanRoute
   '/_shell/admin/servis': typeof ShellAdminServisRoute
@@ -181,6 +198,7 @@ export interface FileRoutesById {
   '/_shell/owner/servis': typeof ShellOwnerServisRoute
   '/_shell/owner/sparepart': typeof ShellOwnerSparepartRoute
   '/_shell/pelanggan/booking': typeof ShellPelangganBookingRoute
+  '/_shell/pelanggan/cs': typeof ShellPelangganCsRoute
   '/_shell/pelanggan/dashboard': typeof ShellPelangganDashboardRoute
   '/_shell/pelanggan/estimasi': typeof ShellPelangganEstimasiRoute
   '/_shell/pelanggan/pembayaran': typeof ShellPelangganPembayaranRoute
@@ -193,6 +211,7 @@ export interface FileRouteTypes {
     | '/'
     | '/profil'
     | '/admin/booking'
+    | '/admin/cs'
     | '/admin/dashboard'
     | '/admin/laporan'
     | '/admin/servis'
@@ -203,6 +222,7 @@ export interface FileRouteTypes {
     | '/owner/servis'
     | '/owner/sparepart'
     | '/pelanggan/booking'
+    | '/pelanggan/cs'
     | '/pelanggan/dashboard'
     | '/pelanggan/estimasi'
     | '/pelanggan/pembayaran'
@@ -213,6 +233,7 @@ export interface FileRouteTypes {
     | '/'
     | '/profil'
     | '/admin/booking'
+    | '/admin/cs'
     | '/admin/dashboard'
     | '/admin/laporan'
     | '/admin/servis'
@@ -223,6 +244,7 @@ export interface FileRouteTypes {
     | '/owner/servis'
     | '/owner/sparepart'
     | '/pelanggan/booking'
+    | '/pelanggan/cs'
     | '/pelanggan/dashboard'
     | '/pelanggan/estimasi'
     | '/pelanggan/pembayaran'
@@ -234,6 +256,7 @@ export interface FileRouteTypes {
     | '/_shell'
     | '/_shell/profil'
     | '/_shell/admin/booking'
+    | '/_shell/admin/cs'
     | '/_shell/admin/dashboard'
     | '/_shell/admin/laporan'
     | '/_shell/admin/servis'
@@ -244,6 +267,7 @@ export interface FileRouteTypes {
     | '/_shell/owner/servis'
     | '/_shell/owner/sparepart'
     | '/_shell/pelanggan/booking'
+    | '/_shell/pelanggan/cs'
     | '/_shell/pelanggan/dashboard'
     | '/_shell/pelanggan/estimasi'
     | '/_shell/pelanggan/pembayaran'
@@ -284,6 +308,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/booking'
       fullPath: '/admin/booking'
       preLoaderRoute: typeof ShellAdminBookingRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/admin/cs': {
+      id: '/_shell/admin/cs'
+      path: '/admin/cs'
+      fullPath: '/admin/cs'
+      preLoaderRoute: typeof ShellAdminCsRouteImport
       parentRoute: typeof ShellRoute
     }
     '/_shell/admin/dashboard': {
@@ -356,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellPelangganBookingRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/pelanggan/cs': {
+      id: '/_shell/pelanggan/cs'
+      path: '/pelanggan/cs'
+      fullPath: '/pelanggan/cs'
+      preLoaderRoute: typeof ShellPelangganCsRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/pelanggan/dashboard': {
       id: '/_shell/pelanggan/dashboard'
       path: '/pelanggan/dashboard'
@@ -397,6 +435,7 @@ declare module '@tanstack/react-router' {
 interface ShellRouteChildren {
   ShellProfilRoute: typeof ShellProfilRoute
   ShellAdminBookingRoute: typeof ShellAdminBookingRoute
+  ShellAdminCsRoute: typeof ShellAdminCsRoute
   ShellAdminDashboardRoute: typeof ShellAdminDashboardRoute
   ShellAdminLaporanRoute: typeof ShellAdminLaporanRoute
   ShellAdminServisRoute: typeof ShellAdminServisRoute
@@ -407,6 +446,7 @@ interface ShellRouteChildren {
   ShellOwnerServisRoute: typeof ShellOwnerServisRoute
   ShellOwnerSparepartRoute: typeof ShellOwnerSparepartRoute
   ShellPelangganBookingRoute: typeof ShellPelangganBookingRoute
+  ShellPelangganCsRoute: typeof ShellPelangganCsRoute
   ShellPelangganDashboardRoute: typeof ShellPelangganDashboardRoute
   ShellPelangganEstimasiRoute: typeof ShellPelangganEstimasiRoute
   ShellPelangganPembayaranRoute: typeof ShellPelangganPembayaranRoute
@@ -417,6 +457,7 @@ interface ShellRouteChildren {
 const ShellRouteChildren: ShellRouteChildren = {
   ShellProfilRoute: ShellProfilRoute,
   ShellAdminBookingRoute: ShellAdminBookingRoute,
+  ShellAdminCsRoute: ShellAdminCsRoute,
   ShellAdminDashboardRoute: ShellAdminDashboardRoute,
   ShellAdminLaporanRoute: ShellAdminLaporanRoute,
   ShellAdminServisRoute: ShellAdminServisRoute,
@@ -427,6 +468,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellOwnerServisRoute: ShellOwnerServisRoute,
   ShellOwnerSparepartRoute: ShellOwnerSparepartRoute,
   ShellPelangganBookingRoute: ShellPelangganBookingRoute,
+  ShellPelangganCsRoute: ShellPelangganCsRoute,
   ShellPelangganDashboardRoute: ShellPelangganDashboardRoute,
   ShellPelangganEstimasiRoute: ShellPelangganEstimasiRoute,
   ShellPelangganPembayaranRoute: ShellPelangganPembayaranRoute,
