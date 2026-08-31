@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/number-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -153,11 +154,11 @@ function SparepartAdmin() {
             </div>
             <div className="space-y-1.5">
               <Label>Harga</Label>
-              <Input type="number" value={form.harga} onChange={(e) => setForm({ ...form, harga: Number(e.target.value) })} />
+              <NumberInput value={form.harga} onChange={(v) => setForm({ ...form, harga: v })} placeholder="0" />
             </div>
             <div className="space-y-1.5">
               <Label>Stok</Label>
-              <Input type="number" value={form.stok} onChange={(e) => setForm({ ...form, stok: Number(e.target.value) })} />
+              <NumberInput value={form.stok} onChange={(v) => setForm({ ...form, stok: v })} placeholder="0" />
             </div>
             <DialogFooter className="sm:col-span-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/number-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -344,12 +345,12 @@ function ServisAdmin() {
                             </TableCell>
                             <TableCell className="whitespace-nowrap text-right">{rupiah(i.harga)}</TableCell>
                             <TableCell>
-                              <Input
-                                type="number"
+                              <NumberInput
+                                aria-label={`Jumlah ${i.nama}`}
                                 min={1}
                                 className="h-8"
                                 value={i.jumlah}
-                                onChange={(e) => ubahJumlah(i.sparepartId, Number(e.target.value))}
+                                onChange={(v) => ubahJumlah(i.sparepartId, v)}
                               />
                             </TableCell>
                             <TableCell className="whitespace-nowrap text-right font-semibold">
@@ -377,7 +378,7 @@ function ServisAdmin() {
 
             <div className="space-y-1.5">
               <Label>Biaya Jasa</Label>
-              <Input type="number" value={form.biayaJasa} onChange={(e) => setForm({ ...form, biayaJasa: Number(e.target.value) })} />
+              <NumberInput value={form.biayaJasa} onChange={(v) => setForm({ ...form, biayaJasa: v })} placeholder="0" />
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>
