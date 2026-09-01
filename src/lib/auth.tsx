@@ -30,6 +30,7 @@ export type SessionUser = {
   inisial: string;
   /** Nama pelanggan yang dipetakan ke akun ini (khusus role pelanggan). */
   pelanggan?: string;
+  telepon?: string;
   premium: boolean;
 };
 
