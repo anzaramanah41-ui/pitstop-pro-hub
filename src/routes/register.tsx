@@ -216,9 +216,9 @@ function Field({
   placeholder: string;
   value: string;
   onChange: (v: string) => void;
-  error?: string;
+  error?: string | undefined;
   type?: string;
-  toggle?: { on: boolean; set: () => void };
+  toggle?: { on: boolean; set: () => void } | undefined;
 }) {
   return (
     <div className="space-y-1.5">
