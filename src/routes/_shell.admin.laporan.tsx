@@ -21,12 +21,23 @@ export const Route = createFileRoute("/_shell/admin/laporan")({
 
 function LaporanAdmin() {
   const { servis, sparepart } = useStore();
-  const [periode, setPeriode] = useState<"harian" | "bulanan">("bulanan");
+  const [periode, setPeriode] = useState<"harian" | "bulanan" | "tahunan">("bulanan");
+  const [tahun, setTahun] = useState<string>("semua");
 
-  const data = useMemo(
-    () => (periode === "harian" ? servis.filter((s) => s.tanggal === "2026-08-18") : servis.filter((s) => s.tanggal.startsWith("2026-08"))),
-    [servis, periode],
+  const daftarTahun = useMemo(
+    () => Array.from(new Set(servis.map((s) => s.tanggal.slice(0, 4)))).sort((a, b) => b.localeCompare(a)),
+    [servis],
   );
+
+  const data = useMemo(() => {
+    let list = servis;
+    if (tahun !== "semua") list = list.filter((s) => s.tanggal.startsWith(tahun));
+    if (periode === "harian") list = list.filter((s) => s.tanggal === "2026-08-18");
+    else if (periode === "bulanan") list = list.filter((s) => s.tanggal.startsWith(`${tahun === "semua" ? "2026" : tahun}-08`));
+    return list;
+  }, [servis, periode, tahun]);
+
+  const labelPeriode = periode === "harian" ? "hari ini" : periode === "bulanan" ? `Agustus ${tahun === "semua" ? "2026" : tahun}` : tahun === "semua" ? "semua tahun" : `Tahun ${tahun}`;
 
   const omzet = data.reduce((a, s) => a + s.total, 0);
   const selesai = data.filter((s) => ["Selesai", "Selesai Dibayar"].includes(s.status)).length;
@@ -44,13 +55,25 @@ function LaporanAdmin() {
         title="Laporan Operasional"
         description="Ringkasan servis, performa mekanik, dan pemakaian sparepart."
         action={
-          <Select value={periode} onValueChange={(v) => setPeriode(v as typeof periode)}>
-            <SelectTrigger className="w-44 bg-card"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="harian">Harian</SelectItem>
-              <SelectItem value="bulanan">Bulanan</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap gap-2">
+            <Select value={tahun} onValueChange={setTahun}>
+              <SelectTrigger className="w-40 bg-card" aria-label="Filter tahun"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="semua">Semua Tahun</SelectItem>
+                {daftarTahun.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={periode} onValueChange={(v) => setPeriode(v as typeof periode)}>
+              <SelectTrigger className="w-40 bg-card" aria-label="Filter periode"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="harian">Harian</SelectItem>
+                <SelectItem value="bulanan">Bulanan</SelectItem>
+                <SelectItem value="tahunan">Tahunan</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         }
       />
 
@@ -58,7 +81,7 @@ function LaporanAdmin() {
         {[
           ["Total Servis", String(data.length), "unit pekerjaan"],
           ["Servis Selesai", String(selesai), "sudah rampung"],
-          ["Nilai Servis", rupiah(omzet), periode === "harian" ? "hari ini" : "Agustus 2026"],
+          ["Nilai Servis", rupiah(omzet), labelPeriode],
         ].map(([l, v, h]) => (
           <Card key={l} className="border-l-4 border-l-primary">
             <CardContent className="p-5">
