@@ -36,7 +36,7 @@ function ProfilPage() {
   const navigate = useNavigate();
   const [nama, setNama] = useState(user?.nama ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
-  const [telepon, setTelepon] = useState("0812-3344-5566");
+  const [telepon, setTelepon] = useState(user?.telepon ?? "0812-3344-5566");
   const [konfirmasi, setKonfirmasi] = useState(false);
 
   return (
