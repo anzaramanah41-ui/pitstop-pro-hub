@@ -18,8 +18,13 @@ function ShellLayout() {
   const izin = user ? bolehAkses(user.role, pathname) : false;
 
   useEffect(() => {
-    if (!user) navigate({ to: "/login", replace: true });
-  }, [user, navigate]);
+    if (!user) {
+      navigate({ to: "/login", replace: true });
+      return;
+    }
+    // Role tidak berizin → langsung diarahkan ke dashboard sesuai role
+    if (!izin) navigate({ to: HOME_ROLE[user.role], replace: true });
+  }, [user, izin, navigate]);
 
   if (!user) return null;
 
