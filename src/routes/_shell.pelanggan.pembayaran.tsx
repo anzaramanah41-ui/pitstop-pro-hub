@@ -33,8 +33,9 @@ const METODE: MetodeBayar[] = ["Cash", "Transfer Bank", "QRIS"];
 function PembayaranPelanggan() {
   const { user } = useAuth();
   const { trx } = Route.useSearch();
-  const { servis, bayarServis } = useStore();
+  const { servis, bayarServis, pelanggan } = useStore();
   const nama = user?.pelanggan ?? "";
+  const profil = pelanggan.find((p) => p.nama === nama);
   const transaksi = servis.filter(
     (s) => s.pelanggan === nama && ["Menunggu Pembayaran", "Selesai Dibayar"].includes(s.status),
   );
@@ -113,7 +114,7 @@ function PembayaranPelanggan() {
                 className="gap-2"
                 disabled={!lunas}
                 onClick={() => {
-                  unduhNota(detail);
+                  unduhNota(detail, profil);
                   toast.success("Nota diunduh");
                 }}
               >
@@ -240,7 +241,7 @@ function PembayaranPelanggan() {
                 <Button
                   className="gap-2"
                   onClick={() => {
-                    unduhNota({ ...detail, status: "Selesai Dibayar", metodeBayar: metode });
+                    unduhNota({ ...detail, status: "Selesai Dibayar", metodeBayar: metode }, profil);
                     toast.success("Nota diunduh");
                   }}
                 >
