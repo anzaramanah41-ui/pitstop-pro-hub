@@ -1,0 +1,252 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, Phone, UserPlus, UserRound } from "lucide-react";
+import { toast } from "sonner";
+import { AuthLayout } from "@/components/auth-layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { HOME_ROLE, useAuth } from "@/lib/auth";
+
+export const Route = createFileRoute("/register")({
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Daftar Akun — AppBenk Solusi Servis Kendaraan" },
+      {
+        name: "description",
+        content:
+          "Buat akun pelanggan AppBenk untuk booking servis, memantau status kendaraan, dan melihat riwayat pembayaran bengkel.",
+      },
+      { property: "og:title", content: "Daftar Akun — AppBenk Solusi Servis Kendaraan" },
+      { property: "og:description", content: "Buat akun untuk mengakses semua layanan AppBenk." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: RegisterPage,
+});
+
+type Err = Partial<Record<"nama" | "email" | "telepon" | "password" | "konfirmasi" | "setuju", string>>;
+
+function RegisterPage() {
+  const navigate = useNavigate();
+  const { user, daftar } = useAuth();
+  const [nama, setNama] = useState("");
+  const [email, setEmail] = useState("");
+  const [telepon, setTelepon] = useState("");
+  const [password, setPassword] = useState("");
+  const [konfirmasi, setKonfirmasi] = useState("");
+  const [lihat1, setLihat1] = useState(false);
+  const [lihat2, setLihat2] = useState(false);
+  const [setuju, setSetuju] = useState(false);
+  const [err, setErr] = useState<Err>({});
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sukses, setSukses] = useState(false);
+
+  useEffect(() => {
+    if (user) navigate({ to: HOME_ROLE[user.role], replace: true });
+  }, [user, navigate]);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const next: Err = {};
+    if (!nama.trim()) next.nama = "Nama lengkap wajib diisi.";
+    if (!email.trim()) next.email = "Email wajib diisi.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = "Format email tidak valid.";
+    if (!telepon.trim()) next.telepon = "No. handphone wajib diisi.";
+    if (!password) next.password = "Kata sandi wajib diisi.";
+    else if (password.length < 8) next.password = "Kata sandi minimal 8 karakter.";
+    if (konfirmasi !== password) next.konfirmasi = "Konfirmasi kata sandi tidak sama.";
+    if (!setuju) next.setuju = "Anda harus menyetujui Syarat & Ketentuan dan Kebijakan Privasi.";
+    setErr(next);
+    setError("");
+    if (Object.keys(next).length) return;
+
+    setLoading(true);
+    setTimeout(() => {
+      const hasil = daftar({ nama, email, telepon, password });
+      setLoading(false);
+      if (!hasil.ok) {
+        setError(hasil.error);
+        return;
+      }
+      setSukses(true);
+      toast.success("Akun berhasil dibuat.");
+    }, 600);
+  };
+
+  if (sukses) {
+    return (
+      <AuthLayout aksi="masuk">
+        <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center shadow-sm">
+          <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-success/10 text-success">
+            <CheckCircle2 className="size-8" />
+          </span>
+          <h1 className="mt-4 font-display text-2xl font-bold tracking-tight">Akun Berhasil Dibuat</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Akun Anda berhasil dibuat. Silakan login untuk melanjutkan.
+          </p>
+          <Button asChild className="mt-6 h-11 w-full text-base font-semibold">
+            <Link to="/login">Kembali ke Login</Link>
+          </Button>
+        </div>
+      </AuthLayout>
+    );
+  }
+
+  return (
+    <AuthLayout aksi="masuk">
+      <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col items-center text-center">
+          <span className="flex size-16 items-center justify-center rounded-full border-2 border-primary/25 text-primary">
+            <UserPlus className="size-8" />
+          </span>
+          <h1 className="mt-4 font-display text-3xl font-bold tracking-tight">Daftar Akun</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Buat akun untuk mengakses semua layanan</p>
+        </div>
+
+        <form onSubmit={submit} className="mt-7 space-y-4">
+          <Field
+            id="nama"
+            label="Nama Lengkap"
+            icon={<UserRound className="size-4" />}
+            placeholder="Masukkan nama lengkap Anda"
+            value={nama}
+            onChange={setNama}
+            error={err.nama}
+          />
+          <Field
+            id="email"
+            label="Email"
+            type="email"
+            icon={<Mail className="size-4" />}
+            placeholder="Masukkan email aktif Anda"
+            value={email}
+            onChange={setEmail}
+            error={err.email}
+          />
+          <Field
+            id="telepon"
+            label="No. Handphone"
+            type="tel"
+            icon={<Phone className="size-4" />}
+            placeholder="Masukkan nomor handphone Anda"
+            value={telepon}
+            onChange={setTelepon}
+            error={err.telepon}
+          />
+          <Field
+            id="password"
+            label="Kata Sandi"
+            type={lihat1 ? "text" : "password"}
+            icon={<Lock className="size-4" />}
+            placeholder="Buat kata sandi"
+            value={password}
+            onChange={setPassword}
+            error={err.password}
+            toggle={{ on: lihat1, set: () => setLihat1((v) => !v) }}
+          />
+          <Field
+            id="konfirmasi"
+            label="Konfirmasi Kata Sandi"
+            type={lihat2 ? "text" : "password"}
+            icon={<Lock className="size-4" />}
+            placeholder="Ulangi kata sandi"
+            value={konfirmasi}
+            onChange={setKonfirmasi}
+            error={err.konfirmasi}
+            toggle={{ on: lihat2, set: () => setLihat2((v) => !v) }}
+          />
+
+          <div className="space-y-1">
+            <label className="flex items-start gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={setuju}
+                onChange={(e) => setSetuju(e.target.checked)}
+                className="mt-0.5 size-4 shrink-0 rounded border-input accent-primary"
+              />
+              <span>
+                Saya setuju dengan <span className="font-medium text-foreground underline">Syarat &amp; Ketentuan</span>{" "}
+                dan <span className="font-medium text-foreground underline">Kebijakan Privasi</span>
+              </span>
+            </label>
+            {err.setuju && <p className="text-xs text-destructive">{err.setuju}</p>}
+          </div>
+
+          {error && <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+
+          <Button type="submit" className="h-11 w-full text-base font-semibold" disabled={loading}>
+            {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+            {loading ? "Membuat Akun..." : "Daftar"}
+          </Button>
+
+          <p className="text-center text-xs text-muted-foreground">
+            Registrasi publik otomatis terdaftar sebagai <span className="font-semibold">Pelanggan</span>.
+          </p>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Sudah punya akun?{" "}
+            <Link to="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
+              Login
+            </Link>
+          </p>
+        </form>
+      </div>
+    </AuthLayout>
+  );
+}
+
+function Field({
+  id,
+  label,
+  icon,
+  placeholder,
+  value,
+  onChange,
+  error,
+  type = "text",
+  toggle,
+}: {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string | undefined;
+  type?: string;
+  toggle?: { on: boolean; set: () => void } | undefined;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+          {icon}
+        </span>
+        <Input
+          id={id}
+          type={type}
+          className={toggle ? "h-11 pl-9 pr-10" : "h-11 pl-9"}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        {toggle && (
+          <button
+            type="button"
+            onClick={toggle.set}
+            aria-label={toggle.on ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {toggle.on ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        )}
+      </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}

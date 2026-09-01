@@ -36,7 +36,7 @@ function ProfilPage() {
   const navigate = useNavigate();
   const [nama, setNama] = useState(user?.nama ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
-  const [telepon, setTelepon] = useState("0812-3344-5566");
+  const [telepon, setTelepon] = useState(user?.telepon ?? "0812-3344-5566");
   const [konfirmasi, setKonfirmasi] = useState(false);
 
   return (
@@ -94,7 +94,7 @@ function ProfilPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 keluar();
-                navigate({ to: "/", replace: true });
+                navigate({ to: "/login", replace: true });
               }}
             >
               Keluar
