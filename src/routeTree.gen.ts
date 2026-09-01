@@ -18,6 +18,7 @@ import { Route as ShellAdminDashboardRouteImport } from './routes/_shell.admin.d
 import { Route as ShellAdminLaporanRouteImport } from './routes/_shell.admin.laporan'
 import { Route as ShellAdminServisRouteImport } from './routes/_shell.admin.servis'
 import { Route as ShellAdminSparepartRouteImport } from './routes/_shell.admin.sparepart'
+import { Route as ShellAdminStokRouteImport } from './routes/_shell.admin.stok'
 import { Route as ShellOwnerDashboardRouteImport } from './routes/_shell.owner.dashboard'
 import { Route as ShellOwnerKeuntunganRouteImport } from './routes/_shell.owner.keuntungan'
 import { Route as ShellOwnerPelangganRouteImport } from './routes/_shell.owner.pelanggan'
@@ -27,6 +28,7 @@ import { Route as ShellPelangganBookingRouteImport } from './routes/_shell.pelan
 import { Route as ShellPelangganCsRouteImport } from './routes/_shell.pelanggan.cs'
 import { Route as ShellPelangganDashboardRouteImport } from './routes/_shell.pelanggan.dashboard'
 import { Route as ShellPelangganEstimasiRouteImport } from './routes/_shell.pelanggan.estimasi'
+import { Route as ShellPelangganKendaraanRouteImport } from './routes/_shell.pelanggan.kendaraan'
 import { Route as ShellPelangganPembayaranRouteImport } from './routes/_shell.pelanggan.pembayaran'
 import { Route as ShellPelangganRiwayatRouteImport } from './routes/_shell.pelanggan.riwayat'
 import { Route as ShellPelangganStatusRouteImport } from './routes/_shell.pelanggan.status'
@@ -75,6 +77,11 @@ const ShellAdminSparepartRoute = ShellAdminSparepartRouteImport.update({
   path: '/admin/sparepart',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellAdminStokRoute = ShellAdminStokRouteImport.update({
+  id: '/admin/stok',
+  path: '/admin/stok',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellOwnerDashboardRoute = ShellOwnerDashboardRouteImport.update({
   id: '/owner/dashboard',
   path: '/owner/dashboard',
@@ -120,6 +127,11 @@ const ShellPelangganEstimasiRoute = ShellPelangganEstimasiRouteImport.update({
   path: '/pelanggan/estimasi',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellPelangganKendaraanRoute = ShellPelangganKendaraanRouteImport.update({
+  id: '/pelanggan/kendaraan',
+  path: '/pelanggan/kendaraan',
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellPelangganPembayaranRoute =
   ShellPelangganPembayaranRouteImport.update({
     id: '/pelanggan/pembayaran',
@@ -146,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/admin/laporan': typeof ShellAdminLaporanRoute
   '/admin/servis': typeof ShellAdminServisRoute
   '/admin/sparepart': typeof ShellAdminSparepartRoute
+  '/admin/stok': typeof ShellAdminStokRoute
   '/owner/dashboard': typeof ShellOwnerDashboardRoute
   '/owner/keuntungan': typeof ShellOwnerKeuntunganRoute
   '/owner/pelanggan': typeof ShellOwnerPelangganRoute
@@ -155,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/pelanggan/cs': typeof ShellPelangganCsRoute
   '/pelanggan/dashboard': typeof ShellPelangganDashboardRoute
   '/pelanggan/estimasi': typeof ShellPelangganEstimasiRoute
+  '/pelanggan/kendaraan': typeof ShellPelangganKendaraanRoute
   '/pelanggan/pembayaran': typeof ShellPelangganPembayaranRoute
   '/pelanggan/riwayat': typeof ShellPelangganRiwayatRoute
   '/pelanggan/status': typeof ShellPelangganStatusRoute
@@ -168,6 +182,7 @@ export interface FileRoutesByTo {
   '/admin/laporan': typeof ShellAdminLaporanRoute
   '/admin/servis': typeof ShellAdminServisRoute
   '/admin/sparepart': typeof ShellAdminSparepartRoute
+  '/admin/stok': typeof ShellAdminStokRoute
   '/owner/dashboard': typeof ShellOwnerDashboardRoute
   '/owner/keuntungan': typeof ShellOwnerKeuntunganRoute
   '/owner/pelanggan': typeof ShellOwnerPelangganRoute
@@ -177,6 +192,7 @@ export interface FileRoutesByTo {
   '/pelanggan/cs': typeof ShellPelangganCsRoute
   '/pelanggan/dashboard': typeof ShellPelangganDashboardRoute
   '/pelanggan/estimasi': typeof ShellPelangganEstimasiRoute
+  '/pelanggan/kendaraan': typeof ShellPelangganKendaraanRoute
   '/pelanggan/pembayaran': typeof ShellPelangganPembayaranRoute
   '/pelanggan/riwayat': typeof ShellPelangganRiwayatRoute
   '/pelanggan/status': typeof ShellPelangganStatusRoute
@@ -192,6 +208,7 @@ export interface FileRoutesById {
   '/_shell/admin/laporan': typeof ShellAdminLaporanRoute
   '/_shell/admin/servis': typeof ShellAdminServisRoute
   '/_shell/admin/sparepart': typeof ShellAdminSparepartRoute
+  '/_shell/admin/stok': typeof ShellAdminStokRoute
   '/_shell/owner/dashboard': typeof ShellOwnerDashboardRoute
   '/_shell/owner/keuntungan': typeof ShellOwnerKeuntunganRoute
   '/_shell/owner/pelanggan': typeof ShellOwnerPelangganRoute
@@ -201,6 +218,7 @@ export interface FileRoutesById {
   '/_shell/pelanggan/cs': typeof ShellPelangganCsRoute
   '/_shell/pelanggan/dashboard': typeof ShellPelangganDashboardRoute
   '/_shell/pelanggan/estimasi': typeof ShellPelangganEstimasiRoute
+  '/_shell/pelanggan/kendaraan': typeof ShellPelangganKendaraanRoute
   '/_shell/pelanggan/pembayaran': typeof ShellPelangganPembayaranRoute
   '/_shell/pelanggan/riwayat': typeof ShellPelangganRiwayatRoute
   '/_shell/pelanggan/status': typeof ShellPelangganStatusRoute
@@ -216,6 +234,7 @@ export interface FileRouteTypes {
     | '/admin/laporan'
     | '/admin/servis'
     | '/admin/sparepart'
+    | '/admin/stok'
     | '/owner/dashboard'
     | '/owner/keuntungan'
     | '/owner/pelanggan'
@@ -225,6 +244,7 @@ export interface FileRouteTypes {
     | '/pelanggan/cs'
     | '/pelanggan/dashboard'
     | '/pelanggan/estimasi'
+    | '/pelanggan/kendaraan'
     | '/pelanggan/pembayaran'
     | '/pelanggan/riwayat'
     | '/pelanggan/status'
@@ -238,6 +258,7 @@ export interface FileRouteTypes {
     | '/admin/laporan'
     | '/admin/servis'
     | '/admin/sparepart'
+    | '/admin/stok'
     | '/owner/dashboard'
     | '/owner/keuntungan'
     | '/owner/pelanggan'
@@ -247,6 +268,7 @@ export interface FileRouteTypes {
     | '/pelanggan/cs'
     | '/pelanggan/dashboard'
     | '/pelanggan/estimasi'
+    | '/pelanggan/kendaraan'
     | '/pelanggan/pembayaran'
     | '/pelanggan/riwayat'
     | '/pelanggan/status'
@@ -261,6 +283,7 @@ export interface FileRouteTypes {
     | '/_shell/admin/laporan'
     | '/_shell/admin/servis'
     | '/_shell/admin/sparepart'
+    | '/_shell/admin/stok'
     | '/_shell/owner/dashboard'
     | '/_shell/owner/keuntungan'
     | '/_shell/owner/pelanggan'
@@ -270,6 +293,7 @@ export interface FileRouteTypes {
     | '/_shell/pelanggan/cs'
     | '/_shell/pelanggan/dashboard'
     | '/_shell/pelanggan/estimasi'
+    | '/_shell/pelanggan/kendaraan'
     | '/_shell/pelanggan/pembayaran'
     | '/_shell/pelanggan/riwayat'
     | '/_shell/pelanggan/status'
@@ -345,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellAdminSparepartRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/admin/stok': {
+      id: '/_shell/admin/stok'
+      path: '/admin/stok'
+      fullPath: '/admin/stok'
+      preLoaderRoute: typeof ShellAdminStokRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/owner/dashboard': {
       id: '/_shell/owner/dashboard'
       path: '/owner/dashboard'
@@ -408,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellPelangganEstimasiRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/pelanggan/kendaraan': {
+      id: '/_shell/pelanggan/kendaraan'
+      path: '/pelanggan/kendaraan'
+      fullPath: '/pelanggan/kendaraan'
+      preLoaderRoute: typeof ShellPelangganKendaraanRouteImport
+      parentRoute: typeof ShellRoute
+    }
     '/_shell/pelanggan/pembayaran': {
       id: '/_shell/pelanggan/pembayaran'
       path: '/pelanggan/pembayaran'
@@ -440,6 +478,7 @@ interface ShellRouteChildren {
   ShellAdminLaporanRoute: typeof ShellAdminLaporanRoute
   ShellAdminServisRoute: typeof ShellAdminServisRoute
   ShellAdminSparepartRoute: typeof ShellAdminSparepartRoute
+  ShellAdminStokRoute: typeof ShellAdminStokRoute
   ShellOwnerDashboardRoute: typeof ShellOwnerDashboardRoute
   ShellOwnerKeuntunganRoute: typeof ShellOwnerKeuntunganRoute
   ShellOwnerPelangganRoute: typeof ShellOwnerPelangganRoute
@@ -449,6 +488,7 @@ interface ShellRouteChildren {
   ShellPelangganCsRoute: typeof ShellPelangganCsRoute
   ShellPelangganDashboardRoute: typeof ShellPelangganDashboardRoute
   ShellPelangganEstimasiRoute: typeof ShellPelangganEstimasiRoute
+  ShellPelangganKendaraanRoute: typeof ShellPelangganKendaraanRoute
   ShellPelangganPembayaranRoute: typeof ShellPelangganPembayaranRoute
   ShellPelangganRiwayatRoute: typeof ShellPelangganRiwayatRoute
   ShellPelangganStatusRoute: typeof ShellPelangganStatusRoute
@@ -462,6 +502,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellAdminLaporanRoute: ShellAdminLaporanRoute,
   ShellAdminServisRoute: ShellAdminServisRoute,
   ShellAdminSparepartRoute: ShellAdminSparepartRoute,
+  ShellAdminStokRoute: ShellAdminStokRoute,
   ShellOwnerDashboardRoute: ShellOwnerDashboardRoute,
   ShellOwnerKeuntunganRoute: ShellOwnerKeuntunganRoute,
   ShellOwnerPelangganRoute: ShellOwnerPelangganRoute,
@@ -471,6 +512,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellPelangganCsRoute: ShellPelangganCsRoute,
   ShellPelangganDashboardRoute: ShellPelangganDashboardRoute,
   ShellPelangganEstimasiRoute: ShellPelangganEstimasiRoute,
+  ShellPelangganKendaraanRoute: ShellPelangganKendaraanRoute,
   ShellPelangganPembayaranRoute: ShellPelangganPembayaranRoute,
   ShellPelangganRiwayatRoute: ShellPelangganRiwayatRoute,
   ShellPelangganStatusRoute: ShellPelangganStatusRoute,
