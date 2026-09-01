@@ -154,10 +154,35 @@ export function bolehAkses(role: Role, pathname: string) {
 }
 
 const KEY = "appbenk.session";
+const KEY_AKUN = "appbenk.akun";
+
+type AkunTersimpan = SessionUser & { password: string };
+
+function bacaAkun(): AkunTersimpan[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(KEY_AKUN);
+    return raw ? (JSON.parse(raw) as AkunTersimpan[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function inisialDari(nama: string) {
+  return nama
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
 type AuthCtx = {
   user: SessionUser | null;
   masuk: (email: string, password: string) => SessionUser | null;
+  daftar: (input: { nama: string; email: string; telepon: string; password: string }) =>
+    | { ok: true }
+    | { ok: false; error: string };
   keluar: () => void;
   aktifkanPremium: () => void;
 };
@@ -179,7 +204,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       masuk: (email, password) => {
-        const found = AKUN_DEMO.find(
+        const semua: AkunTersimpan[] = [...AKUN_DEMO, ...bacaAkun()];
+        const found = semua.find(
           (a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password,
         );
         if (!found) return null;
@@ -191,6 +217,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           /* abaikan */
         }
         return session;
+      },
+      daftar: ({ nama, email, telepon, password }) => {
+        const surel = email.trim().toLowerCase();
+        const sudahAda =
+          AKUN_DEMO.some((a) => a.email.toLowerCase() === surel) ||
+          bacaAkun().some((a) => a.email.toLowerCase() === surel);
+        if (sudahAda) return { ok: false, error: "Email sudah terdaftar. Silakan login." };
+        const akun: AkunTersimpan = {
+          email: surel,
+          password,
+          nama: nama.trim(),
+          telepon: telepon.trim(),
+          role: "pelanggan",
+          inisial: inisialDari(nama) || "PL",
+          pelanggan: nama.trim(),
+          premium: false,
+        };
+        try {
+          window.localStorage.setItem(KEY_AKUN, JSON.stringify([...bacaAkun(), akun]));
+        } catch {
+          /* abaikan */
+        }
+        return { ok: true };
       },
       keluar: () => {
         setUser(null);
