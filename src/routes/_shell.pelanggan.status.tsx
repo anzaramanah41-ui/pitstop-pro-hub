@@ -25,6 +25,7 @@ function StatusPelanggan() {
   const nama = user?.pelanggan ?? "";
   const daftar = servis.filter((s) => s.pelanggan === nama);
   const bookingMenunggu = booking.filter((b) => b.pelanggan === nama && b.status === "Menunggu Konfirmasi");
+  const bookingDitolak = booking.filter((b) => b.pelanggan === nama && b.status === "Ditolak");
 
   return (
     <>
@@ -43,6 +44,31 @@ function StatusPelanggan() {
                   <p className="text-xs text-muted-foreground">{tanggalPanjang(b.tanggal)} · {b.waktu}</p>
                 </div>
                 <BookingBadge status={b.status} />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {bookingDitolak.length > 0 && (
+        <Card className="border-destructive/40">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Booking Ditolak</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {bookingDitolak.map((b) => (
+              <div key={b.id} className="space-y-1.5 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">{b.nomor} · {b.jenis}</p>
+                  <BookingBadge status={b.status} />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {tanggalPanjang(b.tanggal)} · {b.waktu} · {b.kendaraan}
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold text-destructive">Alasan: </span>
+                  {b.alasanTolak || "Tidak ada keterangan dari admin."}
+                </p>
               </div>
             ))}
           </CardContent>
