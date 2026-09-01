@@ -18,7 +18,7 @@ function ShellLayout() {
   const izin = user ? bolehAkses(user.role, pathname) : false;
 
   useEffect(() => {
-    if (!user) navigate({ to: "/", replace: true });
+    if (!user) navigate({ to: "/login", replace: true });
   }, [user, navigate]);
 
   if (!user) return null;

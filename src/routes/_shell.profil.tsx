@@ -94,7 +94,7 @@ function ProfilPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 keluar();
-                navigate({ to: "/", replace: true });
+                navigate({ to: "/login", replace: true });
               }}
             >
               Keluar
