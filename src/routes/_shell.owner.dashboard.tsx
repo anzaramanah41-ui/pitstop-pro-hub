@@ -129,7 +129,7 @@ function DashboardOwner() {
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={grafik} margin={{ left: 8, right: 8, top: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis
                   tickFormatter={(v: number) => (v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`)}
@@ -138,8 +138,8 @@ function DashboardOwner() {
                   fontSize={12}
                   width={52}
                 />
-                <Tooltip formatter={(v: number) => rupiah(v)} cursor={{ fill: "var(--muted)" }} />
-                <Bar dataKey="nilai" name="Penjualan" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                <Tooltip formatter={(v: number) => rupiah(v)} cursor={{ className: "fill-muted" }} />
+                <Bar dataKey="nilai" name="Penjualan" className="fill-primary" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
