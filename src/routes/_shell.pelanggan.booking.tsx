@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/lib/auth";
-import { useStore, tanggalPanjang, JENIS_SERVIS, MEKANIK_DETAIL } from "@/lib/store";
+import { useStore, tanggalPanjang, labelKendaraan, JENIS_SERVIS, MEKANIK_DETAIL } from "@/lib/store";
 
 export const Route = createFileRoute("/_shell/pelanggan/booking")({
   head: () => ({
@@ -28,13 +28,15 @@ export const Route = createFileRoute("/_shell/pelanggan/booking")({
 
 function BookingPelanggan() {
   const { user } = useAuth();
-  const { booking, pelanggan, buatBooking } = useStore();
+  const { booking, pelanggan, kendaraan, buatBooking } = useStore();
   const nama = user?.pelanggan ?? "";
   const profil = pelanggan.find((p) => p.nama === nama);
+  const kendaraanSaya = kendaraan.filter((k) => k.pelangganId === profil?.id);
+  const utama = kendaraanSaya[0];
 
   const kosong = {
-    kendaraan: profil?.kendaraan ?? "",
-    plat: profil?.plat ?? "",
+    kendaraan: utama ? labelKendaraan(utama) : (profil?.kendaraan ?? ""),
+    plat: utama?.plat ?? profil?.plat ?? "",
     jenis: "",
     keluhan: "",
     tanggal: "",
@@ -44,6 +46,7 @@ function BookingPelanggan() {
   };
   const [form, setForm] = useState(kosong);
   const [err, setErr] = useState<Partial<Record<keyof typeof kosong, string>>>({});
+
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,11 +77,34 @@ function BookingPelanggan() {
           </CardHeader>
           <CardContent>
             <form onSubmit={submit} className="space-y-4">
+              {kendaraanSaya.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label>Pilih Kendaraan Terdaftar</Label>
+                  <Select
+                    value={kendaraanSaya.find((k) => k.plat === form.plat)?.id ?? ""}
+                    onValueChange={(v) => {
+                      const k = kendaraanSaya.find((x) => x.id === v);
+                      if (k) setForm({ ...form, kendaraan: labelKendaraan(k), plat: k.plat });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih kendaraan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {kendaraanSaya.map((k) => (
+                        <SelectItem key={k.id} value={k.id}>{labelKendaraan(k)} · {k.plat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Kelola daftar kendaraan di menu Kendaraan Saya.</p>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label>Kendaraan</Label>
                 <Input value={form.kendaraan} onChange={(e) => setForm({ ...form, kendaraan: e.target.value })} placeholder="Honda Beat 2019" />
                 {err.kendaraan && <p className="text-xs text-destructive">{err.kendaraan}</p>}
               </div>
+
               <div className="space-y-1.5">
                 <Label>Nomor Plat</Label>
                 <Input value={form.plat} onChange={(e) => setForm({ ...form, plat: e.target.value })} placeholder="D 1234 ABC" />

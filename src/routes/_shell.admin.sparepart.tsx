@@ -13,7 +13,7 @@ import { NumberInput } from "@/components/number-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useStore, rupiah, KATEGORI_PART, type Sparepart } from "@/lib/store";
+import { useStore, rupiah, KATEGORI_PART, SATUAN_PART, statusStok, tanggalPanjang, type Sparepart } from "@/lib/store";
 
 export const Route = createFileRoute("/_shell/admin/sparepart")({
   head: () => ({
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_shell/admin/sparepart")({
   component: SparepartAdmin,
 });
 
-const kosong = { kode: "", nama: "", kategori: KATEGORI_PART[0]!, harga: 0, stok: 0 };
+const kosong = { kode: "", nama: "", kategori: KATEGORI_PART[0]!, satuan: SATUAN_PART[0]!, harga: 0, stok: 0, stokMinimum: 5 };
 
 function SparepartAdmin() {
   const { sparepart, simpanSparepart, hapusSparepart } = useStore();
@@ -93,8 +93,11 @@ function SparepartAdmin() {
                     <TableHead>Kode</TableHead>
                     <TableHead>Nama Sparepart</TableHead>
                     <TableHead>Kategori</TableHead>
+                    <TableHead>Satuan</TableHead>
                     <TableHead className="text-right">Harga</TableHead>
                     <TableHead className="text-right">Stok</TableHead>
+                    <TableHead>Status Stok</TableHead>
+                    <TableHead>Update</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -104,10 +107,29 @@ function SparepartAdmin() {
                       <TableCell className="text-muted-foreground">{p.kode}</TableCell>
                       <TableCell className="font-medium">{p.nama}</TableCell>
                       <TableCell className="text-muted-foreground">{p.kategori}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.satuan}</TableCell>
                       <TableCell className="text-right font-semibold">{rupiah(p.harga)}</TableCell>
                       <TableCell className="text-right">
-                        <span className={p.stok <= 5 ? "font-semibold text-destructive" : ""}>{p.stok} pcs</span>
+                        <span className={p.stok <= p.stokMinimum ? "font-semibold text-destructive" : ""}>
+                          {p.stok} {p.satuan}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">min. {p.stokMinimum}</span>
                       </TableCell>
+                      <TableCell>
+                        <span
+                          className={
+                            statusStok(p) === "Habis"
+                              ? "font-semibold text-destructive"
+                              : statusStok(p) === "Menipis"
+                                ? "font-semibold text-warning"
+                                : "text-muted-foreground"
+                          }
+                        >
+                          {statusStok(p)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{tanggalPanjang(p.tanggalUpdate)}</TableCell>
+
                       <TableCell>
                         <div className="flex justify-end gap-1">
                           <Button size="icon" variant="ghost" aria-label="Ubah" onClick={() => { setEdit(p); setForm({ ...kosong, ...p }); setOpen(true); }}>
@@ -159,6 +181,21 @@ function SparepartAdmin() {
             <div className="space-y-1.5">
               <Label>Stok</Label>
               <NumberInput value={form.stok} onChange={(v) => setForm({ ...form, stok: v })} placeholder="0" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Satuan</Label>
+              <Select value={form.satuan} onValueChange={(v) => setForm({ ...form, satuan: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SATUAN_PART.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Stok Minimum</Label>
+              <NumberInput value={form.stokMinimum} onChange={(v) => setForm({ ...form, stokMinimum: v })} placeholder="0" />
             </div>
             <DialogFooter className="sm:col-span-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>

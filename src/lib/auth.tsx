@@ -14,7 +14,10 @@ import {
   LineChart,
   Users,
   Crown,
+  Car,
+  ShoppingCart,
   LifeBuoy,
+
   type LucideIcon,
 } from "lucide-react";
 
@@ -69,6 +72,7 @@ export type NavItem = { to: string; label: string; icon: LucideIcon; premium?: b
 export const NAV_ROLE: Record<Role, NavItem[]> = {
   pelanggan: [
     { to: "/pelanggan/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/pelanggan/kendaraan", label: "Kendaraan Saya", icon: Car },
     { to: "/pelanggan/booking", label: "Booking Servis", icon: CalendarPlus },
     { to: "/pelanggan/status", label: "Status Servis", icon: Activity },
     { to: "/pelanggan/estimasi", label: "Estimasi Servis", icon: Calculator },
@@ -82,10 +86,12 @@ export const NAV_ROLE: Record<Role, NavItem[]> = {
     { to: "/admin/booking", label: "Booking Masuk", icon: Inbox },
     { to: "/admin/servis", label: "Operasional Servis", icon: Wrench },
     { to: "/admin/sparepart", label: "Kelola Sparepart", icon: Package },
+    { to: "/admin/stok", label: "Pembelian & Stok", icon: ShoppingCart },
     { to: "/admin/laporan", label: "Laporan & Data", icon: FileBarChart },
     { to: "/admin/cs", label: "Customer Service", icon: LifeBuoy },
     { to: "/profil", label: "Profile", icon: UserCircle2 },
   ],
+
   owner: [
     { to: "/owner/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/owner/servis", label: "Laporan Servis", icon: LineChart },
@@ -111,6 +117,7 @@ export const NAV_GROUPS: Record<Role, NavGroup[]> = {
         { to: "/admin/booking", label: "Booking Masuk", icon: Inbox },
         { to: "/admin/servis", label: "Operasional Servis", icon: Wrench },
         { to: "/admin/sparepart", label: "Kelola Sparepart", icon: Package },
+        { to: "/admin/stok", label: "Pembelian & Stok", icon: ShoppingCart },
       ],
     },
     {
