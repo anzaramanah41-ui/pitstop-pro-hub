@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShellRouteImport } from './routes/_shell'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ShellProfilRouteImport } from './routes/_shell.profil'
 import { Route as ShellAdminBookingRouteImport } from './routes/_shell.admin.booking'
 import { Route as ShellAdminCsRouteImport } from './routes/_shell.admin.cs'
@@ -46,6 +47,11 @@ const ShellRoute = ShellRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShellProfilRoute = ShellProfilRouteImport.update({
@@ -158,6 +164,7 @@ const ShellPelangganStatusRoute = ShellPelangganStatusRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/profil': typeof ShellProfilRoute
   '/admin/booking': typeof ShellAdminBookingRoute
   '/admin/cs': typeof ShellAdminCsRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/profil': typeof ShellProfilRoute
   '/admin/booking': typeof ShellAdminBookingRoute
   '/admin/cs': typeof ShellAdminCsRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_shell': typeof ShellRouteWithChildren
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/_shell/profil': typeof ShellProfilRoute
   '/_shell/admin/booking': typeof ShellAdminBookingRoute
   '/_shell/admin/cs': typeof ShellAdminCsRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/register'
     | '/profil'
     | '/admin/booking'
     | '/admin/cs'
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/register'
     | '/profil'
     | '/admin/booking'
     | '/admin/cs'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_shell'
     | '/login'
+    | '/register'
     | '/_shell/profil'
     | '/_shell/admin/booking'
     | '/_shell/admin/cs'
@@ -315,6 +327,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ShellRoute: typeof ShellRouteWithChildren
   LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_shell/profil': {
@@ -544,6 +564,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ShellRoute: ShellRouteWithChildren,
   LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
