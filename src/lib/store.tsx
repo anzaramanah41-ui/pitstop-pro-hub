@@ -1,7 +1,9 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Pelanggan = {
   id: string;
+  profileId?: string | null;
   nama: string;
   email: string;
   telepon: string;
@@ -25,7 +27,6 @@ export type Kendaraan = {
 /** Label ringkas kendaraan, dipakai pada booking & servis. */
 export const labelKendaraan = (k: Kendaraan) => `${k.merk} ${k.tipe} ${k.tahun}`;
 
-
 export type StatusServis =
   | "Booking"
   | "Menunggu"
@@ -45,7 +46,6 @@ export const URUTAN_STATUS: StatusServis[] = [
 
 export type ItemPart = {
   sparepartId: string;
-  kode: string;
   nama: string;
   harga: number;
   jumlah: number;
@@ -56,6 +56,7 @@ export type MetodeBayar = "Cash" | "Transfer Bank" | "QRIS";
 export type Servis = {
   id: string;
   nomor: string;
+  pelangganId?: string | null;
   pelanggan: string;
   kendaraan: string;
   plat: string;
@@ -73,7 +74,7 @@ export type Servis = {
   total: number;
   noTransaksi: string;
   metodeBayar?: MetodeBayar;
-  /** Hasil pemeriksaan mekanik (ERD: servis.hasil_pemeriksaan). */
+  /** Hasil pemeriksaan mekanik. */
   hasilPemeriksaan?: string;
   /** Estimasi biaya awal sebelum pengerjaan. */
   estimasiBiaya?: number;
@@ -92,13 +93,23 @@ export type Pembayaran = {
   status: "Lunas" | "Belum Lunas";
 };
 
-
+/** Estimasi biaya servis (tabel service_estimates). */
+export type EstimasiServis = {
+  id: string;
+  servisId: string;
+  biayaJasa: number;
+  biayaSparepart: number;
+  total: number;
+  status: string;
+  catatan: string;
+};
 
 export type StatusBooking = "Menunggu Konfirmasi" | "Diterima" | "Ditolak";
 
 export type Booking = {
   id: string;
   nomor: string;
+  pelangganId?: string | null;
   pelanggan: string;
   kendaraan: string;
   plat: string;
@@ -107,25 +118,21 @@ export type Booking = {
   tanggal: string;
   waktu: string;
   catatan: string;
-  /** Mekanik yang diinginkan pelanggan (opsional). */
   mekanikDiinginkan?: string;
-  /** Mekanik yang ditugaskan admin (opsional). */
   mekanikDitugaskan?: string;
-  /** Alasan penolakan booking oleh admin. */
   alasanTolak?: string;
   status: StatusBooking;
 };
 
 export type Sparepart = {
   id: string;
-  kode: string;
   nama: string;
-  kategori: string;
   satuan: string;
   harga: number;
   stok: number;
   stokMinimum: number;
   terpakai: number;
+  deskripsi: string;
   tanggalUpdate: string;
 };
 
@@ -134,7 +141,7 @@ export type StatusStok = "Habis" | "Menipis" | "Aman";
 export const statusStok = (sp: Sparepart): StatusStok =>
   sp.stok === 0 ? "Habis" : sp.stok <= sp.stokMinimum ? "Menipis" : "Aman";
 
-/** Log pergerakan stok (ERD: riwayat_stok). */
+/** Log pergerakan stok (stock_movements). */
 export type RiwayatStok = {
   id: string;
   sparepartId: string;
@@ -169,7 +176,6 @@ export type PenggunaanSparepart = {
   keterangan: string;
 };
 
-
 export const JENIS_SERVIS = [
   "Servis Ringan",
   "Servis Besar",
@@ -180,95 +186,7 @@ export const JENIS_SERVIS = [
   "Kaki-kaki",
 ];
 
-const uid = () => Math.random().toString(36).slice(2, 9);
-
-const pelangganAwal: Pelanggan[] = [
-  { id: "pl-001", nama: "Budi Santoso", email: "budi@mail.test", telepon: "0812-3344-5566", alamat: "Jl. Merdeka No. 12, Bandung", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC" },
-  { id: "pl-002", nama: "Siti Rahmawati", email: "siti@mail.test", telepon: "0857-1122-9090", alamat: "Jl. Cihampelas No. 7, Bandung", kendaraan: "Yamaha NMAX 2021", plat: "D 5521 KJ" },
-  { id: "pl-003", nama: "Agus Prasetyo", email: "agus@mail.test", telepon: "0813-7788-4455", alamat: "Jl. Sudirman No. 88, Cimahi", kendaraan: "Toyota Avanza 2017", plat: "D 9087 PL" },
-  { id: "pl-004", nama: "Dewi Lestari", email: "dewi@mail.test", telepon: "0895-2211-3344", alamat: "Jl. Pasteur No. 45, Bandung", kendaraan: "Honda Vario 160", plat: "D 3311 QW" },
-  { id: "pl-005", nama: "Rizky Ramadhan", email: "rizky@mail.test", telepon: "0821-9911-2233", alamat: "Jl. Buah Batu No. 21, Bandung", kendaraan: "Suzuki Satria FU", plat: "D 7742 ZX" },
-  { id: "pl-006", nama: "Hendra Wijaya", email: "hendra@mail.test", telepon: "0877-6655-1010", alamat: "Jl. Kopo No. 90, Bandung", kendaraan: "Daihatsu Xenia 2015", plat: "D 6120 MN" },
-];
-
-const kendaraanAwal: Kendaraan[] = [
-  { id: "kd-001", pelangganId: "pl-001", merk: "Honda", tipe: "Beat", tahun: 2019, plat: "D 1234 ABC", kilometer: 41200 },
-  { id: "kd-002", pelangganId: "pl-001", merk: "Honda", tipe: "PCX", tahun: 2022, plat: "D 8890 GH", kilometer: 15600 },
-  { id: "kd-003", pelangganId: "pl-002", merk: "Yamaha", tipe: "NMAX", tahun: 2021, plat: "D 5521 KJ", kilometer: 28750 },
-  { id: "kd-004", pelangganId: "pl-003", merk: "Toyota", tipe: "Avanza", tahun: 2017, plat: "D 9087 PL", kilometer: 98400 },
-  { id: "kd-005", pelangganId: "pl-004", merk: "Honda", tipe: "Vario 160", tahun: 2023, plat: "D 3311 QW", kilometer: 9200 },
-  { id: "kd-006", pelangganId: "pl-005", merk: "Suzuki", tipe: "Satria FU", tahun: 2018, plat: "D 7742 ZX", kilometer: 52100 },
-  { id: "kd-007", pelangganId: "pl-006", merk: "Daihatsu", tipe: "Xenia", tahun: 2015, plat: "D 6120 MN", kilometer: 132500 },
-];
-
-
-const mkServis = (s: Omit<Servis, "id" | "total" | "items"> & { items?: ItemPart[] }): Servis => ({
-  items: [],
-  ...s,
-  id: uid(),
-  total: s.biayaJasa + s.biayaPart,
-});
-
-
-const servisAwal: Servis[] = [
-  mkServis({ nomor: "SRV-2026-0148", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Ringan", keluhan: "Mesin kasar saat langsam", pekerjaan: "Servis ringan + ganti busi", mekanik: "Joko", tanggal: "2026-08-18", status: "Diproses", sparepart: "Busi NGK, Oli Federal 0.8L", catatan: "Disarankan ganti filter udara bulan depan", items: [{ sparepartId: "sp-002", kode: "SP-002", nama: "Busi NGK CPR9EA", harga: 27000, jumlah: 1 }, { sparepartId: "sp-001", kode: "SP-001", nama: "Oli Mesin AHM MPX 0.8L", harga: 48000, jumlah: 1 }], biayaJasa: 70000, biayaPart: 75000, noTransaksi: "TRX-2026-0148" }),
-  mkServis({ nomor: "SRV-2026-0147", pelanggan: "Siti Rahmawati", kendaraan: "Yamaha NMAX 2021", plat: "D 5521 KJ", jenis: "Perbaikan Rem", keluhan: "Rem depan kurang pakem", pekerjaan: "Ganti kampas rem depan", mekanik: "Dedi", tanggal: "2026-08-18", status: "Menunggu", sparepart: "Kampas Rem Depan", catatan: "", items: [{ sparepartId: "sp-003", kode: "SP-003", nama: "Kampas Rem Depan NMAX", harga: 95000, jumlah: 1 }], biayaJasa: 60000, biayaPart: 95000, noTransaksi: "TRX-2026-0147" }),
-  mkServis({ nomor: "SRV-2026-0146", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Ganti Oli", keluhan: "Ganti oli rutin bulanan", pekerjaan: "Ganti oli mesin", mekanik: "Joko", tanggal: "2026-08-12", status: "Menunggu Pembayaran", sparepart: "Oli AHM MPX 0.8L", catatan: "", items: [{ sparepartId: "sp-001", kode: "SP-001", nama: "Oli Mesin AHM MPX 0.8L", harga: 48000, jumlah: 1 }], biayaJasa: 25000, biayaPart: 48000, noTransaksi: "TRX-2026-0146" }),
-  mkServis({ nomor: "SRV-2026-0145", pelanggan: "Agus Prasetyo", kendaraan: "Toyota Avanza 2017", plat: "D 9087 PL", jenis: "Kaki-kaki", keluhan: "Bunyi pada kaki-kaki", pekerjaan: "Ganti link stabilizer", mekanik: "Rudi", tanggal: "2026-08-17", status: "Selesai Dibayar", sparepart: "Link Stabilizer x2", catatan: "Sudah test drive, aman", items: [{ sparepartId: "sp-007", kode: "SP-007", nama: "Link Stabilizer Avanza", harga: 175000, jumlah: 2 }], biayaJasa: 130000, biayaPart: 350000, noTransaksi: "TRX-2026-0145" }),
-  mkServis({ nomor: "SRV-2026-0144", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Ringan", keluhan: "Rantai kendur dan berisik", pekerjaan: "Setel & lumasi rantai", mekanik: "Dedi", tanggal: "2026-07-28", status: "Selesai Dibayar", sparepart: "Chain Lube", catatan: "Rantai mulai aus", biayaJasa: 35000, biayaPart: 20000, noTransaksi: "TRX-2026-0144" }),
-  mkServis({ nomor: "SRV-2026-0143", pelanggan: "Hendra Wijaya", kendaraan: "Daihatsu Xenia 2015", plat: "D 6120 MN", jenis: "Servis AC", keluhan: "AC kurang dingin", pekerjaan: "Servis AC + isi freon", mekanik: "Rudi", tanggal: "2026-08-14", status: "Selesai Dibayar", sparepart: "Freon R134a", catatan: "", items: [{ sparepartId: "sp-008", kode: "SP-008", nama: "Freon R134a", harga: 120000, jumlah: 1 }], biayaJasa: 230000, biayaPart: 120000, noTransaksi: "TRX-2026-0143" }),
-  mkServis({ nomor: "SRV-2025-0121", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Besar", keluhan: "Tarikan berat", pekerjaan: "Overhaul ringan mesin", mekanik: "Joko", tanggal: "2025-11-09", status: "Selesai Dibayar", sparepart: "Busi NGK", catatan: "", items: [{ sparepartId: "sp-002", kode: "SP-002", nama: "Busi NGK CPR9EA", harga: 27000, jumlah: 2 }], biayaJasa: 250000, biayaPart: 54000, noTransaksi: "TRX-2025-0121", metodeBayar: "Cash" }),
-  mkServis({ nomor: "SRV-2025-0118", pelanggan: "Siti Rahmawati", kendaraan: "Yamaha NMAX 2021", plat: "D 5521 KJ", jenis: "Ganti Oli", keluhan: "Servis rutin", pekerjaan: "Ganti oli mesin", mekanik: "Bayu", tanggal: "2025-06-21", status: "Selesai Dibayar", sparepart: "Oli AHM MPX", catatan: "", items: [{ sparepartId: "sp-001", kode: "SP-001", nama: "Oli Mesin AHM MPX 0.8L", harga: 48000, jumlah: 1 }], biayaJasa: 30000, biayaPart: 48000, noTransaksi: "TRX-2025-0118", metodeBayar: "QRIS" }),
-];
-
-const bookingAwal: Booking[] = [
-  { id: uid(), nomor: "BK-2026-0032", pelanggan: "Budi Santoso", kendaraan: "Honda Beat 2019", plat: "D 1234 ABC", jenis: "Servis Besar", keluhan: "Tarikan berat & boros bensin", tanggal: "2026-08-20", waktu: "09:00", catatan: "Mohon dikerjakan pagi", mekanikDiinginkan: "Joko", status: "Menunggu Konfirmasi" },
-  { id: uid(), nomor: "BK-2026-0031", pelanggan: "Dewi Lestari", kendaraan: "Honda Vario 160", plat: "D 3311 QW", jenis: "Ganti Oli", keluhan: "Ganti oli rutin", tanggal: "2026-08-19", waktu: "13:00", catatan: "", status: "Menunggu Konfirmasi" },
-  { id: uid(), nomor: "BK-2026-0030", pelanggan: "Siti Rahmawati", kendaraan: "Yamaha NMAX 2021", plat: "D 5521 KJ", jenis: "Perbaikan Rem", keluhan: "Rem depan kurang pakem", tanggal: "2026-08-18", waktu: "10:30", catatan: "", mekanikDiinginkan: "Dedi", mekanikDitugaskan: "Dedi", status: "Diterima" },
-  { id: uid(), nomor: "BK-2026-0029", pelanggan: "Rizky Ramadhan", kendaraan: "Suzuki Satria FU", plat: "D 7742 ZX", jenis: "Kelistrikan", keluhan: "Lampu utama mati", tanggal: "2026-08-16", waktu: "15:00", catatan: "", status: "Ditolak", alasanTolak: "Jadwal servis pada tanggal tersebut sudah penuh. Silakan pilih tanggal lain." },
-];
-
-
-const sparepartAwal: Sparepart[] = [
-  { id: "sp-001", kode: "SP-001", nama: "Oli Mesin AHM MPX 0.8L", kategori: "Oli", satuan: "Botol", harga: 48000, stok: 34, stokMinimum: 10, terpakai: 22, tanggalUpdate: "2026-08-18" },
-  { id: "sp-002", kode: "SP-002", nama: "Busi NGK CPR9EA", kategori: "Mesin", satuan: "Pcs", harga: 27000, stok: 18, stokMinimum: 8, terpakai: 14, tanggalUpdate: "2026-08-18" },
-  { id: "sp-003", kode: "SP-003", nama: "Kampas Rem Depan NMAX", kategori: "Rem", satuan: "Set", harga: 95000, stok: 6, stokMinimum: 6, terpakai: 9, tanggalUpdate: "2026-08-17" },
-  { id: "sp-004", kode: "SP-004", nama: "Filter Udara Beat", kategori: "Mesin", satuan: "Pcs", harga: 62000, stok: 0, stokMinimum: 5, terpakai: 12, tanggalUpdate: "2026-08-15" },
-  { id: "sp-005", kode: "SP-005", nama: "Aki GS Astra NS40", kategori: "Kelistrikan", satuan: "Unit", harga: 610000, stok: 4, stokMinimum: 3, terpakai: 3, tanggalUpdate: "2026-08-10" },
-  { id: "sp-006", kode: "SP-006", nama: "Ban Luar IRC 80/90-14", kategori: "Ban", satuan: "Pcs", harga: 215000, stok: 11, stokMinimum: 4, terpakai: 7, tanggalUpdate: "2026-08-12" },
-  { id: "sp-007", kode: "SP-007", nama: "Link Stabilizer Avanza", kategori: "Kaki-kaki", satuan: "Pcs", harga: 175000, stok: 8, stokMinimum: 4, terpakai: 5, tanggalUpdate: "2026-08-17" },
-  { id: "sp-008", kode: "SP-008", nama: "Freon R134a", kategori: "AC", satuan: "Tabung", harga: 120000, stok: 15, stokMinimum: 5, terpakai: 10, tanggalUpdate: "2026-08-14" },
-];
-
 export const SATUAN_PART = ["Pcs", "Botol", "Set", "Unit", "Tabung", "Liter"];
-
-const pembelianAwal: PembelianSparepart[] = [
-  { id: uid(), nomor: "PB-2026-0011", sparepartId: "sp-001", supplier: "PT Sinar Pelumas", tanggal: "2026-08-05", jumlah: 24, harga: 41000, total: 984000, status: "Diterima" },
-  { id: uid(), nomor: "PB-2026-0010", sparepartId: "sp-003", supplier: "CV Rem Jaya", tanggal: "2026-07-28", jumlah: 10, harga: 78000, total: 780000, status: "Diterima" },
-  { id: uid(), nomor: "PB-2026-0009", sparepartId: "sp-006", supplier: "Toko Ban Makmur", tanggal: "2026-07-19", jumlah: 12, harga: 182000, total: 2184000, status: "Diterima" },
-];
-
-const riwayatStokAwal: RiwayatStok[] = [
-  { id: uid(), sparepartId: "sp-001", jenis: "Masuk", jumlah: 24, tanggal: "2026-08-05", keterangan: "Pembelian PB-2026-0011 · PT Sinar Pelumas" },
-  { id: uid(), sparepartId: "sp-001", jenis: "Keluar", jumlah: 1, tanggal: "2026-08-18", keterangan: "Dipakai servis SRV-2026-0148" },
-  { id: uid(), sparepartId: "sp-002", jenis: "Keluar", jumlah: 1, tanggal: "2026-08-18", keterangan: "Dipakai servis SRV-2026-0148" },
-  { id: uid(), sparepartId: "sp-003", jenis: "Masuk", jumlah: 10, tanggal: "2026-07-28", keterangan: "Pembelian PB-2026-0010 · CV Rem Jaya" },
-  { id: uid(), sparepartId: "sp-007", jenis: "Keluar", jumlah: 2, tanggal: "2026-08-17", keterangan: "Dipakai servis SRV-2026-0145" },
-];
-
-const penggunaanAwal: PenggunaanSparepart[] = [
-  { id: uid(), sparepartId: "sp-002", servisId: "-", servisNomor: "SRV-2026-0148", tanggal: "2026-08-18", jumlah: 1, mekanik: "Joko", keterangan: "Ganti busi" },
-  { id: uid(), sparepartId: "sp-001", servisId: "-", servisNomor: "SRV-2026-0148", tanggal: "2026-08-18", jumlah: 1, mekanik: "Joko", keterangan: "Ganti oli mesin" },
-  { id: uid(), sparepartId: "sp-007", servisId: "-", servisNomor: "SRV-2026-0145", tanggal: "2026-08-17", jumlah: 2, mekanik: "Rudi", keterangan: "Ganti link stabilizer" },
-];
-
-const pembayaranAwal: Pembayaran[] = [
-  { id: uid(), servisId: "-", noTransaksi: "TRX-2026-0145", metode: "Transfer Bank", tanggalBayar: "2026-08-17", totalBayar: 480000, status: "Lunas" },
-  { id: uid(), servisId: "-", noTransaksi: "TRX-2026-0143", metode: "Cash", tanggalBayar: "2026-08-14", totalBayar: 350000, status: "Lunas" },
-  { id: uid(), servisId: "-", noTransaksi: "TRX-2025-0121", metode: "Cash", tanggalBayar: "2025-11-09", totalBayar: 304000, status: "Lunas" },
-  { id: uid(), servisId: "-", noTransaksi: "TRX-2025-0118", metode: "QRIS", tanggalBayar: "2025-06-21", totalBayar: 78000, status: "Lunas" },
-];
-
 
 export const MEKANIK = ["Joko", "Dedi", "Rudi", "Bayu"];
 
@@ -305,244 +223,595 @@ export type Tiket = {
   balasan?: string;
 };
 
-const tiketAwal: Tiket[] = [
-  { id: uid(), nomor: "CS-001", pengirim: "Budi Santoso", peran: "Pelanggan", subjek: "Tidak dapat melakukan booking", kategori: "Booking", pesan: "Saat menekan Kirim Booking, jadwal tidak tersimpan.", tanggal: "2026-08-29", status: "Diproses", balasan: "Tim kami sedang memeriksa kendala ini." },
-  { id: uid(), nomor: "CS-002", pengirim: "Admin Bengkel", peran: "Admin Bengkel", subjek: "Laporan stok tidak sinkron", kategori: "Sparepart", pesan: "Stok sparepart pada laporan berbeda dengan katalog.", tanggal: "2026-08-27", status: "Selesai", balasan: "Sudah diperbaiki pada pembaruan terakhir." },
-];
-
-export const KATEGORI_PART = ["Oli", "Mesin", "Rem", "Kelistrikan", "Ban", "Kaki-kaki", "AC"];
-
 export const totalItem = (items: ItemPart[]) => items.reduce((a, i) => a + i.harga * i.jumlah, 0);
 
 export const ringkasanItem = (items: ItemPart[]) =>
   items.map((i) => `${i.nama} x${i.jumlah}`).join(", ");
 
-/** Terapkan selisih pemakaian sparepart lama → baru ke stok (simulasi). */
-function terapkanSelisih(list: Sparepart[], lama: ItemPart[], baru: ItemPart[]): Sparepart[] {
-  const delta = new Map<string, number>();
-  for (const i of lama) delta.set(i.sparepartId, (delta.get(i.sparepartId) ?? 0) - i.jumlah);
-  for (const i of baru) delta.set(i.sparepartId, (delta.get(i.sparepartId) ?? 0) + i.jumlah);
-  return list.map((sp) => {
-    const d = delta.get(sp.id);
-    if (!d) return sp;
-    return { ...sp, stok: Math.max(0, sp.stok - d), terpakai: Math.max(0, sp.terpakai + d) };
-  });
-}
-
-
 const hariIni = () => new Date().toISOString().slice(0, 10);
 
+const nomorBerikut = (list: { nomor: string }[], prefix: string, mulai: number) => {
+  const angka = list
+    .map((x) => Number(x.nomor.split("-").pop()))
+    .filter((n) => Number.isFinite(n)) as number[];
+  const next = Math.max(mulai - 1, ...(angka.length ? angka : [0])) + 1;
+  return `${prefix}-${String(next).padStart(4, "0")}`;
+};
+
+// ============ MAPPER ============
+type Row = Record<string, any>;
+
+const keServis = (r: Row, items: ItemPart[]): Servis => ({
+  id: r.id,
+  nomor: r.nomor,
+  pelangganId: r.customer_id,
+  pelanggan: r.pelanggan_nama ?? "",
+  kendaraan: r.kendaraan ?? "",
+  plat: r.plat ?? "",
+  jenis: r.jenis ?? "",
+  keluhan: r.keluhan ?? "",
+  pekerjaan: r.pekerjaan ?? "",
+  mekanik: r.mekanik ?? "",
+  tanggal: r.tanggal ?? "",
+  status: (r.status ?? "Menunggu") as StatusServis,
+  sparepart: r.sparepart_ringkas ?? "",
+  items,
+  catatan: r.catatan ?? "",
+  biayaJasa: r.biaya_jasa ?? 0,
+  biayaPart: r.biaya_part ?? 0,
+  total: r.total ?? 0,
+  noTransaksi: r.no_transaksi ?? "",
+  ...(r.metode_bayar ? { metodeBayar: r.metode_bayar as MetodeBayar } : {}),
+  ...(r.hasil_pemeriksaan ? { hasilPemeriksaan: r.hasil_pemeriksaan as string } : {}),
+  ...(r.estimasi_waktu ? { estimasiWaktu: r.estimasi_waktu as string } : {}),
+});
+
+const keBooking = (r: Row): Booking => ({
+  id: r.id,
+  nomor: r.nomor,
+  pelangganId: r.customer_id,
+  pelanggan: r.pelanggan_nama ?? "",
+  kendaraan: r.kendaraan ?? "",
+  plat: r.plat ?? "",
+  jenis: r.jenis ?? "",
+  keluhan: r.keluhan ?? "",
+  tanggal: r.tanggal ?? "",
+  waktu: r.waktu ?? "",
+  catatan: r.catatan ?? "",
+  ...(r.mekanik_diinginkan ? { mekanikDiinginkan: r.mekanik_diinginkan as string } : {}),
+  ...(r.mekanik_ditugaskan ? { mekanikDitugaskan: r.mekanik_ditugaskan as string } : {}),
+  ...(r.alasan_tolak ? { alasanTolak: r.alasan_tolak as string } : {}),
+  status: (r.status ?? "Menunggu Konfirmasi") as StatusBooking,
+});
+
+const kePart = (r: Row): Sparepart => ({
+  id: r.id,
+  nama: r.nama,
+  satuan: r.satuan ?? "Pcs",
+  harga: r.harga ?? 0,
+  stok: r.stok ?? 0,
+  stokMinimum: r.stok_minimum ?? 0,
+  terpakai: r.terpakai ?? 0,
+  deskripsi: r.deskripsi ?? "",
+  tanggalUpdate: (r.updated_at ?? r.created_at ?? "").slice(0, 10),
+});
+
 type Store = {
+  siap: boolean;
+  muatUlang: () => Promise<void>;
   pelanggan: Pelanggan[];
   kendaraan: Kendaraan[];
   servis: Servis[];
   sparepart: Sparepart[];
   booking: Booking[];
   pembayaran: Pembayaran[];
+  estimasi: EstimasiServis[];
   riwayatStok: RiwayatStok[];
   pembelian: PembelianSparepart[];
   penggunaan: PenggunaanSparepart[];
-  simpanPelanggan: (p: Omit<Pelanggan, "id"> & { id?: string }) => void;
-  hapusPelanggan: (id: string) => void;
-  simpanKendaraan: (k: Omit<Kendaraan, "id"> & { id?: string }) => void;
-  hapusKendaraan: (id: string) => void;
-  simpanServis: (s: Omit<Servis, "id" | "nomor" | "total" | "noTransaksi" | "biayaPart" | "sparepart"> & { id?: string }) => void;
-  ubahStatusServis: (id: string, status: StatusServis) => void;
-  hapusServis: (id: string) => void;
-  simpanSparepart: (s: Omit<Sparepart, "id" | "terpakai" | "tanggalUpdate"> & { id?: string; terpakai?: number }) => void;
-  hapusSparepart: (id: string) => void;
-  catatPembelian: (p: Omit<PembelianSparepart, "id" | "nomor" | "total" | "status">) => void;
-  buatBooking: (b: Omit<Booking, "id" | "nomor" | "status">) => Booking;
-  ubahStatusBooking: (id: string, status: StatusBooking, alasan?: string) => void;
-  tugaskanMekanikBooking: (id: string, mekanik: string) => void;
-  bayarServis: (id: string, metode?: MetodeBayar) => void;
   tiket: Tiket[];
-  buatTiket: (t: Omit<Tiket, "id" | "nomor" | "status" | "tanggal">) => Tiket;
+  simpanPelanggan: (p: Omit<Pelanggan, "id"> & { id?: string }) => Promise<void>;
+  hapusPelanggan: (id: string) => Promise<void>;
+  simpanKendaraan: (k: Omit<Kendaraan, "id"> & { id?: string }) => Promise<void>;
+  hapusKendaraan: (id: string) => Promise<void>;
+  simpanServis: (
+    s: Omit<Servis, "id" | "nomor" | "total" | "noTransaksi" | "biayaPart" | "sparepart"> & { id?: string },
+  ) => Promise<void>;
+  ubahStatusServis: (id: string, status: StatusServis) => Promise<void>;
+  hapusServis: (id: string) => Promise<void>;
+  simpanSparepart: (s: Omit<Sparepart, "id" | "terpakai" | "tanggalUpdate"> & { id?: string; terpakai?: number }) => Promise<void>;
+  hapusSparepart: (id: string) => Promise<void>;
+  catatPembelian: (p: Omit<PembelianSparepart, "id" | "nomor" | "total" | "status">) => Promise<void>;
+  buatBooking: (b: Omit<Booking, "id" | "nomor" | "status">) => Promise<Booking>;
+  ubahStatusBooking: (id: string, status: StatusBooking, alasan?: string) => Promise<void>;
+  tugaskanMekanikBooking: (id: string, mekanik: string) => Promise<void>;
+  bayarServis: (id: string, metode?: MetodeBayar) => Promise<void>;
+  buatTiket: (t: Omit<Tiket, "id" | "nomor" | "status" | "tanggal">) => Promise<Tiket>;
 };
 
 const StoreContext = createContext<Store | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [pelanggan, setPelanggan] = useState(pelangganAwal);
-  const [kendaraan, setKendaraan] = useState(kendaraanAwal);
-  const [servis, setServis] = useState(servisAwal);
-  const [sparepart, setSparepart] = useState(sparepartAwal);
-  const [booking, setBooking] = useState(bookingAwal);
-  const [tiket, setTiket] = useState(tiketAwal);
-  const [pembayaran, setPembayaran] = useState(pembayaranAwal);
-  const [riwayatStok, setRiwayatStok] = useState(riwayatStokAwal);
-  const [pembelian, setPembelian] = useState(pembelianAwal);
-  const [penggunaan, setPenggunaan] = useState(penggunaanAwal);
+  const [siap, setSiap] = useState(false);
+  const [pelanggan, setPelanggan] = useState<Pelanggan[]>([]);
+  const [kendaraan, setKendaraan] = useState<Kendaraan[]>([]);
+  const [servis, setServis] = useState<Servis[]>([]);
+  const [sparepart, setSparepart] = useState<Sparepart[]>([]);
+  const [booking, setBooking] = useState<Booking[]>([]);
+  const [pembayaran, setPembayaran] = useState<Pembayaran[]>([]);
+  const [estimasi, setEstimasi] = useState<EstimasiServis[]>([]);
+  const [riwayatStok, setRiwayatStok] = useState<RiwayatStok[]>([]);
+  const [pembelian, setPembelian] = useState<PembelianSparepart[]>([]);
+  const [penggunaan, setPenggunaan] = useState<PenggunaanSparepart[]>([]);
+  const [tiket, setTiket] = useState<Tiket[]>([]);
+
+  const muatUlang = useCallback(async () => {
+    const { data: sesi } = await supabase.auth.getSession();
+    if (!sesi.session) {
+      setSiap(true);
+      return;
+    }
+    const [c, v, sp, so, si, bk, pay, est, mv, pb, us, tk] = await Promise.all([
+      supabase.from("customers").select("*").order("nama"),
+      supabase.from("vehicles").select("*"),
+      supabase.from("spareparts").select("*").order("nama"),
+      supabase.from("service_orders").select("*").order("tanggal", { ascending: false }),
+      supabase.from("service_items").select("*"),
+      supabase.from("bookings").select("*").order("tanggal", { ascending: false }),
+      supabase.from("payments").select("*").order("tanggal_bayar", { ascending: false }),
+      supabase.from("service_estimates").select("*"),
+      supabase.from("stock_movements").select("*").order("tanggal", { ascending: false }),
+      supabase.from("sparepart_purchases").select("*").order("tanggal", { ascending: false }),
+      supabase.from("sparepart_usages").select("*").order("tanggal", { ascending: false }),
+      supabase.from("support_tickets").select("*").order("created_at", { ascending: false }),
+    ]);
+
+    setPelanggan(
+      (c.data ?? []).map((r: Row) => ({
+        id: r.id,
+        profileId: r.profile_id,
+        nama: r.nama,
+        email: r.email ?? "",
+        telepon: r.telepon ?? "",
+        alamat: r.alamat ?? "",
+        kendaraan: r.kendaraan ?? "",
+        plat: r.plat ?? "",
+      })),
+    );
+    setKendaraan(
+      (v.data ?? []).map((r: Row) => ({
+        id: r.id,
+        pelangganId: r.customer_id,
+        merk: r.merk,
+        tipe: r.tipe,
+        tahun: r.tahun,
+        plat: r.plat ?? "",
+        kilometer: r.kilometer ?? 0,
+      })),
+    );
+    setSparepart((sp.data ?? []).map(kePart));
+    const itemsPer = new Map<string, ItemPart[]>();
+    for (const r of (si.data ?? []) as Row[]) {
+      const arr = itemsPer.get(r.service_id) ?? [];
+      arr.push({ sparepartId: r.sparepart_id ?? "", nama: r.nama, harga: r.harga, jumlah: r.jumlah });
+      itemsPer.set(r.service_id, arr);
+    }
+    setServis((so.data ?? []).map((r: Row) => keServis(r, itemsPer.get(r.id) ?? [])));
+    setBooking((bk.data ?? []).map(keBooking));
+    setPembayaran(
+      (pay.data ?? []).map((r: Row) => ({
+        id: r.id,
+        servisId: r.service_id ?? "-",
+        noTransaksi: r.no_transaksi ?? "",
+        metode: (r.metode ?? "Cash") as MetodeBayar,
+        tanggalBayar: r.tanggal_bayar ?? "",
+        totalBayar: r.jumlah ?? 0,
+        status: (r.status ?? "Belum Lunas") as "Lunas" | "Belum Lunas",
+      })),
+    );
+    setEstimasi(
+      (est.data ?? []).map((r: Row) => ({
+        id: r.id,
+        servisId: r.service_id,
+        biayaJasa: r.biaya_jasa ?? 0,
+        biayaSparepart: r.biaya_sparepart ?? 0,
+        total: r.total ?? 0,
+        status: r.status ?? "",
+        catatan: r.catatan ?? "",
+      })),
+    );
+    setRiwayatStok(
+      (mv.data ?? []).map((r: Row) => ({
+        id: r.id,
+        sparepartId: r.sparepart_id,
+        jenis: (r.jenis ?? "Masuk") as "Masuk" | "Keluar",
+        jumlah: r.jumlah ?? 0,
+        tanggal: r.tanggal ?? "",
+        keterangan: r.keterangan ?? "",
+      })),
+    );
+    setPembelian(
+      (pb.data ?? []).map((r: Row) => ({
+        id: r.id,
+        nomor: r.nomor,
+        sparepartId: r.sparepart_id,
+        supplier: r.supplier ?? "",
+        tanggal: r.tanggal ?? "",
+        jumlah: r.jumlah ?? 0,
+        harga: r.harga ?? 0,
+        total: r.total ?? 0,
+        status: "Diterima" as const,
+      })),
+    );
+    setPenggunaan(
+      (us.data ?? []).map((r: Row) => ({
+        id: r.id,
+        sparepartId: r.sparepart_id,
+        servisId: r.service_id ?? "-",
+        servisNomor: r.service_nomor ?? "",
+        tanggal: r.tanggal ?? "",
+        jumlah: r.jumlah ?? 0,
+        mekanik: r.mekanik ?? "",
+        keterangan: r.keterangan ?? "",
+      })),
+    );
+    setTiket(
+      (tk.data ?? []).map((r: Row) => ({
+        id: r.id,
+        nomor: r.nomor,
+        pengirim: r.pengirim ?? "",
+        peran: r.peran ?? "",
+        subjek: r.subjek ?? "",
+        kategori: r.kategori ?? "",
+        pesan: r.pesan ?? "",
+        tanggal: r.tanggal ?? "",
+        status: (r.status ?? "Menunggu") as StatusTiket,
+        ...(r.balasan ? { balasan: r.balasan as string } : {}),
+      })),
+    );
+    setSiap(true);
+  }, []);
+
+  useEffect(() => {
+    void muatUlang();
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") void muatUlang();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [muatUlang]);
+
+  /** Sinkronkan stok & log setelah pemakaian sparepart berubah pada sebuah servis. */
+  const terapkanStok = useCallback(
+    async (lama: ItemPart[], baru: ItemPart[], konteks: { servisId: string; nomor: string; tanggal: string; mekanik: string; keterangan: string }) => {
+      const delta = new Map<string, number>();
+      for (const i of lama) delta.set(i.sparepartId, (delta.get(i.sparepartId) ?? 0) - i.jumlah);
+      for (const i of baru) delta.set(i.sparepartId, (delta.get(i.sparepartId) ?? 0) + i.jumlah);
+      for (const [sparepartId, d] of delta) {
+        if (!d || !sparepartId) continue;
+        const sp = sparepart.find((x) => x.id === sparepartId);
+        if (sp) {
+          await supabase
+            .from("spareparts")
+            .update({ stok: Math.max(0, sp.stok - d), terpakai: Math.max(0, sp.terpakai + d) })
+            .eq("id", sparepartId);
+        }
+        await supabase.from("stock_movements").insert({
+          sparepart_id: sparepartId,
+          jenis: d > 0 ? "Keluar" : "Masuk",
+          jumlah: Math.abs(d),
+          tanggal: konteks.tanggal,
+          keterangan: d > 0 ? `Dipakai servis ${konteks.nomor}` : `Koreksi pemakaian servis ${konteks.nomor}`,
+        });
+        if (d > 0) {
+          await supabase.from("sparepart_usages").insert({
+            sparepart_id: sparepartId,
+            service_id: konteks.servisId,
+            service_nomor: konteks.nomor,
+            tanggal: konteks.tanggal,
+            jumlah: d,
+            mekanik: konteks.mekanik,
+            keterangan: konteks.keterangan,
+          });
+        }
+      }
+    },
+    [sparepart],
+  );
 
   const value = useMemo<Store>(
     () => ({
+      siap,
+      muatUlang,
       pelanggan,
       kendaraan,
       servis,
       sparepart,
       booking,
-      tiket,
       pembayaran,
+      estimasi,
       riwayatStok,
       pembelian,
       penggunaan,
-      buatTiket: (t) => {
-        const baru: Tiket = {
-          ...t,
-          id: uid(),
-          nomor: `CS-${String(tiket.length + 1).padStart(3, "0")}`,
-          tanggal: hariIni(),
-          status: "Menunggu",
+      tiket,
+
+      simpanPelanggan: async (p) => {
+        const payload = {
+          nama: p.nama,
+          email: p.email,
+          telepon: p.telepon,
+          alamat: p.alamat,
+          kendaraan: p.kendaraan,
+          plat: p.plat,
         };
-        setTiket((l) => [baru, ...l]);
-        return baru;
+        if (p.id) await supabase.from("customers").update(payload).eq("id", p.id);
+        else await supabase.from("customers").insert(payload);
+        await muatUlang();
+      },
+      hapusPelanggan: async (id) => {
+        await supabase.from("customers").delete().eq("id", id);
+        await muatUlang();
+      },
+      simpanKendaraan: async (k) => {
+        const payload = {
+          customer_id: k.pelangganId,
+          merk: k.merk,
+          tipe: k.tipe,
+          tahun: k.tahun,
+          plat: k.plat,
+          kilometer: k.kilometer,
+        };
+        if (k.id) await supabase.from("vehicles").update(payload).eq("id", k.id);
+        else await supabase.from("vehicles").insert(payload);
+        await muatUlang();
+      },
+      hapusKendaraan: async (id) => {
+        await supabase.from("vehicles").delete().eq("id", id);
+        await muatUlang();
       },
 
-      simpanPelanggan: (p) =>
-        setPelanggan((list) =>
-          p.id ? list.map((x) => (x.id === p.id ? ({ ...x, ...p } as Pelanggan) : x)) : [{ ...p, id: uid() } as Pelanggan, ...list],
-        ),
-      hapusPelanggan: (id) => {
-        setPelanggan((l) => l.filter((x) => x.id !== id));
-        setKendaraan((l) => l.filter((x) => x.pelangganId !== id));
-      },
-      simpanKendaraan: (k) =>
-        setKendaraan((list) =>
-          k.id ? list.map((x) => (x.id === k.id ? ({ ...x, ...k } as Kendaraan) : x)) : [{ ...k, id: uid() } as Kendaraan, ...list],
-        ),
-      hapusKendaraan: (id) => setKendaraan((l) => l.filter((x) => x.id !== id)),
-      simpanServis: (s) => {
+      simpanServis: async (s) => {
         const items = s.items ?? [];
         const lamaServis = s.id ? servis.find((x) => x.id === s.id) : undefined;
-        const lama = lamaServis?.items ?? [];
-        setSparepart((list) => terapkanSelisih(list, lama, items));
         const biayaPart = totalItem(items);
-        const ringkas = ringkasanItem(items);
+        const total = s.biayaJasa + biayaPart;
         const tgl = s.tanggal || hariIni();
+        const nomor = lamaServis?.nomor ?? nomorBerikut(servis, "SRV-2026", 149);
+        const pelangganRow = pelanggan.find((p) => p.nama === s.pelanggan);
+        const payload: Row = {
+          nomor,
+          customer_id: pelangganRow?.id ?? null,
+          pelanggan_nama: s.pelanggan,
+          kendaraan: s.kendaraan,
+          plat: s.plat,
+          jenis: s.jenis,
+          keluhan: s.keluhan,
+          pekerjaan: s.pekerjaan,
+          mekanik: s.mekanik,
+          tanggal: tgl,
+          status: s.status,
+          catatan: s.catatan ?? "",
+          hasil_pemeriksaan: s.hasilPemeriksaan ?? null,
+          estimasi_waktu: s.estimasiWaktu ?? null,
+          sparepart_ringkas: ringkasanItem(items),
+          biaya_jasa: s.biayaJasa,
+          biaya_part: biayaPart,
+          total,
+          metode_bayar: s.metodeBayar ?? null,
+        };
 
-        // Catat log riwayat stok & penggunaan sparepart untuk selisih pemakaian.
-        const delta = new Map<string, number>();
-        for (const i of lama) delta.set(i.sparepartId, (delta.get(i.sparepartId) ?? 0) - i.jumlah);
-        for (const i of items) delta.set(i.sparepartId, (delta.get(i.sparepartId) ?? 0) + i.jumlah);
+        let servisId = s.id ?? "";
+        if (s.id) {
+          await supabase.from("service_orders").update(payload).eq("id", s.id);
+        } else {
+          const { data } = await supabase
+            .from("service_orders")
+            .insert({ ...payload, no_transaksi: nomor.replace("SRV", "TRX") })
+            .select("id")
+            .single();
+          servisId = data?.id ?? "";
+        }
 
-        setServis((list) => {
-          const total = s.biayaJasa + biayaPart;
-          let nomor = lamaServis?.nomor ?? "";
-          let hasil: Servis[];
-          if (s.id) {
-            hasil = list.map((x) => (x.id === s.id ? { ...x, ...s, items, biayaPart, sparepart: ringkas, total } : x));
-          } else {
-            const seq = 149 + list.length - servisAwal.length;
-            nomor = `SRV-2026-${String(seq).padStart(4, "0")}`;
-            hasil = [
-              { ...s, items, biayaPart, sparepart: ringkas, id: uid(), nomor, total, noTransaksi: `TRX-2026-${String(seq).padStart(4, "0")}` } as Servis,
-              ...list,
-            ];
+        if (servisId) {
+          await supabase.from("service_items").delete().eq("service_id", servisId);
+          if (items.length) {
+            await supabase.from("service_items").insert(
+              items.map((i) => ({
+                service_id: servisId,
+                sparepart_id: i.sparepartId || null,
+                nama: i.nama,
+                harga: i.harga,
+                jumlah: i.jumlah,
+              })),
+            );
           }
-
-          const idServis = s.id ?? hasil[0]?.id ?? "-";
-          const logStok: RiwayatStok[] = [];
-          const logPakai: PenggunaanSparepart[] = [];
-          for (const [sparepartId, d] of delta) {
-            if (!d) continue;
-            logStok.push({
-              id: uid(),
-              sparepartId,
-              jenis: d > 0 ? "Keluar" : "Masuk",
-              jumlah: Math.abs(d),
-              tanggal: tgl,
-              keterangan: d > 0 ? `Dipakai servis ${nomor}` : `Koreksi pemakaian servis ${nomor}`,
-            });
-            if (d > 0)
-              logPakai.push({
-                id: uid(),
-                sparepartId,
-                servisId: idServis,
-                servisNomor: nomor,
-                tanggal: tgl,
-                jumlah: d,
-                mekanik: s.mekanik,
-                keterangan: s.pekerjaan || s.jenis,
-              });
-          }
-          if (logStok.length) setRiwayatStok((l) => [...logStok, ...l]);
-          if (logPakai.length) setPenggunaan((l) => [...logPakai, ...l]);
-          return hasil;
-        });
+          // Estimasi biaya servis
+          await supabase.from("service_estimates").upsert(
+            {
+              service_id: servisId,
+              biaya_jasa: s.biayaJasa,
+              biaya_sparepart: biayaPart,
+              total,
+              status: lamaServis ? "Diperbarui" : "Menunggu Konfirmasi",
+              catatan: s.catatan ?? "",
+            },
+            { onConflict: "service_id" },
+          );
+          await terapkanStok(lamaServis?.items ?? [], items, {
+            servisId,
+            nomor,
+            tanggal: tgl,
+            mekanik: s.mekanik,
+            keterangan: s.pekerjaan || s.jenis,
+          });
+        }
+        await muatUlang();
       },
-      ubahStatusServis: (id, status) => setServis((l) => l.map((x) => (x.id === id ? { ...x, status } : x))),
-      hapusServis: (id) => {
+      ubahStatusServis: async (id, status) => {
+        await supabase.from("service_orders").update({ status }).eq("id", id);
+        await muatUlang();
+      },
+      hapusServis: async (id) => {
         const lama = servis.find((x) => x.id === id);
-        setSparepart((list) => terapkanSelisih(list, lama?.items ?? [], []));
-        if (lama?.items.length)
-          setRiwayatStok((l) => [
-            ...lama.items.map((i) => ({
-              id: uid(),
-              sparepartId: i.sparepartId,
-              jenis: "Masuk" as const,
+        if (lama?.items.length) {
+          for (const i of lama.items) {
+            const sp = sparepart.find((x) => x.id === i.sparepartId);
+            if (sp)
+              await supabase
+                .from("spareparts")
+                .update({ stok: sp.stok + i.jumlah, terpakai: Math.max(0, sp.terpakai - i.jumlah) })
+                .eq("id", sp.id);
+            await supabase.from("stock_movements").insert({
+              sparepart_id: i.sparepartId,
+              jenis: "Masuk",
               jumlah: i.jumlah,
               tanggal: hariIni(),
               keterangan: `Pembatalan servis ${lama.nomor}`,
-            })),
-            ...l,
-          ]);
-        setPenggunaan((l) => l.filter((x) => x.servisId !== id));
-        setServis((l) => l.filter((x) => x.id !== id));
+            });
+          }
+        }
+        await supabase.from("service_orders").delete().eq("id", id);
+        await muatUlang();
       },
 
-      simpanSparepart: (s) =>
-        setSparepart((list) =>
-          s.id
-            ? list.map((x) => (x.id === s.id ? ({ ...x, ...s, tanggalUpdate: hariIni() } as Sparepart) : x))
-            : [{ terpakai: 0, ...s, id: uid(), tanggalUpdate: hariIni() } as Sparepart, ...list],
-        ),
-      hapusSparepart: (id) => setSparepart((l) => l.filter((x) => x.id !== id)),
-      catatPembelian: (p) => {
-        const nomor = `PB-2026-${String(12 + pembelian.length - pembelianAwal.length).padStart(4, "0")}`;
-        const baru: PembelianSparepart = { ...p, id: uid(), nomor, total: p.jumlah * p.harga, status: "Diterima" };
-        setPembelian((l) => [baru, ...l]);
-        setSparepart((l) =>
-          l.map((sp) => (sp.id === p.sparepartId ? { ...sp, stok: sp.stok + p.jumlah, tanggalUpdate: p.tanggal } : sp)),
-        );
-        setRiwayatStok((l) => [
-          { id: uid(), sparepartId: p.sparepartId, jenis: "Masuk", jumlah: p.jumlah, tanggal: p.tanggal, keterangan: `Pembelian ${nomor} · ${p.supplier}` },
-          ...l,
-        ]);
+      simpanSparepart: async (s) => {
+        const payload = {
+          nama: s.nama,
+          satuan: s.satuan,
+          harga: s.harga,
+          stok: s.stok,
+          stok_minimum: s.stokMinimum,
+          deskripsi: s.deskripsi ?? "",
+        };
+        if (s.id) await supabase.from("spareparts").update(payload).eq("id", s.id);
+        else await supabase.from("spareparts").insert({ ...payload, terpakai: s.terpakai ?? 0 });
+        await muatUlang();
       },
-      buatBooking: (b) => {
-        const baru: Booking = { ...b, id: uid(), nomor: `BK-2026-${String(33 + booking.length - bookingAwal.length).padStart(4, "0")}`, status: "Menunggu Konfirmasi" };
-        setBooking((l) => [baru, ...l]);
-        return baru;
+      hapusSparepart: async (id) => {
+        await supabase.from("spareparts").delete().eq("id", id);
+        await muatUlang();
       },
-      ubahStatusBooking: (id, status, alasan) =>
-        setBooking((l) =>
-          l.map((x) => {
-            if (x.id !== id) return x;
-            const { alasanTolak, ...rest } = x;
-            return status === "Ditolak"
-              ? { ...rest, status, alasanTolak: alasan ?? alasanTolak ?? "" }
-              : { ...rest, status };
-          }),
-        ),
-      tugaskanMekanikBooking: (id, mekanik) =>
-        setBooking((l) => l.map((x) => (x.id === id ? { ...x, mekanikDitugaskan: mekanik } : x))),
-      bayarServis: (id, metode) => {
+      catatPembelian: async (p) => {
+        const nomor = nomorBerikut(pembelian, "PB-2026", 12);
+        await supabase.from("sparepart_purchases").insert({
+          nomor,
+          sparepart_id: p.sparepartId,
+          supplier: p.supplier,
+          tanggal: p.tanggal,
+          jumlah: p.jumlah,
+          harga: p.harga,
+          total: p.jumlah * p.harga,
+          status: "Diterima",
+        });
+        const sp = sparepart.find((x) => x.id === p.sparepartId);
+        if (sp) await supabase.from("spareparts").update({ stok: sp.stok + p.jumlah }).eq("id", sp.id);
+        await supabase.from("stock_movements").insert({
+          sparepart_id: p.sparepartId,
+          jenis: "Masuk",
+          jumlah: p.jumlah,
+          tanggal: p.tanggal,
+          keterangan: `Pembelian ${nomor} · ${p.supplier}`,
+        });
+        await muatUlang();
+      },
+
+      buatBooking: async (b) => {
+        const nomor = nomorBerikut(booking, "BK-2026", 33);
+        const pelangganRow =
+          pelanggan.find((p) => p.id === b.pelangganId) ?? pelanggan.find((p) => p.nama === b.pelanggan);
+        const kendaraanRow = kendaraan.find((k) => k.plat === b.plat && k.pelangganId === pelangganRow?.id);
+        const { data } = await supabase
+          .from("bookings")
+          .insert({
+            nomor,
+            customer_id: pelangganRow?.id ?? null,
+            vehicle_id: kendaraanRow?.id ?? null,
+            pelanggan_nama: b.pelanggan,
+            kendaraan: b.kendaraan,
+            plat: b.plat,
+            jenis: b.jenis,
+            keluhan: b.keluhan,
+            tanggal: b.tanggal,
+            waktu: b.waktu,
+            catatan: b.catatan ?? "",
+            mekanik_diinginkan: b.mekanikDiinginkan || null,
+            status: "Menunggu Konfirmasi",
+          })
+          .select("*")
+          .single();
+        await muatUlang();
+        return data ? keBooking(data as Row) : { ...b, id: "", nomor, status: "Menunggu Konfirmasi" };
+      },
+      ubahStatusBooking: async (id, status, alasan) => {
+        await supabase
+          .from("bookings")
+          .update({ status, alasan_tolak: status === "Ditolak" ? (alasan ?? "") : null })
+          .eq("id", id);
+        await muatUlang();
+      },
+      tugaskanMekanikBooking: async (id, mekanik) => {
+        await supabase.from("bookings").update({ mekanik_ditugaskan: mekanik }).eq("id", id);
+        await muatUlang();
+      },
+
+      bayarServis: async (id, metode) => {
         const target = servis.find((x) => x.id === id);
         const m = metode ?? target?.metodeBayar ?? "Cash";
-        setServis((l) => l.map((x) => (x.id === id ? { ...x, status: "Selesai Dibayar" as StatusServis, metodeBayar: m } : x)));
-        if (target)
-          setPembayaran((l) => [
-            { id: uid(), servisId: id, noTransaksi: target.noTransaksi, metode: m, tanggalBayar: hariIni(), totalBayar: target.total, status: "Lunas" },
-            ...l.filter((p) => p.servisId !== id),
-          ]);
+        await supabase
+          .from("service_orders")
+          .update({ status: "Selesai Dibayar", metode_bayar: m })
+          .eq("id", id);
+        if (target) {
+          await supabase.from("payments").delete().eq("service_id", id);
+          await supabase.from("payments").insert({
+            service_id: id,
+            customer_id: target.pelangganId ?? null,
+            no_transaksi: target.noTransaksi,
+            jumlah: target.total,
+            metode: m,
+            status: "Lunas",
+            tanggal_bayar: hariIni(),
+          });
+        }
+        await muatUlang();
+      },
+
+      buatTiket: async (t) => {
+        const { data: sesi } = await supabase.auth.getSession();
+        const nomor = `CS-${String(tiket.length + 1).padStart(3, "0")}`;
+        const { data } = await supabase
+          .from("support_tickets")
+          .insert({
+            nomor,
+            profile_id: sesi.session?.user.id ?? null,
+            pengirim: t.pengirim,
+            peran: t.peran,
+            subjek: t.subjek,
+            kategori: t.kategori,
+            pesan: t.pesan,
+            tanggal: hariIni(),
+            status: "Menunggu",
+          })
+          .select("*")
+          .single();
+        await muatUlang();
+        return {
+          id: data?.id ?? "",
+          nomor,
+          pengirim: t.pengirim,
+          peran: t.peran,
+          subjek: t.subjek,
+          kategori: t.kategori,
+          pesan: t.pesan,
+          tanggal: hariIni(),
+          status: "Menunggu",
+        };
       },
     }),
-    [pelanggan, kendaraan, servis, sparepart, booking, tiket, pembayaran, riwayatStok, pembelian, penggunaan],
+    [siap, muatUlang, pelanggan, kendaraan, servis, sparepart, booking, pembayaran, estimasi, riwayatStok, pembelian, penggunaan, tiket, terapkanStok],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
-
 
 export function useStore() {
   const ctx = useContext(StoreContext);
@@ -554,4 +823,4 @@ export const rupiah = (n: number) =>
   new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
 
 export const tanggalPanjang = (iso: string) =>
-  new Date(iso + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  iso ? new Date(iso + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "—";
