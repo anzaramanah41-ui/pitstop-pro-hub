@@ -93,7 +93,7 @@ function ProfilPage() {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
-                keluar();
+                void keluar();
                 navigate({ to: "/login", replace: true });
               }}
             >

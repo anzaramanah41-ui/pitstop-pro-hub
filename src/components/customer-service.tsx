@@ -42,15 +42,17 @@ export function CustomerServicePage() {
     setErr(next);
     if (Object.keys(next).length) return;
 
-    const baru = buatTiket({
-      pengirim: user?.nama ?? "Pengguna",
-      peran: user ? LABEL_ROLE[user.role] : "-",
-      subjek: form.subjek.trim(),
-      kategori: form.kategori,
-      pesan: form.pesan.trim(),
-    });
-    toast.success(`Pesan terkirim — tiket ${baru.nomor}`);
-    setForm({ subjek: "", kategori: "", pesan: "" });
+    void (async () => {
+      const baru = await buatTiket({
+        pengirim: user?.nama ?? "Pengguna",
+        peran: user ? LABEL_ROLE[user.role] : "-",
+        subjek: form.subjek.trim(),
+        kategori: form.kategori,
+        pesan: form.pesan.trim(),
+      });
+      toast.success(`Pesan terkirim — tiket ${baru.nomor}`);
+      setForm({ subjek: "", kategori: "", pesan: "" });
+    })();
   };
 
   return (

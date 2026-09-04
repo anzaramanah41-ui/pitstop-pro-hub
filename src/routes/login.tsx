@@ -57,8 +57,8 @@ function LoginPage() {
     if (ee || ep) return;
 
     setLoading(true);
-    setTimeout(() => {
-      const sesi = masuk(email, password);
+    void (async () => {
+      const sesi = await masuk(email, password);
       if (!sesi) {
         setLoading(false);
         setError("Email atau password salah. Silakan coba lagi.");
@@ -66,7 +66,7 @@ function LoginPage() {
       }
       toast.success(`Berhasil masuk sebagai ${LABEL_ROLE[sesi.role]}`);
       navigate({ to: HOME_ROLE[sesi.role], replace: true });
-    }, 500);
+    })();
   };
 
   return (

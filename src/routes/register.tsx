@@ -65,8 +65,8 @@ function RegisterPage() {
     if (Object.keys(next).length) return;
 
     setLoading(true);
-    setTimeout(() => {
-      const hasil = daftar({ nama, email, telepon, password });
+    void (async () => {
+      const hasil = await daftar({ nama, email, telepon, password });
       setLoading(false);
       if (!hasil.ok) {
         setError(hasil.error);
@@ -74,7 +74,7 @@ function RegisterPage() {
       }
       setSukses(true);
       toast.success("Akun berhasil dibuat.");
-    }, 600);
+    })();
   };
 
   if (sukses) {
