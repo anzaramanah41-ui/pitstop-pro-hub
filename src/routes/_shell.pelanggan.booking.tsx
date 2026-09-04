@@ -59,9 +59,11 @@ function BookingPelanggan() {
     setErr(next);
     if (Object.keys(next).length) return;
 
-    const baru = buatBooking({ ...form, pelanggan: nama });
-    toast.success(`Booking ${baru.nomor} dibuat — menunggu konfirmasi admin`);
-    setForm(kosong);
+    void (async () => {
+      const baru = await buatBooking({ ...form, pelanggan: nama });
+      toast.success(`Booking ${baru.nomor} dibuat — menunggu konfirmasi admin`);
+      setForm(kosong);
+    })();
   };
 
   const milikSaya = booking.filter((b) => b.pelanggan === nama);

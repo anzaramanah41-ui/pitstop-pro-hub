@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard,
   CalendarPlus,
@@ -153,20 +154,7 @@ export function bolehAkses(role: Role, pathname: string) {
   return IZIN_ROLE[role].some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 
-const KEY = "appbenk.session";
-const KEY_AKUN = "appbenk.akun";
-
-type AkunTersimpan = SessionUser & { password: string };
-
-function bacaAkun(): AkunTersimpan[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(KEY_AKUN);
-    return raw ? (JSON.parse(raw) as AkunTersimpan[]) : [];
-  } catch {
-    return [];
-  }
-}
+const KEY_PREMIUM = "appbenk.premium";
 
 export function inisialDari(nama: string) {
   return nama
@@ -177,91 +165,160 @@ export function inisialDari(nama: string) {
     .join("");
 }
 
+type HasilDaftar = { ok: true } | { ok: false; error: string };
+
 type AuthCtx = {
   user: SessionUser | null;
-  masuk: (email: string, password: string) => SessionUser | null;
-  daftar: (input: { nama: string; email: string; telepon: string; password: string }) =>
-    | { ok: true }
-    | { ok: false; error: string };
-  keluar: () => void;
+  memuat: boolean;
+  masuk: (email: string, password: string) => Promise<SessionUser | null>;
+  daftar: (input: { nama: string; email: string; telepon: string; password: string }) => Promise<HasilDaftar>;
+  keluar: () => Promise<void>;
   aktifkanPremium: () => void;
 };
 
 const Ctx = createContext<AuthCtx | null>(null);
 
+function bacaPremium(email: string) {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = window.localStorage.getItem(KEY_PREMIUM);
+    return raw ? (JSON.parse(raw) as string[]).includes(email) : false;
+  } catch {
+    return false;
+  }
+}
+
+function simpanPremium(email: string) {
+  try {
+    const raw = window.localStorage.getItem(KEY_PREMIUM);
+    const list = raw ? (JSON.parse(raw) as string[]) : [];
+    if (!list.includes(email)) window.localStorage.setItem(KEY_PREMIUM, JSON.stringify([...list, email]));
+  } catch {
+    /* abaikan */
+  }
+}
+
+/** Ambil profil + peran dari database untuk user yang sedang login. */
+async function ambilSesi(userId: string, email: string): Promise<SessionUser | null> {
+  const [{ data: profil }, { data: peran }, { data: pelanggan }] = await Promise.all([
+    supabase.from("profiles").select("full_name, phone, role").eq("id", userId).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", userId),
+    supabase.from("customers").select("nama").eq("profile_id", userId).maybeSingle(),
+  ]);
+
+  const daftarPeran = (peran ?? []).map((r) => r.role as Role);
+  const role: Role = daftarPeran.includes("owner")
+    ? "owner"
+    : daftarPeran.includes("admin")
+      ? "admin"
+      : daftarPeran.includes("pelanggan")
+        ? "pelanggan"
+        : ((profil?.role as Role) ?? "pelanggan");
+
+  const nama = profil?.full_name?.trim() || email.split("@")[0] || "Pengguna";
+  const sesi: SessionUser = {
+    email,
+    nama,
+    role,
+    inisial: inisialDari(nama) || "PL",
+    premium: bacaPremium(email),
+  };
+  if (role === "pelanggan") sesi.pelanggan = pelanggan?.nama ?? nama;
+  if (profil?.phone) sesi.telepon = profil.phone;
+  return sesi;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<SessionUser | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const raw = window.localStorage.getItem(KEY);
-      return raw ? (JSON.parse(raw) as SessionUser) : null;
-    } catch {
+  const [user, setUser] = useState<SessionUser | null>(null);
+  const [memuat, setMemuat] = useState(true);
+
+  const sinkron = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    const s = data.session;
+    if (!s?.user?.email) {
+      setUser(null);
+      setMemuat(false);
       return null;
     }
-  });
+    const sesi = await ambilSesi(s.user.id, s.user.email);
+    setUser(sesi);
+    setMemuat(false);
+    return sesi;
+  }, []);
+
+  useEffect(() => {
+    void sinkron();
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") void sinkron();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [sinkron]);
 
   const value = useMemo<AuthCtx>(
     () => ({
       user,
-      masuk: (email, password) => {
-        const semua: AkunTersimpan[] = [...AKUN_DEMO, ...bacaAkun()];
-        const found = semua.find(
-          (a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password,
-        );
-        if (!found) return null;
-        const { password: _pw, ...session } = found;
-        setUser(session);
-        try {
-          window.localStorage.setItem(KEY, JSON.stringify(session));
-        } catch {
-          /* abaikan */
-        }
-        return session;
+      memuat,
+      masuk: async (email, password) => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+        if (error || !data.user?.email) return null;
+        return await sinkron();
       },
-      daftar: ({ nama, email, telepon, password }) => {
+      daftar: async ({ nama, email, telepon, password }) => {
         const surel = email.trim().toLowerCase();
-        const sudahAda =
-          AKUN_DEMO.some((a) => a.email.toLowerCase() === surel) ||
-          bacaAkun().some((a) => a.email.toLowerCase() === surel);
-        if (sudahAda) return { ok: false, error: "Email sudah terdaftar. Silakan login." };
-        const akun: AkunTersimpan = {
+        const { data, error } = await supabase.auth.signUp({
           email: surel,
           password,
-          nama: nama.trim(),
-          telepon: telepon.trim(),
-          role: "pelanggan",
-          inisial: inisialDari(nama) || "PL",
-          pelanggan: nama.trim(),
-          premium: false,
-        };
-        try {
-          window.localStorage.setItem(KEY_AKUN, JSON.stringify([...bacaAkun(), akun]));
-        } catch {
-          /* abaikan */
+          options: { data: { full_name: nama.trim(), phone: telepon.trim() } },
+        });
+        if (error) {
+          const pesan = /already registered|already been registered|User already/i.test(error.message)
+            ? "Email sudah terdaftar. Silakan login."
+            : error.message;
+          return { ok: false, error: pesan };
+        }
+        const uid = data.user?.id;
+        if (uid && data.session) {
+          await supabase.from("profiles").upsert({
+            id: uid,
+            full_name: nama.trim(),
+            email: surel,
+            phone: telepon.trim(),
+            role: "pelanggan",
+          });
+          await supabase.from("user_roles").insert({ user_id: uid, role: "pelanggan" });
+          const { data: adaPelanggan } = await supabase
+            .from("customers")
+            .select("id")
+            .eq("profile_id", uid)
+            .maybeSingle();
+          if (!adaPelanggan) {
+            await supabase.from("customers").insert({
+              profile_id: uid,
+              nama: nama.trim(),
+              email: surel,
+              telepon: telepon.trim(),
+            });
+          }
+          await supabase.auth.signOut();
+          setUser(null);
         }
         return { ok: true };
       },
-      keluar: () => {
+      keluar: async () => {
+        await supabase.auth.signOut();
         setUser(null);
-        try {
-          window.localStorage.removeItem(KEY);
-        } catch {
-          /* abaikan */
-        }
       },
       aktifkanPremium: () =>
         setUser((u) => {
           if (!u) return u;
-          const next = { ...u, premium: true };
-          try {
-            window.localStorage.setItem(KEY, JSON.stringify(next));
-          } catch {
-            /* abaikan */
-          }
-          return next;
+          simpanPremium(u.email);
+          return { ...u, premium: true };
         }),
     }),
-    [user],
+    [user, memuat, sinkron],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
