@@ -13,7 +13,7 @@ import { NumberInput } from "@/components/number-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useStore, rupiah, KATEGORI_PART, SATUAN_PART, statusStok, tanggalPanjang, type Sparepart } from "@/lib/store";
+import { useStore, rupiah, SATUAN_PART, statusStok, tanggalPanjang, type Sparepart } from "@/lib/store";
 
 export const Route = createFileRoute("/_shell/admin/sparepart")({
   head: () => ({
@@ -27,12 +27,11 @@ export const Route = createFileRoute("/_shell/admin/sparepart")({
   component: SparepartAdmin,
 });
 
-const kosong = { kode: "", nama: "", kategori: KATEGORI_PART[0]!, satuan: SATUAN_PART[0]!, harga: 0, stok: 0, stokMinimum: 5 };
+const kosong = { nama: "", satuan: SATUAN_PART[0]!, harga: 0, stok: 0, stokMinimum: 5, deskripsi: "" };
 
 function SparepartAdmin() {
   const { sparepart, simpanSparepart, hapusSparepart } = useStore();
   const [q, setQ] = useState("");
-  const [kat, setKat] = useState("semua");
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Sparepart | null>(null);
   const [form, setForm] = useState(kosong);
@@ -40,10 +39,8 @@ function SparepartAdmin() {
 
   const data = useMemo(() => {
     const s = q.toLowerCase();
-    return sparepart
-      .filter((p) => kat === "semua" || p.kategori === kat)
-      .filter((p) => p.nama.toLowerCase().includes(s) || p.kategori.toLowerCase().includes(s));
-  }, [sparepart, q, kat]);
+    return sparepart.filter((p) => p.nama.toLowerCase().includes(s) || p.deskripsi.toLowerCase().includes(s));
+  }, [sparepart, q]);
 
   const simpan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +48,7 @@ function SparepartAdmin() {
       toast.error("Nama dan harga wajib diisi dengan benar.");
       return;
     }
-    simpanSparepart(edit ? { ...form, id: edit.id } : form);
+    void simpanSparepart(edit ? { ...form, id: edit.id } : form);
     toast.success(edit ? "Sparepart diperbarui" : "Sparepart ditambahkan");
     setOpen(false);
   };
@@ -72,15 +69,6 @@ function SparepartAdmin() {
         <CardContent className="space-y-4 p-4">
           <div className="flex flex-wrap items-center gap-3">
             <SearchBar value={q} onChange={setQ} placeholder="Cari nama sparepart..." />
-            <Select value={kat} onValueChange={setKat}>
-              <SelectTrigger className="w-52 bg-card"><SelectValue placeholder="Kategori" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="semua">Semua kategori</SelectItem>
-                {KATEGORI_PART.map((k) => (
-                  <SelectItem key={k} value={k}>{k}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           {data.length === 0 ? (
@@ -90,9 +78,8 @@ function SparepartAdmin() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Kode</TableHead>
                     <TableHead>Nama Sparepart</TableHead>
-                    <TableHead>Kategori</TableHead>
+                    <TableHead>Deskripsi</TableHead>
                     <TableHead>Satuan</TableHead>
                     <TableHead className="text-right">Harga</TableHead>
                     <TableHead className="text-right">Stok</TableHead>
@@ -104,9 +91,8 @@ function SparepartAdmin() {
                 <TableBody>
                   {data.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell className="text-muted-foreground">{p.kode}</TableCell>
                       <TableCell className="font-medium">{p.nama}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.kategori}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.deskripsi || "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{p.satuan}</TableCell>
                       <TableCell className="text-right font-semibold">{rupiah(p.harga)}</TableCell>
                       <TableCell className="text-right">
@@ -159,20 +145,9 @@ function SparepartAdmin() {
               <Label>Nama Sparepart</Label>
               <Input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
-              <Label>Kategori</Label>
-              <Select value={form.kategori} onValueChange={(v) => setForm({ ...form, kategori: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {KATEGORI_PART.map((k) => (
-                    <SelectItem key={k} value={k}>{k}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Kode</Label>
-              <Input value={form.kode} onChange={(e) => setForm({ ...form, kode: e.target.value })} placeholder="SP-009" />
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Deskripsi</Label>
+              <Input value={form.deskripsi} onChange={(e) => setForm({ ...form, deskripsi: e.target.value })} placeholder="Keterangan singkat (opsional)" />
             </div>
             <div className="space-y-1.5">
               <Label>Harga</Label>
@@ -210,7 +185,7 @@ function SparepartAdmin() {
         onOpenChange={(v) => !v && setHapus(null)}
         title={`Hapus ${hapus?.nama}?`}
         onConfirm={() => {
-          if (hapus) hapusSparepart(hapus.id);
+          if (hapus) void hapusSparepart(hapus.id);
           setHapus(null);
           toast.success("Sparepart dihapus");
         }}

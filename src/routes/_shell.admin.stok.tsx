@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_shell/admin/stok")({
 function StokAdmin() {
   const { sparepart, pembelian, riwayatStok, penggunaan, catatPembelian } = useStore();
   const namaPart = useMemo(
-    () => new Map(sparepart.map((s) => [s.id, `${s.kode} · ${s.nama}`])),
+    () => new Map(sparepart.map((s) => [s.id, s.nama])),
     [sparepart],
   );
 
@@ -49,7 +49,7 @@ function StokAdmin() {
       toast.error("Lengkapi sparepart, supplier, jumlah, dan harga beli.");
       return;
     }
-    catatPembelian(form);
+    void catatPembelian(form);
     toast.success("Pembelian dicatat, stok bertambah");
     setForm({ ...kosong, tanggal: form.tanggal });
   };
@@ -80,7 +80,7 @@ function StokAdmin() {
                     <SelectTrigger><SelectValue placeholder="Pilih sparepart" /></SelectTrigger>
                     <SelectContent>
                       {sparepart.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.kode} · {s.nama}</SelectItem>
+                        <SelectItem key={s.id} value={s.id}>{s.nama}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

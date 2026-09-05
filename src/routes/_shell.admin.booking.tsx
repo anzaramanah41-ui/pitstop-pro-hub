@@ -57,7 +57,7 @@ function BookingAdmin() {
       setErrAlasan("Alasan penolakan wajib diisi.");
       return;
     }
-    ubahStatusBooking(tolak.id, "Ditolak", alasan.trim());
+    void ubahStatusBooking(tolak.id, "Ditolak", alasan.trim());
     if (detail?.id === tolak.id) setDetail({ ...detail, status: "Ditolak", alasanTolak: alasan.trim() });
     toast.info(`Booking ${tolak.nomor} ditolak`);
     setTolak(null);
@@ -127,7 +127,7 @@ function BookingAdmin() {
                             aria-label="Terima booking"
                             disabled={b.status === "Diterima"}
                             onClick={() => {
-                              ubahStatusBooking(b.id, "Diterima");
+                              void ubahStatusBooking(b.id, "Diterima");
                               toast.success(`Booking ${b.nomor} diterima`);
                             }}
                           >
@@ -189,7 +189,7 @@ function BookingAdmin() {
                 <Select
                   value={detail.mekanikDitugaskan ?? ""}
                   onValueChange={(v) => {
-                    tugaskanMekanikBooking(detail.id, v);
+                    void tugaskanMekanikBooking(detail.id, v);
                     setDetail({ ...detail, mekanikDitugaskan: v });
                     toast.success(`Mekanik ${v} ditugaskan`);
                   }}
@@ -213,7 +213,7 @@ function BookingAdmin() {
                       bukaTolak(detail);
                       return;
                     }
-                    ubahStatusBooking(detail.id, status);
+                    void ubahStatusBooking(detail.id, status);
                     setDetail({ ...detail, status });
                     toast.success(`Status booking diperbarui: ${status}`);
                   }}

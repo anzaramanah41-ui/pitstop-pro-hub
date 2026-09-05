@@ -239,7 +239,8 @@ const nomorBerikut = (list: { nomor: string }[], prefix: string, mulai: number) 
 };
 
 // ============ MAPPER ============
-type Row = Record<string, any>;
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type Row = any;
 
 const keServis = (r: Row, items: ItemPart[]): Servis => ({
   id: r.id,
