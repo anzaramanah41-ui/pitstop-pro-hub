@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useStore, rupiah, KATEGORI_PART } from "@/lib/store";
+import { useStore, rupiah } from "@/lib/store";
 
 export const Route = createFileRoute("/_shell/owner/sparepart")({
   head: () => ({
@@ -23,7 +23,7 @@ function LaporanSparepartOwner() {
   const { sparepart } = useStore();
   const [kat, setKat] = useState("semua");
 
-  const data = useMemo(() => sparepart.filter((p) => kat === "semua" || p.kategori === kat), [sparepart, kat]);
+  const data = sparepart;
   const nilaiStok = data.reduce((a, p) => a + p.harga * p.stok, 0);
   const nilaiTerpakai = data.reduce((a, p) => a + p.harga * p.terpakai, 0);
   const menipis = sparepart.filter((p) => p.stok <= 5);
@@ -34,15 +34,6 @@ function LaporanSparepartOwner() {
         title="Laporan Sparepart"
         description="Pergerakan stok dan nilai persediaan bengkel."
         action={
-          <Select value={kat} onValueChange={setKat}>
-            <SelectTrigger className="w-52 bg-card"><SelectValue placeholder="Kategori" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="semua">Semua kategori</SelectItem>
-              {KATEGORI_PART.map((k) => (
-                <SelectItem key={k} value={k}>{k}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         }
       />
 
@@ -90,9 +81,9 @@ function LaporanSparepartOwner() {
               <TableBody>
                 {data.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell className="text-muted-foreground">{p.kode}</TableCell>
+
                     <TableCell className="font-medium">{p.nama}</TableCell>
-                    <TableCell className="text-muted-foreground">{p.kategori}</TableCell>
+
                     <TableCell className="text-right">{rupiah(p.harga)}</TableCell>
                     <TableCell className="text-right">{p.terpakai}</TableCell>
                     <TableCell className="text-right">

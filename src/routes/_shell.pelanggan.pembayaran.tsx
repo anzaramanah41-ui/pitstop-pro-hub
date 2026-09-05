@@ -58,7 +58,7 @@ function PembayaranPelanggan() {
   const lunas = detail?.status === "Selesai Dibayar";
 
   const konfirmasi = (s: Servis) => {
-    bayarServis(s.id, metode);
+    void bayarServis(s.id, metode);
     setSukses(true);
     toast.success(`Pembayaran ${s.noTransaksi} berhasil (mock)`);
   };
@@ -156,7 +156,6 @@ function PembayaranPelanggan() {
                     <TableRow key={i.sparepartId}>
                       <TableCell>
                         <span className="block font-medium">{i.nama}</span>
-                        <span className="block text-xs text-muted-foreground">{i.kode}</span>
                       </TableCell>
                       <TableCell className="text-center">{i.jumlah}</TableCell>
                       <TableCell className="text-right">{rupiah(i.harga)}</TableCell>

@@ -11,7 +11,7 @@ const info = (label: string, nilai?: string) =>
 export function notaHtml(s: Servis, p?: Pelanggan) {
   const parts = s.items
     .map(
-      (i) => `<tr><td>${esc(i.nama)}<div class="sub">${esc(i.kode)}</div></td>
+      (i) => `<tr><td>${esc(i.nama)}</td>
         <td class="c">${i.jumlah}</td><td class="r">${rupiah(i.harga)}</td><td class="r">${rupiah(i.harga * i.jumlah)}</td></tr>`,
     )
     .join("");

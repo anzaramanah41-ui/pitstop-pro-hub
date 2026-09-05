@@ -112,7 +112,7 @@ function ServisAdmin() {
       }
       return {
         ...f,
-        items: [...f.items, { sparepartId: sp.id, kode: sp.kode, nama: sp.nama, harga: sp.harga, jumlah: 1 }],
+        items: [...f.items, { sparepartId: sp.id, nama: sp.nama, harga: sp.harga, jumlah: 1 }],
       };
     });
     setPilihPart("");
@@ -134,7 +134,7 @@ function ServisAdmin() {
       toast.error("Pelanggan, kendaraan, dan keluhan wajib diisi.");
       return;
     }
-    simpanServis(edit ? { ...form, id: edit.id } : form);
+    void simpanServis(edit ? { ...form, id: edit.id } : form);
     toast.success(edit ? "Data servis diperbarui" : "Servis baru dibuat");
     setOpen(false);
   };
@@ -203,7 +203,7 @@ function ServisAdmin() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Select value={s.status} onValueChange={(v) => { ubahStatusServis(s.id, v as StatusServis); toast.success(`Status ${s.nomor}: ${v}`); }}>
+                        <Select value={s.status} onValueChange={(v) => { void ubahStatusServis(s.id, v as StatusServis); toast.success(`Status ${s.nomor}: ${v}`); }}>
                           <SelectTrigger className="h-8 w-48 bg-card text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {URUTAN_STATUS.map((st) => (
@@ -308,7 +308,7 @@ function ServisAdmin() {
                 <SelectContent>
                   {sparepart.map((sp) => (
                     <SelectItem key={sp.id} value={sp.id}>
-                      {sp.kode} · {sp.nama} — {rupiah(sp.harga)} (stok {sp.stok})
+                      {sp.nama} — {rupiah(sp.harga)} (stok {sp.stok})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -340,7 +340,7 @@ function ServisAdmin() {
                             <TableCell>
                               <span className="block text-sm font-medium">{i.nama}</span>
                               <span className="block text-xs text-muted-foreground">
-                                {i.kode} · stok {sp?.stok ?? 0} → {stokSetelah}
+                                stok {sp?.stok ?? 0} → {stokSetelah}
                               </span>
                             </TableCell>
                             <TableCell className="whitespace-nowrap text-right">{rupiah(i.harga)}</TableCell>
@@ -423,7 +423,7 @@ function ServisAdmin() {
         onOpenChange={(v) => !v && setHapus(null)}
         title={`Hapus servis ${hapus?.nomor}?`}
         onConfirm={() => {
-          if (hapus) hapusServis(hapus.id);
+          if (hapus) void hapusServis(hapus.id);
           setHapus(null);
           toast.success("Data servis dihapus");
         }}

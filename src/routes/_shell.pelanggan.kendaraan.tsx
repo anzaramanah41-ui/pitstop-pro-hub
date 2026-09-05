@@ -47,7 +47,7 @@ function KendaraanPelanggan() {
       toast.error("Merk, tipe, dan nomor polisi wajib diisi.");
       return;
     }
-    simpanKendaraan(edit ? { ...form, pelangganId: profil.id, id: edit.id } : { ...form, pelangganId: profil.id });
+    void simpanKendaraan(edit ? { ...form, pelangganId: profil.id, id: edit.id } : { ...form, pelangganId: profil.id });
     toast.success(edit ? "Kendaraan diperbarui" : "Kendaraan ditambahkan");
     setOpen(false);
   };
@@ -147,7 +147,7 @@ function KendaraanPelanggan() {
         onOpenChange={(v) => !v && setHapus(null)}
         title={`Hapus kendaraan ${hapus?.plat}?`}
         onConfirm={() => {
-          if (hapus) hapusKendaraan(hapus.id);
+          if (hapus) void hapusKendaraan(hapus.id);
           setHapus(null);
           toast.success("Kendaraan dihapus");
         }}
