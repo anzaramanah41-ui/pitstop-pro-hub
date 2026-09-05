@@ -21,7 +21,6 @@ export const Route = createFileRoute("/_shell/owner/sparepart")({
 
 function LaporanSparepartOwner() {
   const { sparepart } = useStore();
-  const [kat, setKat] = useState("semua");
 
   const data = sparepart;
   const nilaiStok = data.reduce((a, p) => a + p.harga * p.stok, 0);
@@ -33,8 +32,6 @@ function LaporanSparepartOwner() {
       <PageHeader
         title="Laporan Sparepart"
         description="Pergerakan stok dan nilai persediaan bengkel."
-        action={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
