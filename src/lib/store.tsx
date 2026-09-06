@@ -133,6 +133,8 @@ export type Booking = {
 
 export type Sparepart = {
   id: string;
+  /** Kode otomatis berurutan dari database, contoh SP-001. */
+  kode: string;
   nama: string;
   satuan: string;
   harga: number;
