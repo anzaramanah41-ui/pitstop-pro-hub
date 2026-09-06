@@ -560,9 +560,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           kendaraan: p.kendaraan,
           plat: p.plat,
         };
-        if (p.id) await supabase.from("customers").update(payload).eq("id", p.id);
-        else await supabase.from("customers").insert(payload);
+        const q = p.id
+          ? supabase.from("customers").update(payload).eq("id", p.id)
+          : supabase.from("customers").insert(payload);
+        const { data } = await q.select("*").maybeSingle();
         await muatUlang();
+        return data
+          ? {
+              id: (data as Row).id,
+              profileId: (data as Row).profile_id,
+              nama: (data as Row).nama,
+              email: (data as Row).email ?? "",
+              telepon: (data as Row).telepon ?? "",
+              alamat: (data as Row).alamat ?? "",
+              kendaraan: (data as Row).kendaraan ?? "",
+              plat: (data as Row).plat ?? "",
+            }
+          : null;
       },
       hapusPelanggan: async (id) => {
         await supabase.from("customers").delete().eq("id", id);
@@ -577,9 +591,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           plat: k.plat,
           kilometer: k.kilometer,
         };
-        if (k.id) await supabase.from("vehicles").update(payload).eq("id", k.id);
-        else await supabase.from("vehicles").insert(payload);
+        const q = k.id
+          ? supabase.from("vehicles").update(payload).eq("id", k.id)
+          : supabase.from("vehicles").insert(payload);
+        const { data } = await q.select("*").maybeSingle();
         await muatUlang();
+        return data
+          ? {
+              id: (data as Row).id,
+              pelangganId: (data as Row).customer_id,
+              merk: (data as Row).merk,
+              tipe: (data as Row).tipe,
+              tahun: (data as Row).tahun,
+              plat: (data as Row).plat ?? "",
+              kilometer: (data as Row).kilometer ?? 0,
+            }
+          : null;
       },
       hapusKendaraan: async (id) => {
         await supabase.from("vehicles").delete().eq("id", id);
