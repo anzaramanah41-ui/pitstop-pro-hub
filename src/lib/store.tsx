@@ -322,22 +322,24 @@ type Store = {
   pembelian: PembelianSparepart[];
   penggunaan: PenggunaanSparepart[];
   tiket: Tiket[];
-  simpanPelanggan: (p: Omit<Pelanggan, "id"> & { id?: string }) => Promise<void>;
+  simpanPelanggan: (p: Omit<Pelanggan, "id"> & { id?: string }) => Promise<Pelanggan | null>;
   hapusPelanggan: (id: string) => Promise<void>;
-  simpanKendaraan: (k: Omit<Kendaraan, "id"> & { id?: string }) => Promise<void>;
+  simpanKendaraan: (k: Omit<Kendaraan, "id"> & { id?: string }) => Promise<Kendaraan | null>;
   hapusKendaraan: (id: string) => Promise<void>;
   simpanServis: (
     s: Omit<Servis, "id" | "nomor" | "total" | "noTransaksi" | "biayaPart" | "sparepart"> & { id?: string },
-  ) => Promise<void>;
+  ) => Promise<{ ok: boolean; error?: string }>;
   ubahStatusServis: (id: string, status: StatusServis) => Promise<void>;
   hapusServis: (id: string) => Promise<void>;
-  simpanSparepart: (s: Omit<Sparepart, "id" | "terpakai" | "tanggalUpdate"> & { id?: string; terpakai?: number }) => Promise<void>;
+  simpanSparepart: (s: Omit<Sparepart, "id" | "kode" | "terpakai" | "tanggalUpdate"> & { id?: string; terpakai?: number }) => Promise<void>;
   hapusSparepart: (id: string) => Promise<void>;
   catatPembelian: (p: Omit<PembelianSparepart, "id" | "nomor" | "total" | "status">) => Promise<void>;
   buatBooking: (b: Omit<Booking, "id" | "nomor" | "status">) => Promise<Booking>;
   ubahStatusBooking: (id: string, status: StatusBooking, alasan?: string) => Promise<void>;
   tugaskanMekanikBooking: (id: string, mekanik: string) => Promise<void>;
   bayarServis: (id: string, metode?: MetodeBayar) => Promise<void>;
+  verifikasiPembayaran: (id: string) => Promise<void>;
+  tolakPembayaran: (id: string, alasan: string) => Promise<void>;
   buatTiket: (t: Omit<Tiket, "id" | "nomor" | "status" | "tanggal">) => Promise<Tiket>;
 };
 
