@@ -141,6 +141,7 @@ export type Database = {
       }
       payments: {
         Row: {
+          alasan_tolak: string | null
           bukti_url: string | null
           created_at: string
           customer_id: string | null
@@ -154,6 +155,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          alasan_tolak?: string | null
           bukti_url?: string | null
           created_at?: string
           customer_id?: string | null
@@ -167,6 +169,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          alasan_tolak?: string | null
           bukti_url?: string | null
           created_at?: string
           customer_id?: string | null
@@ -333,6 +336,7 @@ export type Database = {
           catatan: string
           created_at: string
           customer_id: string | null
+          estimasi_selesai: string | null
           estimasi_waktu: string | null
           hasil_pemeriksaan: string | null
           id: string
@@ -360,6 +364,7 @@ export type Database = {
           catatan?: string
           created_at?: string
           customer_id?: string | null
+          estimasi_selesai?: string | null
           estimasi_waktu?: string | null
           hasil_pemeriksaan?: string | null
           id?: string
@@ -387,6 +392,7 @@ export type Database = {
           catatan?: string
           created_at?: string
           customer_id?: string | null
+          estimasi_selesai?: string | null
           estimasi_waktu?: string | null
           hasil_pemeriksaan?: string | null
           id?: string
@@ -538,6 +544,7 @@ export type Database = {
           deskripsi: string
           harga: number
           id: string
+          kode: string | null
           nama: string
           satuan: string
           stok: number
@@ -550,6 +557,7 @@ export type Database = {
           deskripsi?: string
           harga?: number
           id?: string
+          kode?: string | null
           nama: string
           satuan?: string
           stok?: number
@@ -562,6 +570,7 @@ export type Database = {
           deskripsi?: string
           harga?: number
           id?: string
+          kode?: string | null
           nama?: string
           satuan?: string
           stok?: number
