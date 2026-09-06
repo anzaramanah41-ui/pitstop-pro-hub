@@ -274,6 +274,7 @@ const keServis = (r: Row, items: ItemPart[]): Servis => ({
   ...(r.metode_bayar ? { metodeBayar: r.metode_bayar as MetodeBayar } : {}),
   ...(r.hasil_pemeriksaan ? { hasilPemeriksaan: r.hasil_pemeriksaan as string } : {}),
   ...(r.estimasi_waktu ? { estimasiWaktu: r.estimasi_waktu as string } : {}),
+  ...(r.estimasi_selesai ? { estimasiSelesai: String(r.estimasi_selesai).slice(0, 16) } : {}),
 });
 
 const keBooking = (r: Row): Booking => ({
