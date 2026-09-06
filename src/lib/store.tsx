@@ -416,11 +416,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       (pay.data ?? []).map((r: Row) => ({
         id: r.id,
         servisId: r.service_id ?? "-",
+        pelangganId: r.customer_id ?? null,
         noTransaksi: r.no_transaksi ?? "",
         metode: (r.metode ?? "Cash") as MetodeBayar,
         tanggalBayar: r.tanggal_bayar ?? "",
         totalBayar: r.jumlah ?? 0,
-        status: (r.status ?? "Belum Lunas") as "Lunas" | "Belum Lunas",
+        status: (r.status ?? "Belum Lunas") as StatusBayar,
+        ...(r.bukti_url ? { buktiUrl: r.bukti_url as string } : {}),
+        ...(r.alasan_tolak ? { alasanTolak: r.alasan_tolak as string } : {}),
       })),
     );
     setEstimasi(
