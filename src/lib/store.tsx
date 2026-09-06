@@ -80,17 +80,24 @@ export type Servis = {
   estimasiBiaya?: number;
   /** Estimasi waktu pengerjaan, contoh "2 jam". */
   estimasiWaktu?: string;
+  /** Estimasi selesai (ISO datetime lokal, contoh 2026-09-10T15:00). */
+  estimasiSelesai?: string;
 };
+
+export type StatusBayar = "Belum Lunas" | "Menunggu Verifikasi" | "Lunas" | "Ditolak";
 
 /** Entitas Pembayaran / Transaksi (1 servis : 1 pembayaran). */
 export type Pembayaran = {
   id: string;
   servisId: string;
+  pelangganId?: string | null;
   noTransaksi: string;
   metode: MetodeBayar;
   tanggalBayar: string;
   totalBayar: number;
-  status: "Lunas" | "Belum Lunas";
+  status: StatusBayar;
+  buktiUrl?: string;
+  alasanTolak?: string;
 };
 
 /** Estimasi biaya servis (tabel service_estimates). */
@@ -126,6 +133,8 @@ export type Booking = {
 
 export type Sparepart = {
   id: string;
+  /** Kode otomatis berurutan dari database, contoh SP-001. */
+  kode: string;
   nama: string;
   satuan: string;
   harga: number;
@@ -265,6 +274,7 @@ const keServis = (r: Row, items: ItemPart[]): Servis => ({
   ...(r.metode_bayar ? { metodeBayar: r.metode_bayar as MetodeBayar } : {}),
   ...(r.hasil_pemeriksaan ? { hasilPemeriksaan: r.hasil_pemeriksaan as string } : {}),
   ...(r.estimasi_waktu ? { estimasiWaktu: r.estimasi_waktu as string } : {}),
+  ...(r.estimasi_selesai ? { estimasiSelesai: String(r.estimasi_selesai).slice(0, 16) } : {}),
 });
 
 const keBooking = (r: Row): Booking => ({
@@ -287,6 +297,7 @@ const keBooking = (r: Row): Booking => ({
 
 const kePart = (r: Row): Sparepart => ({
   id: r.id,
+  kode: r.kode ?? "—",
   nama: r.nama,
   satuan: r.satuan ?? "Pcs",
   harga: r.harga ?? 0,
@@ -311,22 +322,24 @@ type Store = {
   pembelian: PembelianSparepart[];
   penggunaan: PenggunaanSparepart[];
   tiket: Tiket[];
-  simpanPelanggan: (p: Omit<Pelanggan, "id"> & { id?: string }) => Promise<void>;
+  simpanPelanggan: (p: Omit<Pelanggan, "id"> & { id?: string }) => Promise<Pelanggan | null>;
   hapusPelanggan: (id: string) => Promise<void>;
-  simpanKendaraan: (k: Omit<Kendaraan, "id"> & { id?: string }) => Promise<void>;
+  simpanKendaraan: (k: Omit<Kendaraan, "id"> & { id?: string }) => Promise<Kendaraan | null>;
   hapusKendaraan: (id: string) => Promise<void>;
   simpanServis: (
     s: Omit<Servis, "id" | "nomor" | "total" | "noTransaksi" | "biayaPart" | "sparepart"> & { id?: string },
-  ) => Promise<void>;
+  ) => Promise<{ ok: boolean; error?: string }>;
   ubahStatusServis: (id: string, status: StatusServis) => Promise<void>;
   hapusServis: (id: string) => Promise<void>;
-  simpanSparepart: (s: Omit<Sparepart, "id" | "terpakai" | "tanggalUpdate"> & { id?: string; terpakai?: number }) => Promise<void>;
+  simpanSparepart: (s: Omit<Sparepart, "id" | "kode" | "terpakai" | "tanggalUpdate"> & { id?: string; terpakai?: number }) => Promise<void>;
   hapusSparepart: (id: string) => Promise<void>;
   catatPembelian: (p: Omit<PembelianSparepart, "id" | "nomor" | "total" | "status">) => Promise<void>;
   buatBooking: (b: Omit<Booking, "id" | "nomor" | "status">) => Promise<Booking>;
   ubahStatusBooking: (id: string, status: StatusBooking, alasan?: string) => Promise<void>;
   tugaskanMekanikBooking: (id: string, mekanik: string) => Promise<void>;
   bayarServis: (id: string, metode?: MetodeBayar) => Promise<void>;
+  verifikasiPembayaran: (id: string) => Promise<void>;
+  tolakPembayaran: (id: string, alasan: string) => Promise<void>;
   buatTiket: (t: Omit<Tiket, "id" | "nomor" | "status" | "tanggal">) => Promise<Tiket>;
 };
 
@@ -403,11 +416,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       (pay.data ?? []).map((r: Row) => ({
         id: r.id,
         servisId: r.service_id ?? "-",
+        pelangganId: r.customer_id ?? null,
         noTransaksi: r.no_transaksi ?? "",
         metode: (r.metode ?? "Cash") as MetodeBayar,
         tanggalBayar: r.tanggal_bayar ?? "",
         totalBayar: r.jumlah ?? 0,
-        status: (r.status ?? "Belum Lunas") as "Lunas" | "Belum Lunas",
+        status: (r.status ?? "Belum Lunas") as StatusBayar,
+        ...(r.bukti_url ? { buktiUrl: r.bukti_url as string } : {}),
+        ...(r.alasan_tolak ? { alasanTolak: r.alasan_tolak as string } : {}),
       })),
     );
     setEstimasi(
@@ -544,9 +560,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           kendaraan: p.kendaraan,
           plat: p.plat,
         };
-        if (p.id) await supabase.from("customers").update(payload).eq("id", p.id);
-        else await supabase.from("customers").insert(payload);
+        const q = p.id
+          ? supabase.from("customers").update(payload).eq("id", p.id)
+          : supabase.from("customers").insert(payload);
+        const { data } = await q.select("*").maybeSingle();
         await muatUlang();
+        return data
+          ? {
+              id: (data as Row).id,
+              profileId: (data as Row).profile_id,
+              nama: (data as Row).nama,
+              email: (data as Row).email ?? "",
+              telepon: (data as Row).telepon ?? "",
+              alamat: (data as Row).alamat ?? "",
+              kendaraan: (data as Row).kendaraan ?? "",
+              plat: (data as Row).plat ?? "",
+            }
+          : null;
       },
       hapusPelanggan: async (id) => {
         await supabase.from("customers").delete().eq("id", id);
@@ -561,9 +591,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           plat: k.plat,
           kilometer: k.kilometer,
         };
-        if (k.id) await supabase.from("vehicles").update(payload).eq("id", k.id);
-        else await supabase.from("vehicles").insert(payload);
+        const q = k.id
+          ? supabase.from("vehicles").update(payload).eq("id", k.id)
+          : supabase.from("vehicles").insert(payload);
+        const { data } = await q.select("*").maybeSingle();
         await muatUlang();
+        return data
+          ? {
+              id: (data as Row).id,
+              pelangganId: (data as Row).customer_id,
+              merk: (data as Row).merk,
+              tipe: (data as Row).tipe,
+              tahun: (data as Row).tahun,
+              plat: (data as Row).plat ?? "",
+              kilometer: (data as Row).kilometer ?? 0,
+            }
+          : null;
       },
       hapusKendaraan: async (id) => {
         await supabase.from("vehicles").delete().eq("id", id);
@@ -573,11 +616,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       simpanServis: async (s) => {
         const items = s.items ?? [];
         const lamaServis = s.id ? servis.find((x) => x.id === s.id) : undefined;
+
+        // Validasi stok: pemakaian tambahan tidak boleh melebihi stok tersedia.
+        for (const i of items) {
+          if (!i.sparepartId) continue;
+          const sp = sparepart.find((x) => x.id === i.sparepartId);
+          if (!sp) continue;
+          const dipakaiAwal = lamaServis?.items.find((o) => o.sparepartId === i.sparepartId)?.jumlah ?? 0;
+          if (i.jumlah - dipakaiAwal > sp.stok) {
+            return { ok: false, error: `Stok sparepart tidak mencukupi (${sp.nama}, sisa ${sp.stok}).` };
+          }
+        }
+
         const biayaPart = totalItem(items);
         const total = s.biayaJasa + biayaPart;
         const tgl = s.tanggal || hariIni();
         const nomor = lamaServis?.nomor ?? nomorBerikut(servis, "SRV-2026", 149);
-        const pelangganRow = pelanggan.find((p) => p.nama === s.pelanggan);
+        const pelangganRow =
+          pelanggan.find((p) => p.id === s.pelangganId) ?? pelanggan.find((p) => p.nama === s.pelanggan);
         const payload: Row = {
           nomor,
           customer_id: pelangganRow?.id ?? null,
@@ -593,6 +649,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           catatan: s.catatan ?? "",
           hasil_pemeriksaan: s.hasilPemeriksaan ?? null,
           estimasi_waktu: s.estimasiWaktu ?? null,
+          estimasi_selesai: s.estimasiSelesai ? new Date(s.estimasiSelesai).toISOString() : null,
           sparepart_ringkas: ringkasanItem(items),
           biaya_jasa: s.biayaJasa,
           biaya_part: biayaPart,
@@ -602,15 +659,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
         let servisId = s.id ?? "";
         if (s.id) {
-          await supabase.from("service_orders").update(payload).eq("id", s.id);
+          const { error } = await supabase.from("service_orders").update(payload).eq("id", s.id);
+          if (error) return { ok: false, error: error.message };
         } else {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from("service_orders")
             .insert({ ...payload, no_transaksi: nomor.replace("SRV", "TRX") })
             .select("id")
             .single();
+          if (error) return { ok: false, error: error.message };
           servisId = data?.id ?? "";
         }
+
 
         if (servisId) {
           await supabase.from("service_items").delete().eq("service_id", servisId);
