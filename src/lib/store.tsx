@@ -80,17 +80,24 @@ export type Servis = {
   estimasiBiaya?: number;
   /** Estimasi waktu pengerjaan, contoh "2 jam". */
   estimasiWaktu?: string;
+  /** Estimasi selesai (ISO datetime lokal, contoh 2026-09-10T15:00). */
+  estimasiSelesai?: string;
 };
+
+export type StatusBayar = "Belum Lunas" | "Menunggu Verifikasi" | "Lunas" | "Ditolak";
 
 /** Entitas Pembayaran / Transaksi (1 servis : 1 pembayaran). */
 export type Pembayaran = {
   id: string;
   servisId: string;
+  pelangganId?: string | null;
   noTransaksi: string;
   metode: MetodeBayar;
   tanggalBayar: string;
   totalBayar: number;
-  status: "Lunas" | "Belum Lunas";
+  status: StatusBayar;
+  buktiUrl?: string;
+  alasanTolak?: string;
 };
 
 /** Estimasi biaya servis (tabel service_estimates). */
