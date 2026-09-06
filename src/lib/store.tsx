@@ -616,11 +616,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       simpanServis: async (s) => {
         const items = s.items ?? [];
         const lamaServis = s.id ? servis.find((x) => x.id === s.id) : undefined;
+
+        // Validasi stok: pemakaian tambahan tidak boleh melebihi stok tersedia.
+        for (const i of items) {
+          if (!i.sparepartId) continue;
+          const sp = sparepart.find((x) => x.id === i.sparepartId);
+          if (!sp) continue;
+          const dipakaiAwal = lamaServis?.items.find((o) => o.sparepartId === i.sparepartId)?.jumlah ?? 0;
+          if (i.jumlah - dipakaiAwal > sp.stok) {
+            return { ok: false, error: `Stok sparepart tidak mencukupi (${sp.nama}, sisa ${sp.stok}).` };
+          }
+        }
+
         const biayaPart = totalItem(items);
         const total = s.biayaJasa + biayaPart;
         const tgl = s.tanggal || hariIni();
         const nomor = lamaServis?.nomor ?? nomorBerikut(servis, "SRV-2026", 149);
-        const pelangganRow = pelanggan.find((p) => p.nama === s.pelanggan);
+        const pelangganRow =
+          pelanggan.find((p) => p.id === s.pelangganId) ?? pelanggan.find((p) => p.nama === s.pelanggan);
         const payload: Row = {
           nomor,
           customer_id: pelangganRow?.id ?? null,
@@ -636,6 +649,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           catatan: s.catatan ?? "",
           hasil_pemeriksaan: s.hasilPemeriksaan ?? null,
           estimasi_waktu: s.estimasiWaktu ?? null,
+          estimasi_selesai: s.estimasiSelesai ? new Date(s.estimasiSelesai).toISOString() : null,
           sparepart_ringkas: ringkasanItem(items),
           biaya_jasa: s.biayaJasa,
           biaya_part: biayaPart,
@@ -645,15 +659,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
         let servisId = s.id ?? "";
         if (s.id) {
-          await supabase.from("service_orders").update(payload).eq("id", s.id);
+          const { error } = await supabase.from("service_orders").update(payload).eq("id", s.id);
+          if (error) return { ok: false, error: error.message };
         } else {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from("service_orders")
             .insert({ ...payload, no_transaksi: nomor.replace("SRV", "TRX") })
             .select("id")
             .single();
+          if (error) return { ok: false, error: error.message };
           servisId = data?.id ?? "";
         }
+
 
         if (servisId) {
           await supabase.from("service_items").delete().eq("service_id", servisId);
