@@ -297,6 +297,7 @@ const keBooking = (r: Row): Booking => ({
 
 const kePart = (r: Row): Sparepart => ({
   id: r.id,
+  kode: r.kode ?? "—",
   nama: r.nama,
   satuan: r.satuan ?? "Pcs",
   harga: r.harga ?? 0,
