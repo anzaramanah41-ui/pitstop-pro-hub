@@ -839,9 +839,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       bayarServis: async (id, metode) => {
         const target = servis.find((x) => x.id === id);
         const m = metode ?? target?.metodeBayar ?? "Cash";
+        // Cash dianggap lunas di kasir; transfer/QRIS menunggu verifikasi Admin.
+        const langsungLunas = m === "Cash";
         await supabase
           .from("service_orders")
-          .update({ status: "Selesai Dibayar", metode_bayar: m })
+          .update({ status: langsungLunas ? "Selesai Dibayar" : "Selesai", metode_bayar: m })
           .eq("id", id);
         if (target) {
           await supabase.from("payments").delete().eq("service_id", id);
@@ -851,12 +853,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             no_transaksi: target.noTransaksi,
             jumlah: target.total,
             metode: m,
-            status: "Lunas",
-            tanggal_bayar: hariIni(),
+            status: langsungLunas ? "Lunas" : "Menunggu Verifikasi",
+            alasan_tolak: null,
+            ...(langsungLunas ? { tanggal_bayar: hariIni() } : {}),
           });
         }
         await muatUlang();
       },
+      verifikasiPembayaran: async (id) => {
+        const bayar = pembayaran.find((p) => p.id === id);
+        await supabase
+          .from("payments")
+          .update({ status: "Lunas", tanggal_bayar: hariIni(), alasan_tolak: null })
+          .eq("id", id);
+        if (bayar?.servisId && bayar.servisId !== "-")
+          await supabase.from("service_orders").update({ status: "Selesai Dibayar" }).eq("id", bayar.servisId);
+        await muatUlang();
+      },
+      tolakPembayaran: async (id, alasan) => {
+        const bayar = pembayaran.find((p) => p.id === id);
+        await supabase
+          .from("payments")
+          .update({ status: "Ditolak", alasan_tolak: alasan, tanggal_bayar: null })
+          .eq("id", id);
+        if (bayar?.servisId && bayar.servisId !== "-")
+          await supabase.from("service_orders").update({ status: "Selesai" }).eq("id", bayar.servisId);
+        await muatUlang();
+      },
+
 
       buatTiket: async (t) => {
         const { data: sesi } = await supabase.auth.getSession();
