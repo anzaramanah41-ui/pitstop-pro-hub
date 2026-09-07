@@ -331,20 +331,52 @@ function ServisAdmin() {
           <form onSubmit={simpan} className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Pelanggan</Label>
-              <Select
-                value={form.pelanggan}
-                onValueChange={(v) => {
-                  const p = pelanggan.find((x) => x.nama === v);
-                  setForm({ ...form, pelanggan: v, kendaraan: p?.kendaraan ?? form.kendaraan, plat: p?.plat ?? form.plat });
-                }}
-              >
-                <SelectTrigger><SelectValue placeholder="Pilih pelanggan" /></SelectTrigger>
-                <SelectContent>
-                  {pelanggan.map((p) => (
-                    <SelectItem key={p.id} value={p.nama}>{p.nama}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Popover open={bukaCari} onOpenChange={setBukaCari}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={bukaCari}
+                      className={cn("flex-1 justify-between font-normal", !form.pelanggan && "text-muted-foreground")}
+                    >
+                      {form.pelanggan || "Cari atau ketik nama pelanggan"}
+                      <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Ketik nama pelanggan..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          <span className="text-xs">Pelanggan tidak ditemukan.</span>
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {pelanggan.map((p) => (
+                            <CommandItem key={p.id} value={`${p.nama} ${p.telepon}`} onSelect={() => pilihPelanggan(p.id)}>
+                              <Check className={cn("mr-2 size-4", form.pelangganId === p.id ? "opacity-100" : "opacity-0")} />
+                              <span className="flex flex-col">
+                                <span>{p.nama}</span>
+                                <span className="text-xs text-muted-foreground">{p.telepon || p.email || "—"}</span>
+                              </span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="gap-1"
+                  onClick={() => setDialogPelanggan(true)}
+                  aria-label="Tambah pelanggan baru"
+                >
+                  <UserPlus className="size-4" /> Baru
+                </Button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Jenis Servis</Label>
@@ -356,6 +388,39 @@ function ServisAdmin() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Kendaraan Pelanggan</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={form.plat}
+                  onValueChange={(v) => {
+                    const k = kendaraanPelanggan.find((x) => x.plat === v);
+                    if (k) setForm({ ...form, plat: k.plat, kendaraan: `${k.merk} ${k.tipe}` });
+                  }}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder={form.pelangganId ? "Pilih kendaraan" : "Pilih pelanggan dulu"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {kendaraanPelanggan.map((k) => (
+                      <SelectItem key={k.id} value={k.plat}>
+                        {k.merk} {k.tipe} · {k.plat} · {k.tahun}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="gap-1"
+                  onClick={() => setDialogKendaraan(true)}
+                  aria-label="Tambah kendaraan baru"
+                >
+                  <Car className="size-4" /> Baru
+                </Button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Kendaraan</Label>
@@ -387,6 +452,15 @@ function ServisAdmin() {
             <div className="space-y-1.5">
               <Label>Tanggal</Label>
               <Input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="estimasi-selesai">Estimasi Selesai</Label>
+              <Input
+                id="estimasi-selesai"
+                type="datetime-local"
+                value={form.estimasiSelesai}
+                onChange={(e) => setForm({ ...form, estimasiSelesai: e.target.value })}
+              />
             </div>
             <div className="space-y-2 rounded-lg border p-3 sm:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
