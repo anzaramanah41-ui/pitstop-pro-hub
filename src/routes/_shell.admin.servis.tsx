@@ -217,9 +217,17 @@ function ServisAdmin() {
       toast.error("Pelanggan, kendaraan, dan keluhan wajib diisi.");
       return;
     }
-    void simpanServis(edit ? { ...form, id: edit.id } : form);
-    toast.success(edit ? "Data servis diperbarui" : "Servis baru dibuat");
-    setOpen(false);
+    setMenyimpan(true);
+    void (async () => {
+      const hasil = await simpanServis(edit ? { ...form, id: edit.id } : form);
+      setMenyimpan(false);
+      if (!hasil.ok) {
+        toast.error(hasil.error ?? "Gagal menyimpan servis.");
+        return;
+      }
+      toast.success(edit ? "Data servis diperbarui" : "Servis baru dibuat");
+      setOpen(false);
+    })();
   };
 
   return (
