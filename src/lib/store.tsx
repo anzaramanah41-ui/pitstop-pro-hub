@@ -704,8 +704,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             mekanik: s.mekanik,
             keterangan: s.pekerjaan || s.jenis,
           });
+
+          // Tagihan pembayaran mengikuti nilai servis.
+          const { data: adaBayar } = await supabase
+            .from("payments")
+            .select("id, status")
+            .eq("service_id", servisId)
+            .maybeSingle();
+          if (adaBayar) {
+            if ((adaBayar as Row).status !== "Lunas") {
+              await supabase.from("payments").update({ jumlah: total }).eq("id", (adaBayar as Row).id);
+            }
+          } else {
+            await supabase.from("payments").insert({
+              service_id: servisId,
+              customer_id: pelangganRow?.id ?? null,
+              no_transaksi: nomor.replace("SRV", "TRX"),
+              jumlah: total,
+              metode: s.metodeBayar ?? "Cash",
+              status: "Belum Lunas",
+            });
+          }
         }
         await muatUlang();
+        return { ok: true };
       },
       ubahStatusServis: async (id, status) => {
         await supabase.from("service_orders").update({ status }).eq("id", id);
