@@ -45,6 +45,7 @@ export const Route = createFileRoute("/_shell/admin/servis")({
 });
 
 const kosong = {
+  pelangganId: "",
   pelanggan: "",
   kendaraan: "",
   plat: "",
@@ -53,14 +54,28 @@ const kosong = {
   pekerjaan: "",
   mekanik: MEKANIK[0]!,
   tanggal: "2026-08-18",
+  estimasiSelesai: "",
   status: "Menunggu" as StatusServis,
   catatan: "",
   biayaJasa: 0,
   items: [] as ItemPart[],
 };
 
+const pelangganKosong = { nama: "", telepon: "", email: "", alamat: "" };
+const kendaraanKosong = { plat: "", merk: "", tipe: "", tahun: 2020 };
+
 function ServisAdmin() {
-  const { servis, pelanggan, sparepart, simpanServis, hapusServis, ubahStatusServis } = useStore();
+  const {
+    servis,
+    pelanggan,
+    kendaraan: daftarKendaraan,
+    sparepart,
+    simpanServis,
+    hapusServis,
+    ubahStatusServis,
+    simpanPelanggan,
+    simpanKendaraan,
+  } = useStore();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"semua" | StatusServis>("semua");
   const [open, setOpen] = useState(false);
@@ -68,6 +83,69 @@ function ServisAdmin() {
   const [form, setForm] = useState(kosong);
   const [hapus, setHapus] = useState<Servis | null>(null);
   const [pilihPart, setPilihPart] = useState("");
+  const [bukaCari, setBukaCari] = useState(false);
+  const [dialogPelanggan, setDialogPelanggan] = useState(false);
+  const [formPelanggan, setFormPelanggan] = useState(pelangganKosong);
+  const [dialogKendaraan, setDialogKendaraan] = useState(false);
+  const [formKendaraan, setFormKendaraan] = useState(kendaraanKosong);
+  const [menyimpan, setMenyimpan] = useState(false);
+
+  const kendaraanPelanggan = useMemo(
+    () => daftarKendaraan.filter((k) => k.pelangganId === form.pelangganId),
+    [daftarKendaraan, form.pelangganId],
+  );
+
+  const pilihPelanggan = (id: string) => {
+    const p = pelanggan.find((x) => x.id === id);
+    if (!p) return;
+    const kend = daftarKendaraan.filter((k) => k.pelangganId === p.id);
+    const utama = kend[0];
+    setForm((f) => ({
+      ...f,
+      pelangganId: p.id,
+      pelanggan: p.nama,
+      kendaraan: utama ? `${utama.merk} ${utama.tipe}` : p.kendaraan,
+      plat: utama?.plat ?? p.plat,
+    }));
+    setBukaCari(false);
+  };
+
+  const buatPelangganBaru = async () => {
+    if (!formPelanggan.nama.trim()) {
+      toast.error("Nama pelanggan wajib diisi.");
+      return;
+    }
+    const baru = await simpanPelanggan({ ...formPelanggan, kendaraan: "", plat: "" });
+    if (!baru) {
+      toast.error("Gagal membuat pelanggan baru.");
+      return;
+    }
+    setForm((f) => ({ ...f, pelangganId: baru.id, pelanggan: baru.nama, kendaraan: "", plat: "" }));
+    setFormPelanggan(pelangganKosong);
+    setDialogPelanggan(false);
+    toast.success(`Pelanggan ${baru.nama} ditambahkan`);
+  };
+
+  const buatKendaraanBaru = async () => {
+    if (!form.pelangganId) {
+      toast.error("Pilih pelanggan terlebih dahulu.");
+      return;
+    }
+    if (!formKendaraan.plat.trim() || !formKendaraan.merk.trim()) {
+      toast.error("Nomor polisi dan merk wajib diisi.");
+      return;
+    }
+    const baru = await simpanKendaraan({ ...formKendaraan, pelangganId: form.pelangganId, kilometer: 0 });
+    if (!baru) {
+      toast.error("Gagal menambahkan kendaraan.");
+      return;
+    }
+    setForm((f) => ({ ...f, kendaraan: `${baru.merk} ${baru.tipe}`, plat: baru.plat }));
+    setFormKendaraan(kendaraanKosong);
+    setDialogKendaraan(false);
+    toast.success("Kendaraan ditambahkan");
+  };
+
 
 
   const data = useMemo(() => {
