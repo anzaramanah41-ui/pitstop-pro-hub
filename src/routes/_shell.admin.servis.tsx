@@ -164,6 +164,7 @@ function ServisAdmin() {
   const bukaEdit = (s: Servis) => {
     setEdit(s);
     setForm({
+      pelangganId: s.pelangganId ?? pelanggan.find((p) => p.nama === s.pelanggan)?.id ?? "",
       pelanggan: s.pelanggan,
       kendaraan: s.kendaraan,
       plat: s.plat,
@@ -172,6 +173,7 @@ function ServisAdmin() {
       pekerjaan: s.pekerjaan,
       mekanik: s.mekanik,
       tanggal: s.tanggal,
+      estimasiSelesai: s.estimasiSelesai ?? "",
       status: s.status,
       catatan: s.catatan,
       biayaJasa: s.biayaJasa,
