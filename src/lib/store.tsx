@@ -931,3 +931,41 @@ export const rupiah = (n: number) =>
 
 export const tanggalPanjang = (iso: string) =>
   iso ? new Date(iso + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "—";
+
+// ===== Filter periode laporan =====
+export type Periode = "harian" | "mingguan" | "bulanan" | "tahunan";
+
+export const LABEL_PERIODE: Record<Periode, string> = {
+  harian: "Harian",
+  mingguan: "Mingguan",
+  bulanan: "Bulanan",
+  tahunan: "Tahunan",
+};
+
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+/** Rentang tanggal (inklusif) untuk periode yang memuat tanggal acuan. */
+export function rentangPeriode(periode: Periode, acuan: string): { mulai: string; akhir: string } {
+  const d = new Date((acuan || hariIni()) + "T00:00:00");
+  if (periode === "harian") return { mulai: iso(d), akhir: iso(d) };
+  if (periode === "mingguan") {
+    const hari = (d.getDay() + 6) % 7; // Senin = 0
+    const mulai = new Date(d);
+    mulai.setDate(d.getDate() - hari);
+    const akhir = new Date(mulai);
+    akhir.setDate(mulai.getDate() + 6);
+    return { mulai: iso(mulai), akhir: iso(akhir) };
+  }
+  if (periode === "bulanan") {
+    const mulai = new Date(d.getFullYear(), d.getMonth(), 1);
+    const akhir = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    return { mulai: iso(mulai), akhir: iso(akhir) };
+  }
+  return { mulai: `${d.getFullYear()}-01-01`, akhir: `${d.getFullYear()}-12-31` };
+}
+
+export const dalamRentang = (tanggal: string, r: { mulai: string; akhir: string }) =>
+  !!tanggal && tanggal >= r.mulai && tanggal <= r.akhir;
+
+export const labelRentang = (r: { mulai: string; akhir: string }) =>
+  r.mulai === r.akhir ? tanggalPanjang(r.mulai) : `${tanggalPanjang(r.mulai)} – ${tanggalPanjang(r.akhir)}`;
