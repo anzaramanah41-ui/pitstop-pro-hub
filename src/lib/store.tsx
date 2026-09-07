@@ -368,7 +368,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const [c, v, sp, so, si, bk, pay, est, mv, pb, us, tk] = await Promise.all([
       supabase.from("customers").select("*").order("nama"),
       supabase.from("vehicles").select("*"),
-      supabase.from("spareparts").select("*").order("nama"),
+      supabase.from("spareparts").select("*").order("kode"),
       supabase.from("service_orders").select("*").order("tanggal", { ascending: false }),
       supabase.from("service_items").select("*"),
       supabase.from("bookings").select("*").order("tanggal", { ascending: false }),
