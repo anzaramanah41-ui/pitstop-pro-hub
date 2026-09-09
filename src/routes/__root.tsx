@@ -87,7 +87,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Kelola pelanggan, servis, sparepart, pricelist, dan riwayat servis bengkel secara digital dalam satu aplikasi.",
       },
       { property: "og:title", content: "Bengkel Pitstop — Aplikasi Administrasi Bengkel" },
+<<<<<<< HEAD
       { property: "og:description", content: "Administrasi bengkel yang sederhana, cepat, dan terstruktur." },
+=======
+      {
+        property: "og:description",
+        content: "Administrasi bengkel yang sederhana, cepat, dan terstruktur.",
+      },
+>>>>>>> b897868 (Initial commit - AppBenk)
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -129,7 +136,11 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <StoreProvider>
+<<<<<<< HEAD
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+=======
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+>>>>>>> b897868 (Initial commit - AppBenk)
           <Outlet />
           <Toaster richColors position="top-right" />
         </StoreProvider>
@@ -137,4 +148,7 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)

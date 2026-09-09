@@ -125,5 +125,17 @@
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }
+<<<<<<< HEAD
+=======
+
+  /* Sembunyikan tombol toggle password bawaan browser (Microsoft Edge & WebKit) agar tidak muncul ganda */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
+  }
+>>>>>>> b897868 (Initial commit - AppBenk)
 }
 

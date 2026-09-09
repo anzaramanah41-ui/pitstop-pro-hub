@@ -1,4 +1,8 @@
 <!-- LOVABLE:BEGIN -->
+<<<<<<< HEAD
+=======
+
+>>>>>>> b897868 (Initial commit - AppBenk)
 > [!IMPORTANT]
 > This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
 > published git history — force pushing, or rebasing/amending/squashing commits
@@ -7,4 +11,8 @@
 >
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
+<<<<<<< HEAD
+=======
+
+>>>>>>> b897868 (Initial commit - AppBenk)
 <!-- LOVABLE:END -->

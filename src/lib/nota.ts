@@ -1,17 +1,31 @@
 import { rupiah, tanggalPanjang, type Pelanggan, type Servis } from "@/lib/store";
 
+<<<<<<< HEAD
 const esc = (v: string) =>
   v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /** Baris info; hanya ditampilkan bila datanya tersedia. */
 const info = (label: string, nilai?: string) =>
   nilai && nilai.trim() ? `<div class="row"><span class="k">${esc(label)}</span><span class="v">${esc(nilai)}</span></div>` : "";
+=======
+const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Baris info; hanya ditampilkan bila datanya tersedia. */
+const info = (label: string, nilai?: string) =>
+  nilai && nilai.trim()
+    ? `<div class="row"><span class="k">${esc(label)}</span><span class="v">${esc(nilai)}</span></div>`
+    : "";
+>>>>>>> b897868 (Initial commit - AppBenk)
 
 /** Susun nota pembayaran sebagai HTML (mock, tanpa backend). */
 export function notaHtml(s: Servis, p?: Pelanggan) {
   const parts = s.items
     .map(
+<<<<<<< HEAD
       (i) => `<tr><td>${esc(i.nama)}</td>
+=======
+      (i) => `<tr><td>${esc(i.nama)}<div class="sub">${esc(i.kode)}</div></td>
+>>>>>>> b897868 (Initial commit - AppBenk)
         <td class="c">${i.jumlah}</td><td class="r">${rupiah(i.harga)}</td><td class="r">${rupiah(i.harga * i.jumlah)}</td></tr>`,
     )
     .join("");

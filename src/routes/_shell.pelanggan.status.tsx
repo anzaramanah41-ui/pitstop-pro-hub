@@ -11,9 +11,21 @@ export const Route = createFileRoute("/_shell/pelanggan/status")({
   head: () => ({
     meta: [
       { title: "Status Servis — AppBenk" },
+<<<<<<< HEAD
       { name: "description", content: "Pantau perkembangan servis kendaraan Anda dari booking hingga selesai dibayar." },
       { property: "og:title", content: "Status Servis — AppBenk" },
       { property: "og:description", content: "Perkembangan servis kendaraan Anda secara real time." },
+=======
+      {
+        name: "description",
+        content: "Pantau perkembangan servis kendaraan Anda dari booking hingga selesai dibayar.",
+      },
+      { property: "og:title", content: "Status Servis — AppBenk" },
+      {
+        property: "og:description",
+        content: "Perkembangan servis kendaraan Anda secara real time.",
+      },
+>>>>>>> b897868 (Initial commit - AppBenk)
     ],
   }),
   component: StatusPelanggan,
@@ -24,12 +36,25 @@ function StatusPelanggan() {
   const { servis, booking } = useStore();
   const nama = user?.pelanggan ?? "";
   const daftar = servis.filter((s) => s.pelanggan === nama);
+<<<<<<< HEAD
   const bookingMenunggu = booking.filter((b) => b.pelanggan === nama && b.status === "Menunggu Konfirmasi");
+=======
+  const bookingMenunggu = booking.filter(
+    (b) => b.pelanggan === nama && b.status === "Menunggu Konfirmasi",
+  );
+>>>>>>> b897868 (Initial commit - AppBenk)
   const bookingDitolak = booking.filter((b) => b.pelanggan === nama && b.status === "Ditolak");
 
   return (
     <>
+<<<<<<< HEAD
       <PageHeader title="Status Servis" description="Ikuti setiap tahapan pengerjaan kendaraan Anda." />
+=======
+      <PageHeader
+        title="Status Servis"
+        description="Ikuti setiap tahapan pengerjaan kendaraan Anda."
+      />
+>>>>>>> b897868 (Initial commit - AppBenk)
 
       {bookingMenunggu.length > 0 && (
         <Card>
@@ -38,10 +63,24 @@ function StatusPelanggan() {
           </CardHeader>
           <CardContent className="space-y-3">
             {bookingMenunggu.map((b) => (
+<<<<<<< HEAD
               <div key={b.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
                 <div>
                   <p className="text-sm font-semibold">{b.nomor} · {b.jenis}</p>
                   <p className="text-xs text-muted-foreground">{tanggalPanjang(b.tanggal)} · {b.waktu}</p>
+=======
+              <div
+                key={b.id}
+                className="flex items-center justify-between gap-3 rounded-md border p-3"
+              >
+                <div>
+                  <p className="text-sm font-semibold">
+                    {b.nomor} · {b.jenis}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {tanggalPanjang(b.tanggal)} · {b.waktu}
+                  </p>
+>>>>>>> b897868 (Initial commit - AppBenk)
                 </div>
                 <BookingBadge status={b.status} />
               </div>
@@ -57,9 +96,20 @@ function StatusPelanggan() {
           </CardHeader>
           <CardContent className="space-y-3">
             {bookingDitolak.map((b) => (
+<<<<<<< HEAD
               <div key={b.id} className="space-y-1.5 rounded-md border border-destructive/30 bg-destructive/5 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold">{b.nomor} · {b.jenis}</p>
+=======
+              <div
+                key={b.id}
+                className="space-y-1.5 rounded-md border border-destructive/30 bg-destructive/5 p-3"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">
+                    {b.nomor} · {b.jenis}
+                  </p>
+>>>>>>> b897868 (Initial commit - AppBenk)
                   <BookingBadge status={b.status} />
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -78,7 +128,15 @@ function StatusPelanggan() {
       {daftar.length === 0 ? (
         <Card>
           <CardContent className="p-0">
+<<<<<<< HEAD
             <EmptyState icon={<Activity className="size-8" />} title="Belum ada servis berjalan" description="Buat booking untuk memulai servis." />
+=======
+            <EmptyState
+              icon={<Activity className="size-8" />}
+              title="Belum ada servis berjalan"
+              description="Buat booking untuk memulai servis."
+            />
+>>>>>>> b897868 (Initial commit - AppBenk)
           </CardContent>
         </Card>
       ) : (
@@ -89,7 +147,13 @@ function StatusPelanggan() {
               <Card key={s.id}>
                 <CardHeader className="flex-row items-start justify-between space-y-0 pb-3">
                   <div>
+<<<<<<< HEAD
                     <CardTitle className="text-base">{s.nomor} · {s.jenis}</CardTitle>
+=======
+                    <CardTitle className="text-base">
+                      {s.nomor} · {s.jenis}
+                    </CardTitle>
+>>>>>>> b897868 (Initial commit - AppBenk)
                     <p className="mt-1 text-xs text-muted-foreground">
                       {s.kendaraan} · {s.plat} · Mekanik {s.mekanik} · {tanggalPanjang(s.tanggal)}
                     </p>
@@ -98,8 +162,17 @@ function StatusPelanggan() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-2 text-sm sm:grid-cols-2">
+<<<<<<< HEAD
                     <p><span className="text-muted-foreground">Keluhan:</span> {s.keluhan}</p>
                     <p><span className="text-muted-foreground">Pekerjaan:</span> {s.pekerjaan}</p>
+=======
+                    <p>
+                      <span className="text-muted-foreground">Keluhan:</span> {s.keluhan}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Pekerjaan:</span> {s.pekerjaan}
+                    </p>
+>>>>>>> b897868 (Initial commit - AppBenk)
                   </div>
                   <ol className="flex flex-wrap gap-2">
                     {URUTAN_STATUS.map((st, i) => (
@@ -107,7 +180,13 @@ function StatusPelanggan() {
                         key={st}
                         className={cn(
                           "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs",
+<<<<<<< HEAD
                           i <= idx ? "border-primary/40 bg-primary/10 font-semibold text-primary" : "text-muted-foreground",
+=======
+                          i <= idx
+                            ? "border-primary/40 bg-primary/10 font-semibold text-primary"
+                            : "text-muted-foreground",
+>>>>>>> b897868 (Initial commit - AppBenk)
                         )}
                       >
                         {i <= idx && <CheckCircle2 className="size-3.5" />}

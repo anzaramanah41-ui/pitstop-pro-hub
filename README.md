@@ -8,10 +8,13 @@ Bengkel Pitstop
 
 Bengkel Pitstop adalah aplikasi administrasi bengkel berbasis web yang dirancang untuk membantu bengkel mengelola data pelanggan, data servis, sparepart, pricelist, dan riwayat servis secara digital.
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 2. Vision Statement
 
 "Menjadi solusi administrasi bengkel yang sederhana, cepat, dan mudah digunakan sehingga bengkel dapat mengelola data pelanggan, servis, dan sparepart secara digital serta meningkatkan kualitas pelayanan kepada pelanggan."
@@ -30,10 +33,13 @@ Profesional
 
 Cocok untuk operasional bengkel sehari-hari
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 3. Target Users
 
 A. Admin Bengkel
@@ -72,10 +78,13 @@ Melihat riwayat servis kendaraan
 
 Melihat sparepart yang tersedia dan pricelist
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 4. Product Description
 
 Bengkel Pitstop merupakan aplikasi administrasi bengkel berbasis web yang menggantikan proses pencatatan manual menggunakan buku.
@@ -104,10 +113,13 @@ Transaksi/informasi servis
 
 Dengan aplikasi ini, proses pencatatan harus terasa lebih cepat dan terorganisir, serta pengguna dapat menemukan riwayat servis dengan lebih mudah.
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 5. MVP Scope
 
 Untuk tahap pertama, bangun interface dan struktur aplikasi berdasarkan fitur MVP berikut:
@@ -268,10 +280,13 @@ Status servis
 
 Tujuannya agar pengguna dapat menemukan riwayat servis kendaraan dengan cepat.
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 6. Application Structure
 
 Buat struktur navigasi utama sebagai berikut:
@@ -300,10 +315,13 @@ Tambahkan profile/user menu pada bagian header.
 
 Navigation harus konsisten pada seluruh halaman aplikasi.
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 7. UI/UX Direction
 
 Buat desain yang terlihat seperti aplikasi administrasi bengkel modern, bukan website company profile.
@@ -350,10 +368,13 @@ Toast notification untuk feedback UI
 
 Jangan membuat desain terlalu kompleks.
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 8. Visual Design
 
 Gunakan visual identity yang sesuai dengan nama Bengkel Pitstop.
@@ -404,10 +425,13 @@ Riwayat
 
 Settings
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 9. Dashboard UX
 
 Dashboard harus menjadi halaman yang paling informatif secara visual.
@@ -456,10 +480,13 @@ Lihat Riwayat
 
 Semua data pada tahap ini menggunakan mock data.
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 10. Data Table UX
 
 Semua halaman yang memiliki daftar data harus memiliki pengalaman tabel yang konsisten.
@@ -486,10 +513,13 @@ Hapus
 
 Pastikan tabel tetap mudah digunakan pada ukuran layar desktop yang berbeda.
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 11. Forms
 
 Buat form yang sederhana dan mudah dipahami.
@@ -538,10 +568,13 @@ Harga
 
 Stok
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 12. Responsive Design
 
 Aplikasi harus responsive.
@@ -566,10 +599,13 @@ Mobile navigation
 
 Table pada mobile harus tetap usable, misalnya dengan horizontal scrolling atau responsive card layout.
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 13. Technology
 
 Gunakan teknologi modern yang sesuai dan native dengan ekosistem Lovable.
@@ -614,10 +650,13 @@ EmptyState
 
 Toast/Notification
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 14. Mock Data Only
 
 Untuk Step 1 ini, gunakan mock/static data untuk menampilkan aplikasi secara realistis.
@@ -644,10 +683,13 @@ Payment integration
 
 Semua interaksi CRUD pada tahap ini boleh menggunakan local state/mock data hanya untuk mendemonstrasikan UI dan user flow.
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 15. Important Scope Restriction
 
 THIS IS STEP 1 ONLY.
@@ -666,10 +708,13 @@ Jangan menghubungkan aplikasi ke external services.
 
 Tujuan Step 1 adalah menghasilkan prototype aplikasi frontend yang sudah terlihat seperti produk Bengkel Pitstop yang siap digunakan dan memiliki user flow yang jelas.
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 16. Expected Result
 
 Setelah prompt ini dijalankan, aplikasi harus memiliki:
@@ -708,7 +753,10 @@ Pastikan seluruh halaman saling terhubung melalui navigation dan user flow dapat
 
 Do not proceed to database/backend implementation. Build Step 1 frontend only.
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
 gunakan warna logo sebagai logo aplikasi
 
 This project was built with [Lovable](https://lovable.dev).

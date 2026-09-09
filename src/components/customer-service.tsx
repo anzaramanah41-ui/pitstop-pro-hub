@@ -8,7 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+<<<<<<< HEAD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+=======
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+>>>>>>> b897868 (Initial commit - AppBenk)
 import { useAuth, LABEL_ROLE } from "@/lib/auth";
 import { useStore, tanggalPanjang, KATEGORI_TIKET, type StatusTiket } from "@/lib/store";
 
@@ -19,7 +29,15 @@ const WARNA: Record<StatusTiket, string> = {
 };
 
 const KANAL = [
+<<<<<<< HEAD
   { icon: Phone, judul: "Hubungi Customer Service", detail: "0800-1234-5678 · Senin–Sabtu, 08.00–17.00" },
+=======
+  {
+    icon: Phone,
+    judul: "Hubungi Customer Service",
+    detail: "0800-1234-5678 · Senin–Sabtu, 08.00–17.00",
+  },
+>>>>>>> b897868 (Initial commit - AppBenk)
   { icon: MessageSquare, judul: "Chat / Pesan", detail: "Kirim pesan lewat formulir di samping" },
   { icon: LifeBuoy, judul: "Kirim Pertanyaan", detail: "Pertanyaan seputar penggunaan aplikasi" },
   { icon: AlertTriangle, judul: "Laporkan Masalah", detail: "Kendala teknis atau bug aplikasi" },
@@ -42,6 +60,7 @@ export function CustomerServicePage() {
     setErr(next);
     if (Object.keys(next).length) return;
 
+<<<<<<< HEAD
     void (async () => {
       const baru = await buatTiket({
         pengirim: user?.nama ?? "Pengguna",
@@ -53,6 +72,17 @@ export function CustomerServicePage() {
       toast.success(`Pesan terkirim — tiket ${baru.nomor}`);
       setForm({ subjek: "", kategori: "", pesan: "" });
     })();
+=======
+    const baru = buatTiket({
+      pengirim: user?.nama ?? "Pengguna",
+      peran: user ? LABEL_ROLE[user.role] : "-",
+      subjek: form.subjek.trim(),
+      kategori: form.kategori,
+      pesan: form.pesan.trim(),
+    });
+    toast.success(`Pesan terkirim — tiket ${baru.nomor}`);
+    setForm({ subjek: "", kategori: "", pesan: "" });
+>>>>>>> b897868 (Initial commit - AppBenk)
   };
 
   return (
@@ -99,11 +129,26 @@ export function CustomerServicePage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Kategori Masalah</Label>
+<<<<<<< HEAD
                   <Select value={form.kategori} onValueChange={(v) => setForm({ ...form, kategori: v })}>
                     <SelectTrigger><SelectValue placeholder="Pilih kategori" /></SelectTrigger>
                     <SelectContent>
                       {KATEGORI_TIKET.map((k) => (
                         <SelectItem key={k} value={k}>{k}</SelectItem>
+=======
+                  <Select
+                    value={form.kategori}
+                    onValueChange={(v) => setForm({ ...form, kategori: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {KATEGORI_TIKET.map((k) => (
+                        <SelectItem key={k} value={k}>
+                          {k}
+                        </SelectItem>
+>>>>>>> b897868 (Initial commit - AppBenk)
                       ))}
                     </SelectContent>
                   </Select>
@@ -134,13 +179,29 @@ export function CustomerServicePage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {milikSaya.length === 0 ? (
+<<<<<<< HEAD
               <EmptyState title="Belum ada tiket" description="Pesan yang Anda kirim akan muncul di sini." />
+=======
+              <EmptyState
+                title="Belum ada tiket"
+                description="Pesan yang Anda kirim akan muncul di sini."
+              />
+>>>>>>> b897868 (Initial commit - AppBenk)
             ) : (
               milikSaya.map((t) => (
                 <div key={t.id} className="space-y-1.5 rounded-md border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
+<<<<<<< HEAD
                     <p className="text-sm font-semibold">Ticket #{t.nomor} · {t.subjek}</p>
                     <Badge variant="outline" className={WARNA[t.status]}>{t.status}</Badge>
+=======
+                    <p className="text-sm font-semibold">
+                      Ticket #{t.nomor} · {t.subjek}
+                    </p>
+                    <Badge variant="outline" className={WARNA[t.status]}>
+                      {t.status}
+                    </Badge>
+>>>>>>> b897868 (Initial commit - AppBenk)
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {t.kategori} · {tanggalPanjang(t.tanggal)}

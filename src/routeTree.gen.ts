@@ -18,6 +18,10 @@ import { Route as ShellAdminBookingRouteImport } from './routes/_shell.admin.boo
 import { Route as ShellAdminCsRouteImport } from './routes/_shell.admin.cs'
 import { Route as ShellAdminDashboardRouteImport } from './routes/_shell.admin.dashboard'
 import { Route as ShellAdminLaporanRouteImport } from './routes/_shell.admin.laporan'
+<<<<<<< HEAD
+=======
+import { Route as ShellAdminMekanikRouteImport } from './routes/_shell.admin.mekanik'
+>>>>>>> b897868 (Initial commit - AppBenk)
 import { Route as ShellAdminServisRouteImport } from './routes/_shell.admin.servis'
 import { Route as ShellAdminSparepartRouteImport } from './routes/_shell.admin.sparepart'
 import { Route as ShellAdminStokRouteImport } from './routes/_shell.admin.stok'
@@ -79,6 +83,14 @@ const ShellAdminLaporanRoute = ShellAdminLaporanRouteImport.update({
   path: '/admin/laporan',
   getParentRoute: () => ShellRoute,
 } as any)
+<<<<<<< HEAD
+=======
+const ShellAdminMekanikRoute = ShellAdminMekanikRouteImport.update({
+  id: '/admin/mekanik',
+  path: '/admin/mekanik',
+  getParentRoute: () => ShellRoute,
+} as any)
+>>>>>>> b897868 (Initial commit - AppBenk)
 const ShellAdminServisRoute = ShellAdminServisRouteImport.update({
   id: '/admin/servis',
   path: '/admin/servis',
@@ -170,6 +182,10 @@ export interface FileRoutesByFullPath {
   '/admin/cs': typeof ShellAdminCsRoute
   '/admin/dashboard': typeof ShellAdminDashboardRoute
   '/admin/laporan': typeof ShellAdminLaporanRoute
+<<<<<<< HEAD
+=======
+  '/admin/mekanik': typeof ShellAdminMekanikRoute
+>>>>>>> b897868 (Initial commit - AppBenk)
   '/admin/servis': typeof ShellAdminServisRoute
   '/admin/sparepart': typeof ShellAdminSparepartRoute
   '/admin/stok': typeof ShellAdminStokRoute
@@ -196,6 +212,10 @@ export interface FileRoutesByTo {
   '/admin/cs': typeof ShellAdminCsRoute
   '/admin/dashboard': typeof ShellAdminDashboardRoute
   '/admin/laporan': typeof ShellAdminLaporanRoute
+<<<<<<< HEAD
+=======
+  '/admin/mekanik': typeof ShellAdminMekanikRoute
+>>>>>>> b897868 (Initial commit - AppBenk)
   '/admin/servis': typeof ShellAdminServisRoute
   '/admin/sparepart': typeof ShellAdminSparepartRoute
   '/admin/stok': typeof ShellAdminStokRoute
@@ -224,6 +244,10 @@ export interface FileRoutesById {
   '/_shell/admin/cs': typeof ShellAdminCsRoute
   '/_shell/admin/dashboard': typeof ShellAdminDashboardRoute
   '/_shell/admin/laporan': typeof ShellAdminLaporanRoute
+<<<<<<< HEAD
+=======
+  '/_shell/admin/mekanik': typeof ShellAdminMekanikRoute
+>>>>>>> b897868 (Initial commit - AppBenk)
   '/_shell/admin/servis': typeof ShellAdminServisRoute
   '/_shell/admin/sparepart': typeof ShellAdminSparepartRoute
   '/_shell/admin/stok': typeof ShellAdminStokRoute
@@ -252,6 +276,10 @@ export interface FileRouteTypes {
     | '/admin/cs'
     | '/admin/dashboard'
     | '/admin/laporan'
+<<<<<<< HEAD
+=======
+    | '/admin/mekanik'
+>>>>>>> b897868 (Initial commit - AppBenk)
     | '/admin/servis'
     | '/admin/sparepart'
     | '/admin/stok'
@@ -278,6 +306,10 @@ export interface FileRouteTypes {
     | '/admin/cs'
     | '/admin/dashboard'
     | '/admin/laporan'
+<<<<<<< HEAD
+=======
+    | '/admin/mekanik'
+>>>>>>> b897868 (Initial commit - AppBenk)
     | '/admin/servis'
     | '/admin/sparepart'
     | '/admin/stok'
@@ -305,6 +337,10 @@ export interface FileRouteTypes {
     | '/_shell/admin/cs'
     | '/_shell/admin/dashboard'
     | '/_shell/admin/laporan'
+<<<<<<< HEAD
+=======
+    | '/_shell/admin/mekanik'
+>>>>>>> b897868 (Initial commit - AppBenk)
     | '/_shell/admin/servis'
     | '/_shell/admin/sparepart'
     | '/_shell/admin/stok'
@@ -395,6 +431,16 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellAdminLaporanRouteImport
       parentRoute: typeof ShellRoute
     }
+<<<<<<< HEAD
+=======
+    '/_shell/admin/mekanik': {
+      id: '/_shell/admin/mekanik'
+      path: '/admin/mekanik'
+      fullPath: '/admin/mekanik'
+      preLoaderRoute: typeof ShellAdminMekanikRouteImport
+      parentRoute: typeof ShellRoute
+    }
+>>>>>>> b897868 (Initial commit - AppBenk)
     '/_shell/admin/servis': {
       id: '/_shell/admin/servis'
       path: '/admin/servis'
@@ -516,6 +562,10 @@ interface ShellRouteChildren {
   ShellAdminCsRoute: typeof ShellAdminCsRoute
   ShellAdminDashboardRoute: typeof ShellAdminDashboardRoute
   ShellAdminLaporanRoute: typeof ShellAdminLaporanRoute
+<<<<<<< HEAD
+=======
+  ShellAdminMekanikRoute: typeof ShellAdminMekanikRoute
+>>>>>>> b897868 (Initial commit - AppBenk)
   ShellAdminServisRoute: typeof ShellAdminServisRoute
   ShellAdminSparepartRoute: typeof ShellAdminSparepartRoute
   ShellAdminStokRoute: typeof ShellAdminStokRoute
@@ -540,6 +590,10 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellAdminCsRoute: ShellAdminCsRoute,
   ShellAdminDashboardRoute: ShellAdminDashboardRoute,
   ShellAdminLaporanRoute: ShellAdminLaporanRoute,
+<<<<<<< HEAD
+=======
+  ShellAdminMekanikRoute: ShellAdminMekanikRoute,
+>>>>>>> b897868 (Initial commit - AppBenk)
   ShellAdminServisRoute: ShellAdminServisRoute,
   ShellAdminSparepartRoute: ShellAdminSparepartRoute,
   ShellAdminStokRoute: ShellAdminStokRoute,

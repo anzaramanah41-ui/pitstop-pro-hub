@@ -5,9 +5,22 @@ export const Route = createFileRoute("/_shell/admin/cs")({
   head: () => ({
     meta: [
       { title: "Customer Service Admin — AppBenk" },
+<<<<<<< HEAD
       { name: "description", content: "Kirim pertanyaan atau laporan kendala aplikasi ke tim pengelola AppBenk dan pantau status tiket bantuan." },
       { property: "og:title", content: "Customer Service Admin — AppBenk" },
       { property: "og:description", content: "Bantuan teknis aplikasi AppBenk untuk admin bengkel." },
+=======
+      {
+        name: "description",
+        content:
+          "Kirim pertanyaan atau laporan kendala aplikasi ke tim pengelola AppBenk dan pantau status tiket bantuan.",
+      },
+      { property: "og:title", content: "Customer Service Admin — AppBenk" },
+      {
+        property: "og:description",
+        content: "Bantuan teknis aplikasi AppBenk untuk admin bengkel.",
+      },
+>>>>>>> b897868 (Initial commit - AppBenk)
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

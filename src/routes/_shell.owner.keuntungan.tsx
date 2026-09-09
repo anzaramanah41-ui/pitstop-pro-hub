@@ -4,15 +4,41 @@ import { Crown, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+<<<<<<< HEAD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+=======
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+>>>>>>> b897868 (Initial commit - AppBenk)
 import { useStore, rupiah } from "@/lib/store";
 
 export const Route = createFileRoute("/_shell/owner/keuntungan")({
   head: () => ({
     meta: [
       { title: "Laporan Keuntungan Premium — AppBenk" },
+<<<<<<< HEAD
       { name: "description", content: "Fitur premium: analisis pendapatan, biaya sparepart, margin jasa, dan laba bersih bengkel per bulan." },
+=======
+      {
+        name: "description",
+        content:
+          "Fitur premium: analisis pendapatan, biaya sparepart, margin jasa, dan laba bersih bengkel per bulan.",
+      },
+>>>>>>> b897868 (Initial commit - AppBenk)
       { property: "og:title", content: "Laporan Keuntungan Premium — AppBenk" },
       { property: "og:description", content: "Lihat laba bersih dan margin bengkel Anda." },
     ],
@@ -56,11 +82,23 @@ function KeuntunganOwner() {
               <Crown className="size-3.5" /> Premium
             </Badge>
             <Select value={bulan} onValueChange={setBulan}>
+<<<<<<< HEAD
               <SelectTrigger className="w-44 bg-card"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="semua">Semua periode</SelectItem>
                 {Object.entries(BULAN).map(([k, v]) => (
                   <SelectItem key={k} value={k}>{v}</SelectItem>
+=======
+              <SelectTrigger className="w-44 bg-card">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="semua">Semua periode</SelectItem>
+                {Object.entries(BULAN).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>
+                    {v}
+                  </SelectItem>
+>>>>>>> b897868 (Initial commit - AppBenk)
                 ))}
               </SelectContent>
             </Select>
@@ -74,14 +112,25 @@ function KeuntunganOwner() {
             Perlu Review · Coming Soon
           </Badge>
           <p className="min-w-56 flex-1 text-sm text-muted-foreground">
+<<<<<<< HEAD
             Konsep sementara: <span className="font-medium text-foreground">Keuntungan = Pendapatan − Biaya</span>.
             Angka di bawah masih memakai estimasi modal sparepart 70% dari harga jual. Perhitungan final akan
             bersumber dari transaksi pembayaran yang sudah lunas setelah struktur pembayaran & biaya disepakati.
+=======
+            Konsep sementara:{" "}
+            <span className="font-medium text-foreground">Keuntungan = Pendapatan − Biaya</span>.
+            Angka di bawah masih memakai estimasi modal sparepart 70% dari harga jual. Perhitungan
+            final akan bersumber dari transaksi pembayaran yang sudah lunas setelah struktur
+            pembayaran & biaya disepakati.
+>>>>>>> b897868 (Initial commit - AppBenk)
           </p>
         </CardContent>
       </Card>
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b897868 (Initial commit - AppBenk)
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ["Pendapatan", rupiah(pendapatan), "total transaksi servis"],
@@ -91,7 +140,13 @@ function KeuntunganOwner() {
         ].map(([l, v, h]) => (
           <Card key={l} className="border-l-4 border-l-primary">
             <CardContent className="p-5">
+<<<<<<< HEAD
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{l}</p>
+=======
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {l}
+              </p>
+>>>>>>> b897868 (Initial commit - AppBenk)
               <p className="mt-2 font-display text-xl font-bold">{v}</p>
               <p className="text-xs text-muted-foreground">{h}</p>
             </CardContent>
@@ -122,8 +177,17 @@ function KeuntunganOwner() {
                   <TableCell className="font-medium">{b.label}</TableCell>
                   <TableCell className="text-right">{b.jumlah}</TableCell>
                   <TableCell className="text-right">{rupiah(b.pendapatan)}</TableCell>
+<<<<<<< HEAD
                   <TableCell className="text-right text-muted-foreground">{rupiah(b.modal)}</TableCell>
                   <TableCell className="text-right font-semibold text-success">{rupiah(b.laba)}</TableCell>
+=======
+                  <TableCell className="text-right text-muted-foreground">
+                    {rupiah(b.modal)}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold text-success">
+                    {rupiah(b.laba)}
+                  </TableCell>
+>>>>>>> b897868 (Initial commit - AppBenk)
                 </TableRow>
               ))}
             </TableBody>

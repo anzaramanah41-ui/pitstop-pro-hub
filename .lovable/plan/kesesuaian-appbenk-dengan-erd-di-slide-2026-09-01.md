@@ -4,6 +4,7 @@ Jawaban singkat: **sebagian sesuai, belum sepenuhnya.** Aplikasi saat ini memaka
 
 ## Sudah sesuai
 
+<<<<<<< HEAD
 | Entitas ERD | Status di aplikasi |
 |---|---|
 | Pelanggan | Ada (nama, telepon, alamat) |
@@ -13,6 +14,17 @@ Jawaban singkat: **sebagian sesuai, belum sepenuhnya.** Aplikasi saat ini memaka
 | Sparepart & Stok | Ada (kode, nama, kategori, harga, stok, terpakai) |
 | Pembayaran | Ada, tetapi menempel di record servis (metode bayar, status, nota) |
 | Admin & Owner | Ada sebagai peran login mock, bukan data |
+=======
+| Entitas ERD      | Status di aplikasi                                                                 |
+| ---------------- | ---------------------------------------------------------------------------------- |
+| Pelanggan        | Ada (nama, telepon, alamat)                                                        |
+| Booking Servis   | Ada (tanggal, waktu, keluhan, status, mekanik diinginkan/ditugaskan, alasan tolak) |
+| Servis           | Ada (jenis, keluhan, pekerjaan, mekanik, status, biaya)                            |
+| Detail Servis    | Ada sebagai `items` di dalam servis (sparepart, jumlah, harga satuan)              |
+| Sparepart & Stok | Ada (kode, nama, kategori, harga, stok, terpakai)                                  |
+| Pembayaran       | Ada, tetapi menempel di record servis (metode bayar, status, nota)                 |
+| Admin & Owner    | Ada sebagai peran login mock, bukan data                                           |
+>>>>>>> b897868 (Initial commit - AppBenk)
 
 ## Belum sesuai / belum ada
 
