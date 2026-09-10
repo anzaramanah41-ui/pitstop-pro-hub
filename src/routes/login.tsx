@@ -1,14 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-<<<<<<< HEAD
-import { Eye, EyeOff, Loader2, Lock, Mail, UserRoundCheck } from "lucide-react";
-import { toast } from "sonner";
-import { AuthLayout } from "@/components/auth-layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { AKUN_DEMO, HOME_ROLE, LABEL_ROLE, useAuth } from "@/lib/auth";
-=======
 import {
   Eye,
   EyeOff,
@@ -32,7 +23,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { HOME_ROLE, LABEL_ROLE, useAuth } from "@/lib/auth";
->>>>>>> b897868 (Initial commit - AppBenk)
 
 export const Route = createFileRoute("/login")({
   ssr: false,
@@ -55,15 +45,9 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-<<<<<<< HEAD
-  const { user, masuk } = useAuth();
-  const [email, setEmail] = useState("pelanggan@appbenk.test");
-  const [password, setPassword] = useState("pelanggan123");
-=======
   const { user, masuk, kirimKodeResetPassword, verifikasiDanUbahPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
->>>>>>> b897868 (Initial commit - AppBenk)
   const [lihat, setLihat] = useState(false);
   const [ingat, setIngat] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -71,8 +55,6 @@ function LoginPage() {
   const [errPassword, setErrPassword] = useState("");
   const [error, setError] = useState("");
 
-<<<<<<< HEAD
-=======
   // State Dialog Lupa Password Real (Supabase OTP)
   const [lupaOpen, setLupaOpen] = useState(false);
   const [lupaStep, setLupaStep] = useState<1 | 2>(1);
@@ -94,14 +76,10 @@ function LoginPage() {
     return () => clearInterval(timer);
   }, [countdown]);
 
->>>>>>> b897868 (Initial commit - AppBenk)
   useEffect(() => {
     if (user) navigate({ to: HOME_ROLE[user.role], replace: true });
   }, [user, navigate]);
 
-<<<<<<< HEAD
-  const submit = (e: React.FormEvent) => {
-=======
   const bukaLupaPassword = () => {
     setLupaEmail(email.trim());
     setLupaKode("");
@@ -183,7 +161,6 @@ function LoginPage() {
   };
 
   const submit = async (e: React.FormEvent) => {
->>>>>>> b897868 (Initial commit - AppBenk)
     e.preventDefault();
     const ee = !email.trim()
       ? "Email wajib diisi."
@@ -197,18 +174,6 @@ function LoginPage() {
     if (ee || ep) return;
 
     setLoading(true);
-<<<<<<< HEAD
-    void (async () => {
-      const sesi = await masuk(email, password);
-      if (!sesi) {
-        setLoading(false);
-        setError("Email atau password salah. Silakan coba lagi.");
-        return;
-      }
-      toast.success(`Berhasil masuk sebagai ${LABEL_ROLE[sesi.role]}`);
-      navigate({ to: HOME_ROLE[sesi.role], replace: true });
-    })();
-=======
     const hasil = await masuk(email, password);
     setLoading(false);
     if (!hasil.user) {
@@ -223,7 +188,6 @@ function LoginPage() {
     }
     toast.success(`Berhasil masuk sebagai ${LABEL_ROLE[hasil.user.role]}`);
     navigate({ to: HOME_ROLE[hasil.user.role], replace: true });
->>>>>>> b897868 (Initial commit - AppBenk)
   };
 
   return (
@@ -238,16 +202,6 @@ function LoginPage() {
             <p className="mt-1 text-sm text-muted-foreground">Masuk untuk mengakses sistem Anda</p>
           </div>
 
-<<<<<<< HEAD
-          <form onSubmit={submit} className="mt-7 space-y-5">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-=======
           <form onSubmit={submit} className="mt-7 space-y-5" autoComplete="off">
             <div className="space-y-1.5">
               <Label htmlFor="login_email_field">Email</Label>
@@ -258,7 +212,6 @@ function LoginPage() {
                   name="login_email_field"
                   type="email"
                   autoComplete="off"
->>>>>>> b897868 (Initial commit - AppBenk)
                   className="h-11 pl-9"
                   placeholder="Masukkan email Anda"
                   value={email}
@@ -269,14 +222,6 @@ function LoginPage() {
             </div>
 
             <div className="space-y-1.5">
-<<<<<<< HEAD
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={lihat ? "text" : "password"}
-=======
               <Label htmlFor="login_password_field">Password</Label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -285,7 +230,6 @@ function LoginPage() {
                   name="login_password_field"
                   type={lihat ? "text" : "password"}
                   autoComplete="new-password"
->>>>>>> b897868 (Initial commit - AppBenk)
                   className="h-11 pl-9 pr-10"
                   placeholder="Masukkan password Anda"
                   value={password}
@@ -315,11 +259,7 @@ function LoginPage() {
               </label>
               <button
                 type="button"
-<<<<<<< HEAD
-                onClick={() => toast.info("Hubungi Admin Bengkel untuk reset kata sandi.")}
-=======
                 onClick={bukaLupaPassword}
->>>>>>> b897868 (Initial commit - AppBenk)
                 className="font-medium text-primary underline-offset-4 hover:underline"
               >
                 Lupa password?
@@ -327,12 +267,6 @@ function LoginPage() {
             </div>
 
             {error && (
-<<<<<<< HEAD
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
-            )}
-
-            <Button type="submit" className="h-11 w-full text-base font-semibold" disabled={loading}>
-=======
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
               </p>
@@ -343,61 +277,21 @@ function LoginPage() {
               className="h-11 w-full text-base font-semibold"
               disabled={loading}
             >
->>>>>>> b897868 (Initial commit - AppBenk)
               {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
               {loading ? "Memproses..." : "Login"}
             </Button>
 
-<<<<<<< HEAD
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="h-px flex-1 bg-border" />
-              atau
-              <span className="h-px flex-1 bg-border" />
-            </div>
-
-            <Button asChild variant="outline" className="h-11 w-full font-semibold">
-              <Link to="/register">Daftar jika belum punya akun</Link>
-            </Button>
-
-            <p className="text-center text-sm text-muted-foreground">
-              Belum punya akun?{" "}
-              <Link to="/register" className="font-semibold text-primary underline-offset-4 hover:underline">
-=======
             <p className="text-center text-sm text-muted-foreground">
               Belum punya akun?{" "}
               <Link
                 to="/register"
                 className="font-semibold text-primary underline-offset-4 hover:underline"
               >
->>>>>>> b897868 (Initial commit - AppBenk)
                 Daftar sekarang
               </Link>
             </p>
           </form>
         </div>
-<<<<<<< HEAD
-
-        <div className="mt-5 space-y-2 rounded-xl border bg-muted/40 p-4">
-          <p className="text-xs font-semibold">Akun demo</p>
-          {AKUN_DEMO.map((a) => (
-            <button
-              key={a.email}
-              type="button"
-              onClick={() => {
-                setEmail(a.email);
-                setPassword(a.password);
-              }}
-              className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[11px] text-muted-foreground transition-colors hover:bg-background"
-            >
-              <span className="font-medium text-foreground">{LABEL_ROLE[a.role]}</span>
-              <span>
-                {a.email} / {a.password}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-=======
       </div>
 
       {/* Modal Dialog Lupa Password Real (Kirim OTP ke Email & Verifikasi) */}
@@ -554,7 +448,6 @@ function LoginPage() {
           )}
         </DialogContent>
       </Dialog>
->>>>>>> b897868 (Initial commit - AppBenk)
     </AuthLayout>
   );
 }

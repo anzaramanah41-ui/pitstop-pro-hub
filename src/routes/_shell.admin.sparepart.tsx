@@ -1,25 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-<<<<<<< HEAD
-import { Plus, Pencil, Trash2, Package } from "lucide-react";
-=======
 import { Plus, Pencil, Trash2, Package, RotateCcw, Tag, ArrowUpDown, Layers } from "lucide-react";
->>>>>>> b897868 (Initial commit - AppBenk)
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { SearchBar } from "@/components/search-bar";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-<<<<<<< HEAD
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/number-input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useStore, rupiah, SATUAN_PART, statusStok, tanggalPanjang, type Sparepart } from "@/lib/store";
-=======
 import {
   Dialog,
   DialogContent,
@@ -56,17 +43,11 @@ import {
   generateNextKodeSparepart,
   type Sparepart,
 } from "@/lib/store";
->>>>>>> b897868 (Initial commit - AppBenk)
 
 export const Route = createFileRoute("/_shell/admin/sparepart")({
   head: () => ({
     meta: [
       { title: "Sparepart & Pricelist — AppBenk" },
-<<<<<<< HEAD
-      { name: "description", content: "Kelola katalog sparepart bengkel, harga jual, stok, dan kategori komponen kendaraan." },
-      { property: "og:title", content: "Sparepart & Pricelist — AppBenk" },
-      { property: "og:description", content: "Katalog sparepart dan pricelist bengkel yang selalu siap." },
-=======
       {
         name: "description",
         content:
@@ -77,19 +58,11 @@ export const Route = createFileRoute("/_shell/admin/sparepart")({
         property: "og:description",
         content: "Katalog sparepart dan pricelist bengkel yang selalu siap.",
       },
->>>>>>> b897868 (Initial commit - AppBenk)
     ],
   }),
   component: SparepartAdmin,
 });
 
-<<<<<<< HEAD
-const kosong = { nama: "", satuan: SATUAN_PART[0]!, harga: 0, stok: 0, stokMinimum: 5, deskripsi: "" };
-
-function SparepartAdmin() {
-  const { sparepart, simpanSparepart, hapusSparepart } = useStore();
-  const [q, setQ] = useState("");
-=======
 const kosong = {
   kode: "",
   nama: "",
@@ -107,18 +80,11 @@ function SparepartAdmin() {
   const [kat, setKat] = useState("semua");
   const [statusFilter, setStatusFilter] = useState("semua");
   const [sortFilter, setSortFilter] = useState("default");
->>>>>>> b897868 (Initial commit - AppBenk)
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Sparepart | null>(null);
   const [form, setForm] = useState(kosong);
   const [hapus, setHapus] = useState<Sparepart | null>(null);
 
-<<<<<<< HEAD
-  const data = useMemo(() => {
-    const s = q.toLowerCase();
-    return sparepart.filter((p) => p.nama.toLowerCase().includes(s) || p.deskripsi.toLowerCase().includes(s));
-  }, [sparepart, q]);
-=======
   const isFiltered = q.trim() !== "" || kat !== "semua" || statusFilter !== "semua" || sortFilter !== "default";
 
   const resetFilter = () => {
@@ -186,7 +152,6 @@ function SparepartAdmin() {
     const avgHarga = Math.round(hargas.reduce((a, b) => a + b, 0) / hargas.length);
     return { total: sparepart.length, minHarga, maxHarga, avgHarga };
   }, [sparepart]);
->>>>>>> b897868 (Initial commit - AppBenk)
 
   const simpan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,9 +159,6 @@ function SparepartAdmin() {
       toast.error("Nama dan harga wajib diisi dengan benar.");
       return;
     }
-<<<<<<< HEAD
-    void simpanSparepart(edit ? { ...form, id: edit.id } : form);
-=======
     const kodeOtomatis = generateNextKodeSparepart(sparepart);
     const kodeInput = (form.kode.trim() || kodeOtomatis).toUpperCase();
     if (!edit && kodeInput && sparepart.some((x) => x.kode.toLowerCase() === kodeInput.toLowerCase())) {
@@ -204,7 +166,6 @@ function SparepartAdmin() {
       return;
     }
     simpanSparepart(edit ? { ...form, kode: kodeInput, id: edit.id } : { ...form, kode: kodeInput });
->>>>>>> b897868 (Initial commit - AppBenk)
     toast.success(edit ? "Sparepart diperbarui" : "Sparepart ditambahkan");
     setOpen(false);
   };
@@ -213,91 +174,14 @@ function SparepartAdmin() {
     <>
       <PageHeader
         title="Sparepart & Pricelist"
-<<<<<<< HEAD
-        description="Katalog komponen beserta harga dan stok."
-        action={
-          <Button className="gap-2" onClick={() => { setEdit(null); setForm(kosong); setOpen(true); }}>
-=======
         description="Katalog komponen lengkap beserta harga jual, pergerakan stok, dan informasi ketersediaan."
         action={
           <Button className="gap-2" onClick={bukaBaru}>
->>>>>>> b897868 (Initial commit - AppBenk)
             <Plus className="size-4" /> Tambah Sparepart
           </Button>
         }
       />
 
-<<<<<<< HEAD
-      <Card>
-        <CardContent className="space-y-4 p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <SearchBar value={q} onChange={setQ} placeholder="Cari nama sparepart..." />
-          </div>
-
-          {data.length === 0 ? (
-            <EmptyState icon={<Package className="size-8" />} title="Sparepart tidak ditemukan" description="Tambahkan item baru atau ubah filter." />
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nama Sparepart</TableHead>
-                    <TableHead>Deskripsi</TableHead>
-                    <TableHead>Satuan</TableHead>
-                    <TableHead className="text-right">Harga</TableHead>
-                    <TableHead className="text-right">Stok</TableHead>
-                    <TableHead>Status Stok</TableHead>
-                    <TableHead>Update</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium">{p.nama}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.deskripsi || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.satuan}</TableCell>
-                      <TableCell className="text-right font-semibold">{rupiah(p.harga)}</TableCell>
-                      <TableCell className="text-right">
-                        <span className={p.stok <= p.stokMinimum ? "font-semibold text-destructive" : ""}>
-                          {p.stok} {p.satuan}
-                        </span>
-                        <span className="block text-xs text-muted-foreground">min. {p.stokMinimum}</span>
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={
-                            statusStok(p) === "Habis"
-                              ? "font-semibold text-destructive"
-                              : statusStok(p) === "Menipis"
-                                ? "font-semibold text-warning"
-                                : "text-muted-foreground"
-                          }
-                        >
-                          {statusStok(p)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{tanggalPanjang(p.tanggalUpdate)}</TableCell>
-
-                      <TableCell>
-                        <div className="flex justify-end gap-1">
-                          <Button size="icon" variant="ghost" aria-label="Ubah" onClick={() => { setEdit(p); setForm({ ...kosong, ...p }); setOpen(true); }}>
-                            <Pencil className="size-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" aria-label="Hapus" onClick={() => setHapus(p)}>
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-=======
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList>
@@ -583,7 +467,6 @@ function SparepartAdmin() {
           </CardContent>
         </Card>
       </Tabs>
->>>>>>> b897868 (Initial commit - AppBenk)
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-lg">
@@ -593,21 +476,6 @@ function SparepartAdmin() {
           <form onSubmit={simpan} className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Nama Sparepart</Label>
-<<<<<<< HEAD
-              <Input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} />
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label>Deskripsi</Label>
-              <Input value={form.deskripsi} onChange={(e) => setForm({ ...form, deskripsi: e.target.value })} placeholder="Keterangan singkat (opsional)" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Harga</Label>
-              <NumberInput value={form.harga} onChange={(v) => setForm({ ...form, harga: v })} placeholder="0" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Stok</Label>
-              <NumberInput value={form.stok} onChange={(v) => setForm({ ...form, stok: v })} placeholder="0" />
-=======
               <Input
                 value={form.nama}
                 onChange={(e) => setForm({ ...form, nama: e.target.value })}
@@ -661,17 +529,10 @@ function SparepartAdmin() {
                 onChange={(v) => setForm({ ...form, stok: v })}
                 placeholder="0"
               />
->>>>>>> b897868 (Initial commit - AppBenk)
             </div>
             <div className="space-y-1.5">
               <Label>Satuan</Label>
               <Select value={form.satuan} onValueChange={(v) => setForm({ ...form, satuan: v })}>
-<<<<<<< HEAD
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SATUAN_PART.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-=======
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -680,19 +541,12 @@ function SparepartAdmin() {
                     <SelectItem key={s} value={s}>
                       {s}
                     </SelectItem>
->>>>>>> b897868 (Initial commit - AppBenk)
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Stok Minimum</Label>
-<<<<<<< HEAD
-              <NumberInput value={form.stokMinimum} onChange={(v) => setForm({ ...form, stokMinimum: v })} placeholder="0" />
-            </div>
-            <DialogFooter className="sm:col-span-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
-=======
               <NumberInput
                 value={form.stokMinimum}
                 onChange={(v) => setForm({ ...form, stokMinimum: v })}
@@ -703,7 +557,6 @@ function SparepartAdmin() {
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Batal
               </Button>
->>>>>>> b897868 (Initial commit - AppBenk)
               <Button type="submit">Simpan</Button>
             </DialogFooter>
           </form>
@@ -715,11 +568,7 @@ function SparepartAdmin() {
         onOpenChange={(v) => !v && setHapus(null)}
         title={`Hapus ${hapus?.nama}?`}
         onConfirm={() => {
-<<<<<<< HEAD
-          if (hapus) void hapusSparepart(hapus.id);
-=======
           if (hapus) hapusSparepart(hapus.id);
->>>>>>> b897868 (Initial commit - AppBenk)
           setHapus(null);
           toast.success("Sparepart dihapus");
         }}

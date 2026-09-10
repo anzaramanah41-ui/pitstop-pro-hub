@@ -1,8 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-<<<<<<< HEAD
-import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Wrench, Check, ChevronsUpDown, UserPlus, Car } from "lucide-react";
-=======
 import { useMemo, useState, useEffect } from "react";
 import {
   Plus,
@@ -19,7 +15,6 @@ import {
   Maximize2,
   Banknote,
 } from "lucide-react";
->>>>>>> b897868 (Initial commit - AppBenk)
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { SearchBar } from "@/components/search-bar";
@@ -27,11 +22,6 @@ import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-<<<<<<< HEAD
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-=======
 import {
   Dialog,
   DialogContent,
@@ -39,16 +29,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
->>>>>>> b897868 (Initial commit - AppBenk)
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/number-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-<<<<<<< HEAD
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-=======
 import {
   Select,
   SelectContent,
@@ -65,16 +49,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/lib/auth";
->>>>>>> b897868 (Initial commit - AppBenk)
 import {
   useStore,
   rupiah,
   tanggalPanjang,
   totalItem,
-<<<<<<< HEAD
-  MEKANIK,
-=======
->>>>>>> b897868 (Initial commit - AppBenk)
   JENIS_SERVIS,
   URUTAN_STATUS,
   type Servis,
@@ -82,16 +61,6 @@ import {
   type ItemPart,
 } from "@/lib/store";
 
-<<<<<<< HEAD
-
-export const Route = createFileRoute("/_shell/admin/servis")({
-  head: () => ({
-    meta: [
-      { title: "Operasional Servis — AppBenk" },
-      { name: "description", content: "Kelola proses servis: mekanik, sparepart, estimasi biaya, dan pembaruan status pengerjaan." },
-      { property: "og:title", content: "Operasional Servis — AppBenk" },
-      { property: "og:description", content: "Kendalikan seluruh proses pengerjaan servis bengkel." },
-=======
 export const Route = createFileRoute("/_shell/admin/servis")({
   validateSearch: (search: Record<string, unknown>): { trx?: string } =>
     typeof search["trx"] === "string" ? { trx: search["trx"] } : {},
@@ -108,56 +77,27 @@ export const Route = createFileRoute("/_shell/admin/servis")({
         property: "og:description",
         content: "Kendalikan seluruh proses pengerjaan servis bengkel.",
       },
->>>>>>> b897868 (Initial commit - AppBenk)
     ],
   }),
   component: ServisAdmin,
 });
 
 const kosong = {
-<<<<<<< HEAD
-  pelangganId: "",
-  pelanggan: "",
-=======
   pelanggan: "",
   telepon: "",
->>>>>>> b897868 (Initial commit - AppBenk)
   kendaraan: "",
   plat: "",
   jenis: JENIS_SERVIS[0]!,
   keluhan: "",
   pekerjaan: "",
-<<<<<<< HEAD
-  mekanik: MEKANIK[0]!,
-  tanggal: "2026-08-18",
-  estimasiSelesai: "",
-=======
   mekanik: "Andi",
   tanggal: new Date().toISOString().slice(0, 10),
->>>>>>> b897868 (Initial commit - AppBenk)
   status: "Menunggu" as StatusServis,
   catatan: "",
   biayaJasa: 0,
   items: [] as ItemPart[],
 };
 
-<<<<<<< HEAD
-const pelangganKosong = { nama: "", telepon: "", email: "", alamat: "" };
-const kendaraanKosong = { plat: "", merk: "", tipe: "", tahun: 2020 };
-
-function ServisAdmin() {
-  const {
-    servis,
-    pelanggan,
-    kendaraan: daftarKendaraan,
-    sparepart,
-    simpanServis,
-    hapusServis,
-    ubahStatusServis,
-    simpanPelanggan,
-    simpanKendaraan,
-  } = useStore();
-=======
 function ServisAdmin() {
   const { user } = useAuth();
   const { trx } = Route.useSearch();
@@ -181,80 +121,11 @@ function ServisAdmin() {
     refreshMekanik?.();
   }, []);
 
->>>>>>> b897868 (Initial commit - AppBenk)
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"semua" | StatusServis>("semua");
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Servis | null>(null);
   const [form, setForm] = useState(kosong);
-<<<<<<< HEAD
-  const [hapus, setHapus] = useState<Servis | null>(null);
-  const [pilihPart, setPilihPart] = useState("");
-  const [bukaCari, setBukaCari] = useState(false);
-  const [dialogPelanggan, setDialogPelanggan] = useState(false);
-  const [formPelanggan, setFormPelanggan] = useState(pelangganKosong);
-  const [dialogKendaraan, setDialogKendaraan] = useState(false);
-  const [formKendaraan, setFormKendaraan] = useState(kendaraanKosong);
-  const [menyimpan, setMenyimpan] = useState(false);
-
-  const kendaraanPelanggan = useMemo(
-    () => daftarKendaraan.filter((k) => k.pelangganId === form.pelangganId),
-    [daftarKendaraan, form.pelangganId],
-  );
-
-  const pilihPelanggan = (id: string) => {
-    const p = pelanggan.find((x) => x.id === id);
-    if (!p) return;
-    const kend = daftarKendaraan.filter((k) => k.pelangganId === p.id);
-    const utama = kend[0];
-    setForm((f) => ({
-      ...f,
-      pelangganId: p.id,
-      pelanggan: p.nama,
-      kendaraan: utama ? `${utama.merk} ${utama.tipe}` : p.kendaraan,
-      plat: utama?.plat ?? p.plat,
-    }));
-    setBukaCari(false);
-  };
-
-  const buatPelangganBaru = async () => {
-    if (!formPelanggan.nama.trim()) {
-      toast.error("Nama pelanggan wajib diisi.");
-      return;
-    }
-    const baru = await simpanPelanggan({ ...formPelanggan, kendaraan: "", plat: "" });
-    if (!baru) {
-      toast.error("Gagal membuat pelanggan baru.");
-      return;
-    }
-    setForm((f) => ({ ...f, pelangganId: baru.id, pelanggan: baru.nama, kendaraan: "", plat: "" }));
-    setFormPelanggan(pelangganKosong);
-    setDialogPelanggan(false);
-    toast.success(`Pelanggan ${baru.nama} ditambahkan`);
-  };
-
-  const buatKendaraanBaru = async () => {
-    if (!form.pelangganId) {
-      toast.error("Pilih pelanggan terlebih dahulu.");
-      return;
-    }
-    if (!formKendaraan.plat.trim() || !formKendaraan.merk.trim()) {
-      toast.error("Nomor polisi dan merk wajib diisi.");
-      return;
-    }
-    const baru = await simpanKendaraan({ ...formKendaraan, pelangganId: form.pelangganId, kilometer: 0 });
-    if (!baru) {
-      toast.error("Gagal menambahkan kendaraan.");
-      return;
-    }
-    setForm((f) => ({ ...f, kendaraan: `${baru.merk} ${baru.tipe}`, plat: baru.plat }));
-    setFormKendaraan(kendaraanKosong);
-    setDialogKendaraan(false);
-    toast.success("Kendaraan ditambahkan");
-  };
-
-
-=======
   const [modePelanggan, setModePelanggan] = useState<"pilih" | "manual">("pilih");
   const [hapus, setHapus] = useState<Servis | null>(null);
   const [pilihPart, setPilihPart] = useState("");
@@ -296,20 +167,10 @@ function ServisAdmin() {
     }
     return aktif;
   }, [mekanik, bengkelAktifId, edit]);
->>>>>>> b897868 (Initial commit - AppBenk)
 
   const data = useMemo(() => {
     const s = q.toLowerCase();
     return servis
-<<<<<<< HEAD
-      .filter((x) => filter === "semua" || x.status === filter)
-      .filter((x) => [x.nomor, x.pelanggan, x.kendaraan, x.plat, x.mekanik].some((v) => v.toLowerCase().includes(s)));
-  }, [servis, q, filter]);
-
-  const bukaBaru = () => {
-    setEdit(null);
-    setForm(kosong);
-=======
       .filter((x) => !x.bengkelId || x.bengkelId === bengkelAktifId)
       .filter((x) => filter === "semua" || x.status === filter)
       .filter((x) =>
@@ -327,19 +188,11 @@ function ServisAdmin() {
       tanggal: new Date().toISOString().slice(0, 10),
     });
     setModePelanggan(pelanggan.length > 0 ? "pilih" : "manual");
->>>>>>> b897868 (Initial commit - AppBenk)
     setOpen(true);
   };
 
   const bukaEdit = (s: Servis) => {
     setEdit(s);
-<<<<<<< HEAD
-    setForm({
-      pelangganId: s.pelangganId ?? pelanggan.find((p) => p.nama === s.pelanggan)?.id ?? "",
-      pelanggan: s.pelanggan,
-      kendaraan: s.kendaraan,
-      plat: s.plat,
-=======
     const p = pelanggan.find(
       (x) => x.nama.trim().toLowerCase() === s.pelanggan.trim().toLowerCase(),
     );
@@ -348,25 +201,17 @@ function ServisAdmin() {
       telepon: p?.telepon ?? "",
       kendaraan: s.kendaraan || p?.kendaraan || "",
       plat: s.plat || p?.plat || "",
->>>>>>> b897868 (Initial commit - AppBenk)
       jenis: s.jenis,
       keluhan: s.keluhan,
       pekerjaan: s.pekerjaan,
       mekanik: s.mekanik,
       tanggal: s.tanggal,
-<<<<<<< HEAD
-      estimasiSelesai: s.estimasiSelesai ?? "",
-=======
->>>>>>> b897868 (Initial commit - AppBenk)
       status: s.status,
       catatan: s.catatan,
       biayaJasa: s.biayaJasa,
       items: s.items.map((i) => ({ ...i })),
     });
-<<<<<<< HEAD
-=======
     setModePelanggan(p ? "pilih" : "manual");
->>>>>>> b897868 (Initial commit - AppBenk)
     setPilihPart("");
     setOpen(true);
   };
@@ -379,13 +224,6 @@ function ServisAdmin() {
     setForm((f) => {
       const ada = f.items.find((i) => i.sparepartId === id);
       if (ada) {
-<<<<<<< HEAD
-        return { ...f, items: f.items.map((i) => (i.sparepartId === id ? { ...i, jumlah: i.jumlah + 1 } : i)) };
-      }
-      return {
-        ...f,
-        items: [...f.items, { sparepartId: sp.id, nama: sp.nama, harga: sp.harga, jumlah: 1 }],
-=======
         return {
           ...f,
           items: f.items.map((i) => (i.sparepartId === id ? { ...i, jumlah: i.jumlah + 1 } : i)),
@@ -397,7 +235,6 @@ function ServisAdmin() {
           ...f.items,
           { sparepartId: sp.id, kode: sp.kode, nama: sp.nama, harga: sp.harga, jumlah: 1 },
         ],
->>>>>>> b897868 (Initial commit - AppBenk)
       };
     });
     setPilihPart("");
@@ -406,38 +243,14 @@ function ServisAdmin() {
   const ubahJumlah = (id: string, jumlah: number) =>
     setForm((f) => ({
       ...f,
-<<<<<<< HEAD
-      items: f.items.map((i) => (i.sparepartId === id ? { ...i, jumlah: Math.max(1, jumlah || 1) } : i)),
-=======
       items: f.items.map((i) =>
         i.sparepartId === id ? { ...i, jumlah: Math.max(1, jumlah || 1) } : i,
       ),
->>>>>>> b897868 (Initial commit - AppBenk)
     }));
 
   const hapusPart = (id: string) =>
     setForm((f) => ({ ...f, items: f.items.filter((i) => i.sparepartId !== id) }));
 
-<<<<<<< HEAD
-
-  const simpan = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.pelanggan || !form.kendaraan.trim() || !form.keluhan.trim()) {
-      toast.error("Pelanggan, kendaraan, dan keluhan wajib diisi.");
-      return;
-    }
-    setMenyimpan(true);
-    void (async () => {
-      const hasil = await simpanServis(edit ? { ...form, id: edit.id } : form);
-      setMenyimpan(false);
-      if (!hasil.ok) {
-        toast.error(hasil.error ?? "Gagal menyimpan servis.");
-        return;
-      }
-      toast.success(edit ? "Data servis diperbarui" : "Servis baru dibuat");
-      setOpen(false);
-    })();
-=======
   const simpan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.pelanggan.trim() || !form.kendaraan.trim() || !form.keluhan.trim()) {
@@ -465,7 +278,6 @@ function ServisAdmin() {
     } finally {
       setLoadingSimpan(false);
     }
->>>>>>> b897868 (Initial commit - AppBenk)
   };
 
   return (
@@ -474,11 +286,6 @@ function ServisAdmin() {
         title="Operasional Servis"
         description="Catat, kerjakan, dan perbarui status servis kendaraan."
         action={
-<<<<<<< HEAD
-          <Button onClick={bukaBaru} className="gap-2">
-            <Plus className="size-4" /> Servis Baru
-          </Button>
-=======
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -495,22 +302,12 @@ function ServisAdmin() {
               <Plus className="size-4" /> Servis Baru
             </Button>
           </div>
->>>>>>> b897868 (Initial commit - AppBenk)
         }
       />
 
       <Card>
         <CardContent className="space-y-4 p-4">
           <div className="flex flex-wrap items-center gap-3">
-<<<<<<< HEAD
-            <SearchBar value={q} onChange={setQ} placeholder="Cari nomor servis, pelanggan, atau mekanik..." />
-            <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-              <SelectTrigger className="w-56 bg-card"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="semua">Semua status</SelectItem>
-                {URUTAN_STATUS.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-=======
             <SearchBar
               value={q}
               onChange={setQ}
@@ -526,22 +323,17 @@ function ServisAdmin() {
                   <SelectItem key={s} value={s}>
                     {s}
                   </SelectItem>
->>>>>>> b897868 (Initial commit - AppBenk)
                 ))}
               </SelectContent>
             </Select>
           </div>
 
           {data.length === 0 ? (
-<<<<<<< HEAD
-            <EmptyState icon={<Wrench className="size-8" />} title="Belum ada servis" description="Tambahkan servis baru untuk memulai." />
-=======
             <EmptyState
               icon={<Wrench className="size-8" />}
               title="Belum ada servis"
               description="Tambahkan servis baru untuk memulai."
             />
->>>>>>> b897868 (Initial commit - AppBenk)
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -559,48 +351,6 @@ function ServisAdmin() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-<<<<<<< HEAD
-                  {data.map((s) => (
-                    <TableRow key={s.id}>
-                      <TableCell className="font-medium">
-                        {s.nomor}
-                        <span className="block text-xs text-muted-foreground">{tanggalPanjang(s.tanggal)}</span>
-                      </TableCell>
-                      <TableCell>{s.pelanggan}</TableCell>
-                      <TableCell className="text-muted-foreground">{s.kendaraan} · {s.plat}</TableCell>
-                      <TableCell className="max-w-40 truncate">{s.keluhan}</TableCell>
-                      <TableCell>{s.mekanik}</TableCell>
-                      <TableCell className="max-w-40 truncate text-muted-foreground">{s.sparepart || "—"}</TableCell>
-                      <TableCell className="whitespace-nowrap text-right">
-                        {rupiah(s.total)}
-                        <span className="block text-xs text-muted-foreground">
-                          Jasa {rupiah(s.biayaJasa)} · Part {rupiah(s.biayaPart)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Select value={s.status} onValueChange={(v) => { void ubahStatusServis(s.id, v as StatusServis); toast.success(`Status ${s.nomor}: ${v}`); }}>
-                          <SelectTrigger className="h-8 w-48 bg-card text-xs"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {URUTAN_STATUS.map((st) => (
-                              <SelectItem key={st} value={st}>{st}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <span className="mt-1 block"><StatusBadge status={s.status} /></span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-1">
-                          <Button size="icon" variant="ghost" aria-label="Ubah" onClick={() => bukaEdit(s)}>
-                            <Pencil className="size-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" aria-label="Hapus" onClick={() => setHapus(s)}>
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-=======
                   {data.map((s) => {
                     const pmb = pembayaran.find(
                       (p) => p.servisId === s.id || p.noTransaksi === s.noTransaksi,
@@ -732,7 +482,6 @@ function ServisAdmin() {
                       </TableRow>
                     );
                   })}
->>>>>>> b897868 (Initial commit - AppBenk)
                 </TableBody>
               </Table>
             </div>
@@ -746,86 +495,6 @@ function ServisAdmin() {
             <DialogTitle>{edit ? `Ubah ${edit.nomor}` : "Servis Baru"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={simpan} className="grid gap-4 sm:grid-cols-2">
-<<<<<<< HEAD
-            <div className="space-y-1.5">
-              <Label>Pelanggan</Label>
-              <div className="flex gap-2">
-                <Popover open={bukaCari} onOpenChange={setBukaCari}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={bukaCari}
-                      className={cn("flex-1 justify-between font-normal", !form.pelanggan && "text-muted-foreground")}
-                    >
-                      {form.pelanggan || "Cari atau ketik nama pelanggan"}
-                      <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Ketik nama pelanggan..." />
-                      <CommandList>
-                        <CommandEmpty>
-                          <span className="text-xs">Pelanggan tidak ditemukan.</span>
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {pelanggan.map((p) => (
-                            <CommandItem key={p.id} value={`${p.nama} ${p.telepon}`} onSelect={() => pilihPelanggan(p.id)}>
-                              <Check className={cn("mr-2 size-4", form.pelangganId === p.id ? "opacity-100" : "opacity-0")} />
-                              <span className="flex flex-col">
-                                <span>{p.nama}</span>
-                                <span className="text-xs text-muted-foreground">{p.telepon || p.email || "—"}</span>
-                              </span>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="gap-1"
-                  onClick={() => setDialogPelanggan(true)}
-                  aria-label="Tambah pelanggan baru"
-                >
-                  <UserPlus className="size-4" /> Baru
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Jenis Servis</Label>
-              <Select value={form.jenis} onValueChange={(v) => setForm({ ...form, jenis: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {JENIS_SERVIS.map((j) => (
-                    <SelectItem key={j} value={j}>{j}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label>Kendaraan Pelanggan</Label>
-              <div className="flex gap-2">
-                <Select
-                  value={form.plat}
-                  onValueChange={(v) => {
-                    const k = kendaraanPelanggan.find((x) => x.plat === v);
-                    if (k) setForm({ ...form, plat: k.plat, kendaraan: `${k.merk} ${k.tipe}` });
-                  }}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder={form.pelangganId ? "Pilih kendaraan" : "Pilih pelanggan dulu"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {kendaraanPelanggan.map((k) => (
-                      <SelectItem key={k.id} value={k.plat}>
-                        {k.merk} {k.tipe} · {k.plat} · {k.tahun}
-=======
             <div className="space-y-1.5 sm:col-span-2">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">Pelanggan</Label>
@@ -873,48 +542,10 @@ function ServisAdmin() {
                     {pelanggan.map((p) => (
                       <SelectItem key={p.id} value={p.nama}>
                         {p.nama} {p.telepon ? `· ${p.telepon}` : ""} {p.kendaraan ? `(${p.kendaraan})` : ""}
->>>>>>> b897868 (Initial commit - AppBenk)
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-<<<<<<< HEAD
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="gap-1"
-                  onClick={() => setDialogKendaraan(true)}
-                  aria-label="Tambah kendaraan baru"
-                >
-                  <Car className="size-4" /> Baru
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Kendaraan</Label>
-              <Input value={form.kendaraan} onChange={(e) => setForm({ ...form, kendaraan: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Nomor Plat</Label>
-              <Input value={form.plat} onChange={(e) => setForm({ ...form, plat: e.target.value })} />
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label>Keluhan</Label>
-              <Textarea value={form.keluhan} onChange={(e) => setForm({ ...form, keluhan: e.target.value })} />
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label>Pekerjaan</Label>
-              <Input value={form.pekerjaan} onChange={(e) => setForm({ ...form, pekerjaan: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Mekanik</Label>
-              <Select value={form.mekanik} onValueChange={(v) => setForm({ ...form, mekanik: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {MEKANIK.map((m) => (
-                    <SelectItem key={m} value={m}>{m}</SelectItem>
-                  ))}
-=======
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="space-y-1">
@@ -1011,28 +642,15 @@ function ServisAdmin() {
                       </SelectItem>
                     ))
                   )}
->>>>>>> b897868 (Initial commit - AppBenk)
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Tanggal</Label>
-<<<<<<< HEAD
-              <Input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} />
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="estimasi-selesai">Estimasi Selesai</Label>
-              <Input
-                id="estimasi-selesai"
-                type="datetime-local"
-                value={form.estimasiSelesai}
-                onChange={(e) => setForm({ ...form, estimasiSelesai: e.target.value })}
-=======
               <Input
                 type="date"
                 value={form.tanggal}
                 onChange={(e) => setForm({ ...form, tanggal: e.target.value })}
->>>>>>> b897868 (Initial commit - AppBenk)
               />
             </div>
             <div className="space-y-2 rounded-lg border p-3 sm:col-span-2">
@@ -1042,13 +660,6 @@ function ServisAdmin() {
               </div>
 
               <Select value={pilihPart} onValueChange={tambahPart}>
-<<<<<<< HEAD
-                <SelectTrigger><SelectValue placeholder="Pilih sparepart untuk ditambahkan" /></SelectTrigger>
-                <SelectContent>
-                  {sparepart.map((sp) => (
-                    <SelectItem key={sp.id} value={sp.id}>
-                      {sp.nama} — {rupiah(sp.harga)} (stok {sp.stok})
-=======
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih sparepart untuk ditambahkan" />
                 </SelectTrigger>
@@ -1056,7 +667,6 @@ function ServisAdmin() {
                   {sparepart.map((sp) => (
                     <SelectItem key={sp.id} value={sp.id}>
                       {sp.kode} · {sp.nama} — {rupiah(sp.harga)} (stok {sp.stok})
->>>>>>> b897868 (Initial commit - AppBenk)
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1081,34 +691,22 @@ function ServisAdmin() {
                     <TableBody>
                       {form.items.map((i) => {
                         const sp = sparepart.find((x) => x.id === i.sparepartId);
-<<<<<<< HEAD
-                        const dipakaiAwal = edit?.items.find((o) => o.sparepartId === i.sparepartId)?.jumlah ?? 0;
-                        const stokSetelah = sp ? Math.max(0, sp.stok - (i.jumlah - dipakaiAwal)) : 0;
-=======
                         const dipakaiAwal =
                           edit?.items.find((o) => o.sparepartId === i.sparepartId)?.jumlah ?? 0;
                         const stokSetelah = sp
                           ? Math.max(0, sp.stok - (i.jumlah - dipakaiAwal))
                           : 0;
->>>>>>> b897868 (Initial commit - AppBenk)
                         return (
                           <TableRow key={i.sparepartId}>
                             <TableCell>
                               <span className="block text-sm font-medium">{i.nama}</span>
                               <span className="block text-xs text-muted-foreground">
-<<<<<<< HEAD
-                                stok {sp?.stok ?? 0} → {stokSetelah}
-                              </span>
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap text-right">{rupiah(i.harga)}</TableCell>
-=======
                                 {i.kode} · stok {sp?.stok ?? 0} → {stokSetelah}
                               </span>
                             </TableCell>
                             <TableCell className="whitespace-nowrap text-right">
                               {rupiah(i.harga)}
                             </TableCell>
->>>>>>> b897868 (Initial commit - AppBenk)
                             <TableCell>
                               <NumberInput
                                 aria-label={`Jumlah ${i.nama}`}
@@ -1143,17 +741,6 @@ function ServisAdmin() {
 
             <div className="space-y-1.5">
               <Label>Biaya Jasa</Label>
-<<<<<<< HEAD
-              <NumberInput value={form.biayaJasa} onChange={(v) => setForm({ ...form, biayaJasa: v })} placeholder="0" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as StatusServis })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {URUTAN_STATUS.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-=======
               <NumberInput
                 value={form.biayaJasa}
                 onChange={(v) => setForm({ ...form, biayaJasa: v })}
@@ -1174,7 +761,6 @@ function ServisAdmin() {
                     <SelectItem key={s} value={s}>
                       {s}
                     </SelectItem>
->>>>>>> b897868 (Initial commit - AppBenk)
                   ))}
                 </SelectContent>
               </Select>
@@ -1196,13 +782,6 @@ function ServisAdmin() {
 
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Catatan</Label>
-<<<<<<< HEAD
-              <Textarea value={form.catatan} onChange={(e) => setForm({ ...form, catatan: e.target.value })} />
-            </div>
-            <DialogFooter className="sm:col-span-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button>
-              <Button type="submit">Simpan</Button>
-=======
               <Textarea
                 value={form.catatan}
                 onChange={(e) => setForm({ ...form, catatan: e.target.value })}
@@ -1215,7 +794,6 @@ function ServisAdmin() {
               <Button type="submit" disabled={loadingSimpan}>
                 {loadingSimpan ? "Menyimpan..." : "Simpan"}
               </Button>
->>>>>>> b897868 (Initial commit - AppBenk)
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1226,17 +804,11 @@ function ServisAdmin() {
         onOpenChange={(v) => !v && setHapus(null)}
         title={`Hapus servis ${hapus?.nomor}?`}
         onConfirm={() => {
-<<<<<<< HEAD
-          if (hapus) void hapusServis(hapus.id);
-=======
           if (hapus) hapusServis(hapus.id);
->>>>>>> b897868 (Initial commit - AppBenk)
           setHapus(null);
           toast.success("Data servis dihapus");
         }}
       />
-<<<<<<< HEAD
-=======
 
       {/* -------------------------------------------------------------------- */}
       {/* MODAL VERIFIKASI PEMBAYARAN & BUKTI SCREENSHOT E-WALLET ADMIN */}
@@ -1504,7 +1076,6 @@ function ServisAdmin() {
           })()}
         </DialogContent>
       </Dialog>
->>>>>>> b897868 (Initial commit - AppBenk)
     </>
   );
 }

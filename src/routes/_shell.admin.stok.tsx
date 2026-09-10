@@ -1,19 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-<<<<<<< HEAD
-import { ShoppingCart, ArrowDownUp, PackageCheck } from "lucide-react";
-import { toast } from "sonner";
-import { PageHeader, EmptyState } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/number-input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useStore, rupiah, tanggalPanjang } from "@/lib/store";
-=======
 import { ShoppingCart, ArrowDownUp, PackageCheck, RotateCcw, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/page-header";
@@ -48,17 +34,11 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStore, rupiah, tanggalPanjang, type PembelianSparepart } from "@/lib/store";
->>>>>>> b897868 (Initial commit - AppBenk)
 
 export const Route = createFileRoute("/_shell/admin/stok")({
   head: () => ({
     meta: [
       { title: "Pembelian & Riwayat Stok — AppBenk" },
-<<<<<<< HEAD
-      { name: "description", content: "Catat pembelian sparepart dari supplier, pantau riwayat pergerakan stok masuk/keluar, dan penggunaan sparepart per servis." },
-      { property: "og:title", content: "Pembelian & Riwayat Stok — AppBenk" },
-      { property: "og:description", content: "Kelola pembelian supplier, riwayat stok, dan penggunaan sparepart bengkel." },
-=======
       {
         name: "description",
         content:
@@ -69,7 +49,6 @@ export const Route = createFileRoute("/_shell/admin/stok")({
         property: "og:description",
         content: "Kelola pembelian supplier, riwayat stok, dan penggunaan sparepart bengkel.",
       },
->>>>>>> b897868 (Initial commit - AppBenk)
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -78,11 +57,6 @@ export const Route = createFileRoute("/_shell/admin/stok")({
 });
 
 function StokAdmin() {
-<<<<<<< HEAD
-  const { sparepart, pembelian, riwayatStok, penggunaan, catatPembelian } = useStore();
-  const namaPart = useMemo(
-    () => new Map(sparepart.map((s) => [s.id, s.nama])),
-=======
   const {
     sparepart,
     pembelian,
@@ -153,7 +127,6 @@ function StokAdmin() {
         label: `${s.kode} · ${s.nama}`,
         sublabel: `Stok: ${s.stok} ${s.satuan} | ${rupiah(s.harga)}`,
       })),
->>>>>>> b897868 (Initial commit - AppBenk)
     [sparepart],
   );
 
@@ -166,15 +139,6 @@ function StokAdmin() {
   };
   const [form, setForm] = useState(kosong);
 
-<<<<<<< HEAD
-  const simpan = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.sparepartId || !form.supplier.trim() || form.jumlah <= 0 || form.harga <= 0) {
-      toast.error("Lengkapi sparepart, supplier, jumlah, dan harga beli.");
-      return;
-    }
-    void catatPembelian(form);
-=======
   const kosongRetur = {
     sparepartId: sparepart[0]?.id ?? "",
     pembelianId: "",
@@ -192,22 +156,10 @@ function StokAdmin() {
       return;
     }
     catatPembelian(form);
->>>>>>> b897868 (Initial commit - AppBenk)
     toast.success("Pembelian dicatat, stok bertambah");
     setForm({ ...kosong, tanggal: form.tanggal });
   };
 
-<<<<<<< HEAD
-  return (
-    <>
-      <PageHeader title="Pembelian & Stok" description="Pembelian sparepart dari supplier, riwayat pergerakan stok, dan penggunaan per servis." />
-
-      <Tabs defaultValue="pembelian">
-        <TabsList>
-          <TabsTrigger value="pembelian">Pembelian</TabsTrigger>
-          <TabsTrigger value="riwayat">Riwayat Stok</TabsTrigger>
-          <TabsTrigger value="penggunaan">Penggunaan</TabsTrigger>
-=======
   const simpanRetur = (e: React.FormEvent) => {
     e.preventDefault();
     if (!returForm.sparepartId.trim() || !returForm.alasan.trim() || returForm.jumlah <= 0) {
@@ -239,7 +191,6 @@ function StokAdmin() {
           <TabsTrigger value="riwayat">Riwayat Stok</TabsTrigger>
           <TabsTrigger value="penggunaan">Penggunaan</TabsTrigger>
           <TabsTrigger value="retur">Pengembalian (Retur)</TabsTrigger>
->>>>>>> b897868 (Initial commit - AppBenk)
         </TabsList>
 
         <TabsContent value="pembelian" className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.4fr]">
@@ -253,20 +204,6 @@ function StokAdmin() {
               <form onSubmit={simpan} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label>Sparepart</Label>
-<<<<<<< HEAD
-                  <Select value={form.sparepartId} onValueChange={(v) => setForm({ ...form, sparepartId: v })}>
-                    <SelectTrigger><SelectValue placeholder="Pilih sparepart" /></SelectTrigger>
-                    <SelectContent>
-                      {sparepart.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.nama}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Supplier</Label>
-                  <Input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} placeholder="PT Sinar Pelumas" />
-=======
                   <ComboboxInput
                     value={form.sparepartId}
                     onChange={(v) => {
@@ -290,18 +227,10 @@ function StokAdmin() {
                     onChange={(e) => setForm({ ...form, supplier: e.target.value })}
                     placeholder="PT Sinar Pelumas"
                   />
->>>>>>> b897868 (Initial commit - AppBenk)
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label>Tanggal</Label>
-<<<<<<< HEAD
-                    <Input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Jumlah</Label>
-                    <NumberInput value={form.jumlah} onChange={(v) => setForm({ ...form, jumlah: v })} />
-=======
                     <Input
                       type="date"
                       value={form.tanggal}
@@ -314,19 +243,14 @@ function StokAdmin() {
                       value={form.jumlah}
                       onChange={(v) => setForm({ ...form, jumlah: v })}
                     />
->>>>>>> b897868 (Initial commit - AppBenk)
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Harga Beli / Satuan</Label>
-<<<<<<< HEAD
-                  <NumberInput value={form.harga} onChange={(v) => setForm({ ...form, harga: v })} />
-=======
                   <NumberInput
                     value={form.harga}
                     onChange={(v) => setForm({ ...form, harga: v })}
                   />
->>>>>>> b897868 (Initial commit - AppBenk)
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-2 text-sm">
                   <span className="font-medium">Total</span>
@@ -345,14 +269,10 @@ function StokAdmin() {
             </CardHeader>
             <CardContent className="px-0">
               {pembelian.length === 0 ? (
-<<<<<<< HEAD
-                <EmptyState title="Belum ada pembelian" description="Pembelian sparepart akan tampil di sini." />
-=======
                 <EmptyState
                   title="Belum ada pembelian"
                   description="Pembelian sparepart akan tampil di sini."
                 />
->>>>>>> b897868 (Initial commit - AppBenk)
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
@@ -364,23 +284,13 @@ function StokAdmin() {
                         <TableHead>Tanggal</TableHead>
                         <TableHead className="text-right">Jumlah</TableHead>
                         <TableHead className="text-right">Total</TableHead>
-<<<<<<< HEAD
-=======
                         <TableHead className="text-center w-24">Aksi</TableHead>
->>>>>>> b897868 (Initial commit - AppBenk)
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {pembelian.map((p) => (
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">{p.nomor}</TableCell>
-<<<<<<< HEAD
-                          <TableCell>{namaPart.get(p.sparepartId) ?? "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">{p.supplier}</TableCell>
-                          <TableCell className="text-muted-foreground">{tanggalPanjang(p.tanggal)}</TableCell>
-                          <TableCell className="text-right">{p.jumlah}</TableCell>
-                          <TableCell className="text-right font-semibold">{rupiah(p.total)}</TableCell>
-=======
                           <TableCell>{namaPart.get(p.sparepartId) ?? p.sparepartId ?? "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{p.supplier}</TableCell>
                           <TableCell className="text-muted-foreground">
@@ -412,7 +322,6 @@ function StokAdmin() {
                               </Button>
                             </div>
                           </TableCell>
->>>>>>> b897868 (Initial commit - AppBenk)
                         </TableRow>
                       ))}
                     </TableBody>
@@ -432,14 +341,10 @@ function StokAdmin() {
             </CardHeader>
             <CardContent className="px-0">
               {riwayatStok.length === 0 ? (
-<<<<<<< HEAD
-                <EmptyState title="Belum ada pergerakan stok" description="Log stok masuk/keluar akan tampil di sini." />
-=======
                 <EmptyState
                   title="Belum ada pergerakan stok"
                   description="Log stok masuk/keluar akan tampil di sini."
                 />
->>>>>>> b897868 (Initial commit - AppBenk)
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
@@ -455,11 +360,6 @@ function StokAdmin() {
                     <TableBody>
                       {riwayatStok.map((r) => (
                         <TableRow key={r.id}>
-<<<<<<< HEAD
-                          <TableCell className="text-muted-foreground">{tanggalPanjang(r.tanggal)}</TableCell>
-                          <TableCell>{namaPart.get(r.sparepartId) ?? "—"}</TableCell>
-                          <TableCell className={r.jenis === "Masuk" ? "font-medium text-success" : "font-medium text-destructive"}>
-=======
                           <TableCell className="text-muted-foreground">
                             {tanggalPanjang(r.tanggal)}
                           </TableCell>
@@ -471,7 +371,6 @@ function StokAdmin() {
                                 : "font-medium text-destructive"
                             }
                           >
->>>>>>> b897868 (Initial commit - AppBenk)
                             {r.jenis}
                           </TableCell>
                           <TableCell className="text-right">{r.jumlah}</TableCell>
@@ -493,14 +392,10 @@ function StokAdmin() {
             </CardHeader>
             <CardContent className="px-0">
               {penggunaan.length === 0 ? (
-<<<<<<< HEAD
-                <EmptyState title="Belum ada pemakaian" description="Pemakaian sparepart tercatat otomatis dari operasional servis." />
-=======
                 <EmptyState
                   title="Belum ada pemakaian"
                   description="Pemakaian sparepart tercatat otomatis dari operasional servis."
                 />
->>>>>>> b897868 (Initial commit - AppBenk)
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
@@ -517,13 +412,6 @@ function StokAdmin() {
                     <TableBody>
                       {penggunaan.map((p) => (
                         <TableRow key={p.id}>
-<<<<<<< HEAD
-                          <TableCell className="text-muted-foreground">{tanggalPanjang(p.tanggal)}</TableCell>
-                          <TableCell className="font-medium">{p.servisNomor}</TableCell>
-                          <TableCell>{namaPart.get(p.sparepartId) ?? "—"}</TableCell>
-                          <TableCell className="text-right">{p.jumlah}</TableCell>
-                          <TableCell className="text-muted-foreground">{p.mekanik || "—"}</TableCell>
-=======
                           <TableCell className="text-muted-foreground">
                             {tanggalPanjang(p.tanggal)}
                           </TableCell>
@@ -533,7 +421,6 @@ function StokAdmin() {
                           <TableCell className="text-muted-foreground">
                             {p.mekanik || "—"}
                           </TableCell>
->>>>>>> b897868 (Initial commit - AppBenk)
                           <TableCell className="text-muted-foreground">{p.keterangan}</TableCell>
                         </TableRow>
                       ))}
@@ -544,9 +431,6 @@ function StokAdmin() {
             </CardContent>
           </Card>
         </TabsContent>
-<<<<<<< HEAD
-      </Tabs>
-=======
 
         <TabsContent value="retur" className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.4fr]">
           <Card>
@@ -782,7 +666,6 @@ function StokAdmin() {
         description="Menghapus pembelian ini akan otomatis mengembalikan (rollback) stok sparepart yang pernah tercatat masuk dari transaksi ini."
         onConfirm={handleKonfirmasiHapus}
       />
->>>>>>> b897868 (Initial commit - AppBenk)
     </>
   );
 }

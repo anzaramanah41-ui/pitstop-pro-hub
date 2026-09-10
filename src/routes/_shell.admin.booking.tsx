@@ -1,27 +1,12 @@
-<<<<<<< HEAD
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Check, X, Eye, Inbox } from "lucide-react";
-=======
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
 import { Check, X, Eye, Inbox, RefreshCw, Wrench } from "lucide-react";
->>>>>>> b897868 (Initial commit - AppBenk)
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { SearchBar } from "@/components/search-bar";
 import { BookingBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-<<<<<<< HEAD
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useStore, tanggalPanjang, MEKANIK, type Booking, type StatusBooking } from "@/lib/store";
-=======
 import {
   Dialog,
   DialogContent,
@@ -51,7 +36,6 @@ import {
 import { useAuth } from "@/lib/auth";
 import { useStore, tanggalPanjang, type Booking, type StatusBooking } from "@/lib/store";
 import { Input } from "@/components/ui/input";
->>>>>>> b897868 (Initial commit - AppBenk)
 
 const STATUS: StatusBooking[] = ["Menunggu Konfirmasi", "Diterima", "Ditolak"];
 
@@ -59,15 +43,11 @@ export const Route = createFileRoute("/_shell/admin/booking")({
   head: () => ({
     meta: [
       { title: "Booking Masuk — AppBenk" },
-<<<<<<< HEAD
-      { name: "description", content: "Kelola booking servis dari pelanggan: lihat detail, terima, tolak dengan alasan, dan tugaskan mekanik." },
-=======
       {
         name: "description",
         content:
           "Kelola booking servis dari pelanggan: lihat detail, terima, tolak dengan alasan, dan tugaskan mekanik.",
       },
->>>>>>> b897868 (Initial commit - AppBenk)
       { property: "og:title", content: "Booking Masuk — AppBenk" },
       { property: "og:description", content: "Konfirmasi booking pelanggan dengan cepat." },
     ],
@@ -76,22 +56,16 @@ export const Route = createFileRoute("/_shell/admin/booking")({
 });
 
 function BookingAdmin() {
-<<<<<<< HEAD
-  const { booking, ubahStatusBooking, tugaskanMekanikBooking } = useStore();
-=======
   const navigate = useNavigate();
   const { user } = useAuth();
   const bengkelAktifId = user?.bengkelId || "bengkel-001";
   const { booking, mekanik, ubahStatusBooking, tugaskanMekanikBooking, aturEstimasiBooking, refreshBooking } = useStore();
->>>>>>> b897868 (Initial commit - AppBenk)
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"semua" | StatusBooking>("semua");
   const [detail, setDetail] = useState<Booking | null>(null);
   const [tolak, setTolak] = useState<Booking | null>(null);
   const [alasan, setAlasan] = useState("");
   const [errAlasan, setErrAlasan] = useState("");
-<<<<<<< HEAD
-=======
   const [refreshing, setRefreshing] = useState(false);
 
   const terimaBooking = (b: Booking) => {
@@ -111,16 +85,10 @@ function BookingAdmin() {
   const mekanikBengkelAktif = useMemo(() => {
     return mekanik.filter((m) => m.bengkelId === bengkelAktifId && m.status === "Aktif");
   }, [mekanik, bengkelAktifId]);
->>>>>>> b897868 (Initial commit - AppBenk)
 
   const data = useMemo(() => {
     const s = q.toLowerCase();
     return booking
-<<<<<<< HEAD
-      .filter((b) => filter === "semua" || b.status === filter)
-      .filter((b) => [b.nomor, b.pelanggan, b.kendaraan, b.plat, b.jenis].some((v) => v.toLowerCase().includes(s)));
-  }, [booking, q, filter]);
-=======
       .filter((b) => !b.bengkelId || b.bengkelId === bengkelAktifId)
       .filter((b) => filter === "semua" || b.status === filter)
       .filter((b) =>
@@ -129,7 +97,6 @@ function BookingAdmin() {
         ),
       );
   }, [booking, q, filter, bengkelAktifId]);
->>>>>>> b897868 (Initial commit - AppBenk)
 
   const bukaTolak = (b: Booking) => {
     setTolak(b);
@@ -143,24 +110,14 @@ function BookingAdmin() {
       setErrAlasan("Alasan penolakan wajib diisi.");
       return;
     }
-<<<<<<< HEAD
-    void ubahStatusBooking(tolak.id, "Ditolak", alasan.trim());
-    if (detail?.id === tolak.id) setDetail({ ...detail, status: "Ditolak", alasanTolak: alasan.trim() });
-=======
     ubahStatusBooking(tolak.id, "Ditolak", alasan.trim());
     if (detail?.id === tolak.id)
       setDetail({ ...detail, status: "Ditolak", alasanTolak: alasan.trim() });
->>>>>>> b897868 (Initial commit - AppBenk)
     toast.info(`Booking ${tolak.nomor} ditolak`);
     setTolak(null);
     setAlasan("");
   };
 
-<<<<<<< HEAD
-  return (
-    <>
-      <PageHeader title="Booking Masuk" description="Konfirmasi permintaan booking servis dari pelanggan." />
-=======
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -191,20 +148,15 @@ function BookingAdmin() {
           </Button>
         }
       />
->>>>>>> b897868 (Initial commit - AppBenk)
 
       <Card>
         <CardContent className="space-y-4 p-4">
           <div className="flex flex-wrap items-center gap-3">
-<<<<<<< HEAD
-            <SearchBar value={q} onChange={setQ} placeholder="Cari nomor booking, pelanggan, atau plat..." />
-=======
             <SearchBar
               value={q}
               onChange={setQ}
               placeholder="Cari nomor booking, pelanggan, atau plat..."
             />
->>>>>>> b897868 (Initial commit - AppBenk)
             <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
               <SelectTrigger className="w-52 bg-card">
                 <SelectValue />
@@ -212,28 +164,20 @@ function BookingAdmin() {
               <SelectContent>
                 <SelectItem value="semua">Semua status</SelectItem>
                 {STATUS.map((s) => (
-<<<<<<< HEAD
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-=======
                   <SelectItem key={s} value={s}>
                     {s}
                   </SelectItem>
->>>>>>> b897868 (Initial commit - AppBenk)
                 ))}
               </SelectContent>
             </Select>
           </div>
 
           {data.length === 0 ? (
-<<<<<<< HEAD
-            <EmptyState icon={<Inbox className="size-8" />} title="Tidak ada booking" description="Coba ubah filter atau kata kunci." />
-=======
             <EmptyState
               icon={<Inbox className="size-8" />}
               title="Tidak ada booking"
               description="Coba ubah filter atau kata kunci."
             />
->>>>>>> b897868 (Initial commit - AppBenk)
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -254,13 +198,9 @@ function BookingAdmin() {
                     <TableRow key={b.id}>
                       <TableCell className="font-medium">{b.nomor}</TableCell>
                       <TableCell>{b.pelanggan}</TableCell>
-<<<<<<< HEAD
-                      <TableCell className="text-muted-foreground">{b.kendaraan} · {b.plat}</TableCell>
-=======
                       <TableCell className="text-muted-foreground">
                         {b.kendaraan} · {b.plat}
                       </TableCell>
->>>>>>> b897868 (Initial commit - AppBenk)
                       <TableCell>{b.jenis}</TableCell>
                       <TableCell className={b.mekanikDiinginkan ? "" : "text-muted-foreground"}>
                         {b.mekanikDiinginkan || "Tidak ada preferensi"}
@@ -268,12 +208,6 @@ function BookingAdmin() {
                       <TableCell className="whitespace-nowrap text-muted-foreground">
                         {tanggalPanjang(b.tanggal)} · {b.waktu}
                       </TableCell>
-<<<<<<< HEAD
-                      <TableCell><BookingBadge status={b.status} /></TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-1">
-                          <Button size="icon" variant="ghost" aria-label="Detail" onClick={() => setDetail(b)}>
-=======
                       <TableCell>
                         <BookingBadge status={b.status} />
                       </TableCell>
@@ -285,7 +219,6 @@ function BookingAdmin() {
                             aria-label="Detail"
                             onClick={() => setDetail(b)}
                           >
->>>>>>> b897868 (Initial commit - AppBenk)
                             <Eye className="size-4" />
                           </Button>
                           <Button
@@ -293,14 +226,7 @@ function BookingAdmin() {
                             variant="ghost"
                             aria-label="Terima booking"
                             disabled={b.status === "Diterima"}
-<<<<<<< HEAD
-                            onClick={() => {
-                              void ubahStatusBooking(b.id, "Diterima");
-                              toast.success(`Booking ${b.nomor} diterima`);
-                            }}
-=======
                             onClick={() => terimaBooking(b)}
->>>>>>> b897868 (Initial commit - AppBenk)
                           >
                             <Check className="size-4 text-success" />
                           </Button>
@@ -350,25 +276,14 @@ function BookingAdmin() {
 
               {detail.status === "Ditolak" && detail.alasanTolak && (
                 <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3">
-<<<<<<< HEAD
-                  <p className="text-xs font-semibold uppercase tracking-wide text-destructive">Alasan Penolakan</p>
-=======
                   <p className="text-xs font-semibold uppercase tracking-wide text-destructive">
                     Alasan Penolakan
                   </p>
->>>>>>> b897868 (Initial commit - AppBenk)
                   <p className="mt-1 text-sm">{detail.alasanTolak}</p>
                 </div>
               )}
 
               <div>
-<<<<<<< HEAD
-                <p className="mb-1.5 text-xs uppercase tracking-wide text-muted-foreground">Tugaskan Mekanik</p>
-                <Select
-                  value={detail.mekanikDitugaskan ?? ""}
-                  onValueChange={(v) => {
-                    void tugaskanMekanikBooking(detail.id, v);
-=======
                 <p className="mb-1.5 text-xs uppercase tracking-wide text-muted-foreground">
                   Tugaskan Mekanik (Penugasan Resmi Bengkel)
                 </p>
@@ -376,24 +291,10 @@ function BookingAdmin() {
                   value={detail.mekanikDitugaskan ?? ""}
                   onValueChange={(v) => {
                     tugaskanMekanikBooking(detail.id, v);
->>>>>>> b897868 (Initial commit - AppBenk)
                     setDetail({ ...detail, mekanikDitugaskan: v });
                     toast.success(`Mekanik ${v} ditugaskan`);
                   }}
                 >
-<<<<<<< HEAD
-                  <SelectTrigger><SelectValue placeholder="Pilih mekanik" /></SelectTrigger>
-                  <SelectContent>
-                    {MEKANIK.map((m) => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <p className="mb-1.5 text-xs uppercase tracking-wide text-muted-foreground">Ubah Status</p>
-=======
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih mekanik bengkel" />
                   </SelectTrigger>
@@ -424,7 +325,6 @@ function BookingAdmin() {
                 <p className="mb-1.5 text-xs uppercase tracking-wide text-muted-foreground">
                   Ubah Status
                 </p>
->>>>>>> b897868 (Initial commit - AppBenk)
                 <Select
                   value={detail.status}
                   onValueChange={(v) => {
@@ -433,17 +333,6 @@ function BookingAdmin() {
                       bukaTolak(detail);
                       return;
                     }
-<<<<<<< HEAD
-                    void ubahStatusBooking(detail.id, status);
-                    setDetail({ ...detail, status });
-                    toast.success(`Status booking diperbarui: ${status}`);
-                  }}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STATUS.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-=======
                     ubahStatusBooking(detail.id, status);
                     setDetail({ ...detail, status });
                     toast.success(
@@ -461,13 +350,10 @@ function BookingAdmin() {
                       <SelectItem key={s} value={s}>
                         {s}
                       </SelectItem>
->>>>>>> b897868 (Initial commit - AppBenk)
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-<<<<<<< HEAD
-=======
               {detail.status === "Diterima" && (
                 <div>
                   <p className="mb-1.5 text-xs uppercase tracking-wide text-muted-foreground">
@@ -511,7 +397,6 @@ function BookingAdmin() {
                   </Button>
                 </div>
               )}
->>>>>>> b897868 (Initial commit - AppBenk)
             </div>
           )}
         </SheetContent>
@@ -521,13 +406,9 @@ function BookingAdmin() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Tolak Permintaan Booking</DialogTitle>
-<<<<<<< HEAD
-            <DialogDescription>Berikan alasan agar pelanggan memahami penolakan ini.</DialogDescription>
-=======
             <DialogDescription>
               Berikan alasan agar pelanggan memahami penolakan ini.
             </DialogDescription>
->>>>>>> b897868 (Initial commit - AppBenk)
           </DialogHeader>
           {tolak && (
             <div className="space-y-4">
@@ -563,13 +444,9 @@ function BookingAdmin() {
             </div>
           )}
           <DialogFooter>
-<<<<<<< HEAD
-            <Button variant="outline" onClick={() => setTolak(null)}>Batal</Button>
-=======
             <Button variant="outline" onClick={() => setTolak(null)}>
               Batal
             </Button>
->>>>>>> b897868 (Initial commit - AppBenk)
             <Button
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={konfirmasiTolak}

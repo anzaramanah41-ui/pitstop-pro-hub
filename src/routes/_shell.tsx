@@ -11,38 +11,20 @@ export const Route = createFileRoute("/_shell")({
 });
 
 function ShellLayout() {
-<<<<<<< HEAD
-  const { user, memuat } = useAuth();
-=======
   const { user, loading } = useAuth();
->>>>>>> b897868 (Initial commit - AppBenk)
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const izin = user ? bolehAkses(user.role, pathname) : false;
 
   useEffect(() => {
-<<<<<<< HEAD
-    if (memuat) return;
-=======
     if (loading) return;
->>>>>>> b897868 (Initial commit - AppBenk)
     if (!user) {
       navigate({ to: "/login", replace: true });
       return;
     }
     // Role tidak berizin → langsung diarahkan ke dashboard sesuai role
     if (!izin) navigate({ to: HOME_ROLE[user.role], replace: true });
-<<<<<<< HEAD
-  }, [user, izin, memuat, navigate]);
-
-  if (memuat)
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        Memuat data…
-      </div>
-    );
-=======
   }, [user, loading, izin, navigate]);
 
   if (loading) {
@@ -55,7 +37,6 @@ function ShellLayout() {
       </div>
     );
   }
->>>>>>> b897868 (Initial commit - AppBenk)
 
   if (!user) return null;
 

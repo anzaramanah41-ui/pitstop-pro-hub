@@ -26,32 +26,11 @@ export function AuthLayout({
             </span>
           </Link>
 
-<<<<<<< HEAD
-          <nav className="ml-auto hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
-            <Link to="/login" className="transition-colors hover:text-foreground">
-              Beranda
-            </Link>
-            <Link to="/register" className="transition-colors hover:text-foreground">
-              Daftar Akun
-            </Link>
-          </nav>
-
-          <div className="ml-auto md:ml-7">
-            {aksi === "masuk" ? (
-              <Button asChild variant="outline" className="font-semibold">
-                <Link to="/login">Masuk</Link>
-              </Button>
-            ) : (
-              <Button asChild variant="outline" className="font-semibold">
-                <Link to="/register">Daftar</Link>
-              </Button>
-=======
           <div className="ml-auto">
             {aksi === "masuk" && (
               <Button asChild variant="outline" className="font-semibold">
                 <Link to="/login">Masuk</Link>
               </Button>
->>>>>>> b897868 (Initial commit - AppBenk)
             )}
           </div>
         </div>

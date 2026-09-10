@@ -5,9 +5,6 @@ import { PageHeader, EmptyState } from "@/components/page-header";
 import { SearchBar } from "@/components/search-bar";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
-<<<<<<< HEAD
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-=======
 import {
   Table,
   TableBody,
@@ -16,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
->>>>>>> b897868 (Initial commit - AppBenk)
 import { useAuth } from "@/lib/auth";
 import { useStore, rupiah, tanggalPanjang } from "@/lib/store";
 
@@ -24,11 +20,6 @@ export const Route = createFileRoute("/_shell/pelanggan/riwayat")({
   head: () => ({
     meta: [
       { title: "Riwayat Servis — AppBenk" },
-<<<<<<< HEAD
-      { name: "description", content: "Telusuri riwayat servis kendaraan Anda lengkap dengan pekerjaan, sparepart, dan total biaya." },
-      { property: "og:title", content: "Riwayat Servis — AppBenk" },
-      { property: "og:description", content: "Semua catatan servis kendaraan Anda dalam satu daftar." },
-=======
       {
         name: "description",
         content:
@@ -39,7 +30,6 @@ export const Route = createFileRoute("/_shell/pelanggan/riwayat")({
         property: "og:description",
         content: "Semua catatan servis kendaraan Anda dalam satu daftar.",
       },
->>>>>>> b897868 (Initial commit - AppBenk)
     ],
   }),
   component: RiwayatPelanggan,
@@ -55,15 +45,11 @@ function RiwayatPelanggan() {
     const s = q.toLowerCase();
     return servis
       .filter((x) => x.pelanggan === nama)
-<<<<<<< HEAD
-      .filter((x) => [x.nomor, x.kendaraan, x.plat, x.jenis, x.pekerjaan].some((v) => v.toLowerCase().includes(s)));
-=======
       .filter((x) =>
         [x.nomor, x.kendaraan, x.plat, x.jenis, x.pekerjaan].some((v) =>
           v.toLowerCase().includes(s),
         ),
       );
->>>>>>> b897868 (Initial commit - AppBenk)
   }, [servis, nama, q]);
 
   return (
@@ -72,12 +58,6 @@ function RiwayatPelanggan() {
 
       <Card>
         <CardContent className="space-y-4 p-4">
-<<<<<<< HEAD
-          <SearchBar value={q} onChange={setQ} placeholder="Cari nomor servis, kendaraan, atau pekerjaan..." />
-
-          {data.length === 0 ? (
-            <EmptyState icon={<History className="size-8" />} title="Riwayat tidak ditemukan" description="Coba kata kunci lain." />
-=======
           <SearchBar
             value={q}
             onChange={setQ}
@@ -90,7 +70,6 @@ function RiwayatPelanggan() {
               title="Riwayat tidak ditemukan"
               description="Coba kata kunci lain."
             />
->>>>>>> b897868 (Initial commit - AppBenk)
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -109,16 +88,6 @@ function RiwayatPelanggan() {
                 <TableBody>
                   {data.map((s) => (
                     <TableRow key={s.id}>
-<<<<<<< HEAD
-                      <TableCell className="whitespace-nowrap text-muted-foreground">{tanggalPanjang(s.tanggal)}</TableCell>
-                      <TableCell>{s.kendaraan} · {s.plat}</TableCell>
-                      <TableCell>{s.jenis}</TableCell>
-                      <TableCell className="max-w-40 truncate">{s.keluhan}</TableCell>
-                      <TableCell className="max-w-40 truncate">{s.pekerjaan}</TableCell>
-                      <TableCell className="max-w-40 truncate text-muted-foreground">{s.sparepart || "—"}</TableCell>
-                      <TableCell className="text-right font-semibold">{rupiah(s.total)}</TableCell>
-                      <TableCell><StatusBadge status={s.status} /></TableCell>
-=======
                       <TableCell className="whitespace-nowrap text-muted-foreground">
                         {tanggalPanjang(s.tanggal)}
                       </TableCell>
@@ -135,7 +104,6 @@ function RiwayatPelanggan() {
                       <TableCell>
                         <StatusBadge status={s.status} />
                       </TableCell>
->>>>>>> b897868 (Initial commit - AppBenk)
                     </TableRow>
                   ))}
                 </TableBody>

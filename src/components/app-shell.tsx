@@ -1,9 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-<<<<<<< HEAD
-import { UserCircle2, Menu, X, Lock } from "lucide-react";
-=======
 import { UserCircle2, Menu, X, Lock, Bell, CreditCard, CheckCheck, ExternalLink } from "lucide-react";
->>>>>>> b897868 (Initial commit - AppBenk)
 import { useEffect, useState, type ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
@@ -17,10 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { LABEL_ROLE, NAV_GROUPS, useAuth } from "@/lib/auth";
-<<<<<<< HEAD
-=======
 import { useStore } from "@/lib/store";
->>>>>>> b897868 (Initial commit - AppBenk)
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -115,11 +108,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </p>
 
           <div className="ml-auto flex items-center gap-2">
-<<<<<<< HEAD
-=======
             <NotificationBell />
 
->>>>>>> b897868 (Initial commit - AppBenk)
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2 px-2">
@@ -128,26 +118,18 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </span>
                   <span className="hidden text-left leading-tight sm:block">
                     <span className="block text-sm font-semibold">{user.nama}</span>
-<<<<<<< HEAD
-                    <span className="block text-[11px] text-muted-foreground">{LABEL_ROLE[user.role]}</span>
-=======
                     <span className="block text-[11px] text-muted-foreground">
                       {LABEL_ROLE[user.role]}
                     </span>
->>>>>>> b897868 (Initial commit - AppBenk)
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="leading-tight">
                   Akun Saya
-<<<<<<< HEAD
-                  <span className="block text-[11px] font-normal text-muted-foreground">{user.email}</span>
-=======
                   <span className="block text-[11px] font-normal text-muted-foreground">
                     {user.email}
                   </span>
->>>>>>> b897868 (Initial commit - AppBenk)
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => navigate({ to: "/profil" })}>
@@ -163,8 +145,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
-<<<<<<< HEAD
-=======
 
 function NotificationBell() {
   const { user } = useAuth();
@@ -275,4 +255,3 @@ function NotificationBell() {
     </DropdownMenu>
   );
 }
->>>>>>> b897868 (Initial commit - AppBenk)
