@@ -74,9 +74,14 @@ BEGIN
   IF NEW.ticket_number IS NULL OR NEW.ticket_number = '' THEN
     NEW.ticket_number := 'CS-' || LPAD(nextval('public.cs_ticket_seq')::text, 4, '0');
   END IF;
+
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public;
+
+GRANT USAGE, SELECT ON SEQUENCE public.cs_ticket_seq TO authenticated;
 
 -- 5. Tabel customer_service_tickets
 CREATE TABLE IF NOT EXISTS public.customer_service_tickets (
