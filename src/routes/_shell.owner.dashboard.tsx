@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TrendingUp, Users, Wrench, Package, Crown, ArrowRight } from "lucide-react";
+import { TrendingUp, Users, Wrench, Package, Crown, ArrowRight, Inbox, Wallet, Activity, Eye } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,8 +39,26 @@ export const Route = createFileRoute("/_shell/owner/dashboard")({
 });
 
 function DashboardOwner() {
-  const { servis, pelanggan, sparepart } = useStore();
+  const { servis, pelanggan, sparepart, booking, pembayaran } = useStore();
   const omzet = servis.reduce((a, s) => a + s.total, 0);
+
+  // Operational monitoring metrics (Admin features)
+  const bookingMenunggu = useMemo(
+    () => booking.filter((b) => b.status === "Menunggu Konfirmasi").length,
+    [booking],
+  );
+  const servisAktif = useMemo(
+    () => servis.filter((s) => s.status === "Diproses" || s.status === "Menunggu").length,
+    [servis],
+  );
+  const pembayaranVerifikasi = useMemo(
+    () => pembayaran.filter((p) => p.status === "Menunggu Verifikasi").length,
+    [pembayaran],
+  );
+  const stokKritis = useMemo(
+    () => sparepart.filter((p) => p.stok <= p.minStok).length,
+    [sparepart],
+  );
 
   const stats = [
     { label: "Total Omzet", value: rupiah(omzet), icon: TrendingUp, hint: "seluruh transaksi" },
@@ -141,6 +159,112 @@ function DashboardOwner() {
           </Card>
         ))}
       </div>
+
+      {/* ── MONITORING OPERASIONAL BENGKEL (AKSES ADMIN) ── */}
+      <Card className="border-border/70 shadow-xs">
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 space-y-0 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Activity className="size-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base">Monitoring Operasional Bengkel</CardTitle>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                  Akses Admin
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Pantau langsung seluruh alur operasional dan transaksi bengkel Anda
+              </p>
+            </div>
+          </div>
+          <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Link to="/admin/dashboard">
+              <Eye className="size-3.5" /> Dashboard Admin Lengkap
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Link
+              to="/admin/booking"
+              className="group flex items-center justify-between rounded-lg border bg-card p-3.5 transition-all hover:border-blue-500/50 hover:bg-blue-50/30 dark:hover:bg-blue-950/20"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
+                  <Inbox className="size-4.5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Booking Masuk</p>
+                  <p className="text-base font-bold text-foreground">
+                    {bookingMenunggu}{" "}
+                    <span className="text-xs font-normal text-muted-foreground">Menunggu</span>
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              to="/admin/servis"
+              className="group flex items-center justify-between rounded-lg border bg-card p-3.5 transition-all hover:border-amber-500/50 hover:bg-amber-50/30 dark:hover:bg-amber-950/20"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+                  <Wrench className="size-4.5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Servis Berjalan</p>
+                  <p className="text-base font-bold text-foreground">
+                    {servisAktif}{" "}
+                    <span className="text-xs font-normal text-muted-foreground">Servis</span>
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              to="/admin/pembayaran"
+              className="group flex items-center justify-between rounded-lg border bg-card p-3.5 transition-all hover:border-emerald-500/50 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+                  <Wallet className="size-4.5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Verifikasi Bayar</p>
+                  <p className="text-base font-bold text-foreground">
+                    {pembayaranVerifikasi}{" "}
+                    <span className="text-xs font-normal text-muted-foreground">Transaksi</span>
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              to="/admin/stok"
+              className="group flex items-center justify-between rounded-lg border bg-card p-3.5 transition-all hover:border-rose-500/50 hover:bg-rose-50/30 dark:hover:bg-rose-950/20"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600">
+                  <Package className="size-4.5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Stok Kritis</p>
+                  <p className="text-base font-bold text-foreground">
+                    {stokKritis}{" "}
+                    <span className="text-xs font-normal text-muted-foreground">Item</span>
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 space-y-0 pb-3">
