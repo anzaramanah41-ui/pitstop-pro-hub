@@ -223,22 +223,47 @@ CREATE TABLE IF NOT EXISTS public.customer_service_messages (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Trigger validasi sender role & user_id (anti-spoofing)
+-- Trigger validasi sender role & user_id & sender_name (anti-spoofing zero-trust)
 CREATE OR REPLACE FUNCTION public.validate_cs_message_sender()
 RETURNS TRIGGER AS $$
 DECLARE
   v_is_super boolean := false;
   v_real_role text := 'pelanggan';
   v_real_name text := NULL;
+  v_email text := NULL;
 BEGIN
+  -- 1. Wajib terautentikasi
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Akses ditolak: Anda harus login untuk mengirim pesan.';
   END IF;
 
-  -- Selalu paksa sender_user_id adalah auth.uid()
+  -- 2. Paksa sender_user_id selalu mengambil dari auth.uid()
   NEW.sender_user_id := auth.uid()::text;
-  
-  -- Cek apakah user adalah super_admin otoritatif
+
+  -- 3. Ambil data profil riil dari tabel public.profiles (Zero-Trust)
+  SELECT role::text, full_name, email
+  INTO v_real_role, v_real_name, v_email
+  FROM public.profiles
+  WHERE id = auth.uid();
+
+  -- Fallback email jika di profile null
+  IF v_email IS NULL THEN
+    v_email := auth.jwt() ->> 'email';
+  END IF;
+
+  -- Tentukan fallback nama yang aman jika full_name kosong/null
+  IF v_real_name IS NULL OR trim(v_real_name) = '' THEN
+    IF v_email IS NOT NULL AND trim(v_email) != '' THEN
+      v_real_name := split_part(v_email, '@', 1);
+    ELSE
+      v_real_name := 'Pengguna';
+    END IF;
+  END IF;
+
+  -- 4. Tetapkan sender_name SELALU dari database (timpa total input frontend)
+  NEW.sender_name := v_real_name;
+
+  -- 5. Cek otorisasi super_admin secara otoritatif dari profiles
   v_is_super := public.is_super_admin();
 
   IF v_is_super THEN
@@ -249,16 +274,7 @@ BEGIN
       RAISE EXCEPTION 'Akses ditolak: Hanya Super Admin yang dapat menggunakan peran super_admin.';
     END IF;
 
-    -- Ambil role asli dari tabel profiles
-    SELECT role::text, full_name INTO v_real_role, v_real_name
-    FROM public.profiles
-    WHERE id = auth.uid();
-
     NEW.sender_role := COALESCE(v_real_role, 'pelanggan');
-  END IF;
-
-  IF NEW.sender_name IS NULL OR trim(NEW.sender_name) = '' THEN
-    NEW.sender_name := COALESCE(v_real_name, 'Pengguna');
   END IF;
 
   RETURN NEW;
