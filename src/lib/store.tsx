@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import {
   isSupabaseConfigured,
   pelangganService,
@@ -8,8 +8,12 @@ import {
   sparepartService,
   pembayaranService,
   mekanikService,
+  supplierService,
+  workshopPaymentAccountsService,
+  getLocalAccounts,
   supabase,
 } from "@/services/appbenk-service";
+import type { WorkshopPaymentAccountRow, PaymentAccountType } from "@/types/database";
 
 export type Bengkel = {
   id: string;
@@ -142,6 +146,10 @@ export type Notifikasi = {
   pelanggan?: string | undefined;
   total?: number | undefined;
   buktiUrl?: string | undefined;
+  bookingId?: string | undefined;
+  customerId?: string | undefined;
+  userId?: string | undefined;
+  statusBooking?: StatusBooking | undefined;
 };
 
 export type StatusBooking = "Menunggu Konfirmasi" | "Diterima" | "Ditolak";
@@ -201,12 +209,25 @@ export type RiwayatStok = {
   keterangan: string;
 };
 
+export type Supplier = {
+  id: string;
+  bengkelId?: string | undefined;
+  nama: string;
+  kontak?: string | undefined;
+  telepon?: string | undefined;
+  email?: string | undefined;
+  alamat?: string | undefined;
+  status: "Aktif" | "Tidak Aktif";
+};
+
 /** Pembelian sparepart dari supplier. */
 export type PembelianSparepart = {
   id: string;
   nomor: string;
   sparepartId: string;
+  supplierId?: string | undefined;
   supplier: string;
+  bengkelId?: string | undefined;
   tanggal: string;
   jumlah: number;
   harga: number;
@@ -235,15 +256,50 @@ export type StokOpname = {
   selisihTotal: number;
 };
 
-/** Entitas Retur Sparepart */
+export type StatusRetur =
+  "Diajukan" | "Diproses" | "Disetujui" | "Ditolak" | "Barang Dikirim" | "Selesai";
+
+export const STATUS_RETUR_OPTIONS: StatusRetur[] = [
+  "Diajukan",
+  "Diproses",
+  "Disetujui",
+  "Ditolak",
+  "Barang Dikirim",
+  "Selesai",
+];
+
+export const ALASAN_RETUR_OPTIONS = [
+  "Cacat / Rusak Pabrik",
+  "Tidak Sesuai Spesifikasi",
+  "Salah Kirim Barang",
+  "Kelebihan Kirim",
+  "Barang Kadaluwarsa / Usang",
+  "Lainnya",
+] as const;
+
+/** Entitas Retur Sparepart ke Supplier / PT */
 export type ReturSparepart = {
   id: string;
+  nomorRetur: string;
+  bengkelId?: string | undefined;
+  supplierId: string;
+  supplier: string;
+  pembelianId: string;
+  nomorPembelian: string;
   sparepartId: string;
-  pembelianId?: string | null;
+  namaSparepart: string;
   jumlah: number;
+  hargaSatuan: number;
+  totalNilai: number;
   tanggal: string;
   alasan: string;
-  status: "Diproses" | "Disetujui" | "Ditolak";
+  alasanDetail?: string | undefined;
+  alasanPenolakan?: string | undefined;
+  keterangan?: string | undefined;
+  status: StatusRetur;
+  stokDikurangi: boolean;
+  riwayatStokId?: string | undefined;
+  createdAt?: string | undefined;
 };
 
 /** Entitas Laporan Ringkasan Stok */
@@ -986,14 +1042,81 @@ const stokOpnameAwal: StokOpname[] = [
   },
 ];
 
+const supplierAwal: Supplier[] = [
+  {
+    id: "sup-001",
+    bengkelId: "bengkel-001",
+    nama: "PT Maju Jaya",
+    kontak: "Budi Santoso",
+    telepon: "081234567890",
+    email: "kontak@majujaya.com",
+    alamat: "Jl. Industri Raya No. 45, Jakarta",
+    status: "Aktif",
+  },
+  {
+    id: "sup-002",
+    bengkelId: "bengkel-001",
+    nama: "Nissin Brake Official",
+    kontak: "Rudi Heryanto",
+    telepon: "082198765432",
+    email: "sales@nissinbrake.id",
+    alamat: "Kawasan Industri MM2100 Blok C-2, Cikarang",
+    status: "Aktif",
+  },
+  {
+    id: "sup-003",
+    bengkelId: "bengkel-001",
+    nama: "PT Astra Otoparts",
+    kontak: "Hendra Wijaya",
+    telepon: "081377889900",
+    email: "support@astra-otoparts.com",
+    alamat: "Jl. Pegangsaan Dua Km. 2.2, Kelapa Gading, Jakarta",
+    status: "Aktif",
+  },
+  {
+    id: "sup-004",
+    bengkelId: "bengkel-001",
+    nama: "Denso Sales Indonesia",
+    kontak: "Agus Pratama",
+    telepon: "085611223344",
+    email: "info@densosales.co.id",
+    alamat: "Jl. Gaya Motor I No. 6, Sunter II, Jakarta",
+    status: "Aktif",
+  },
+  {
+    id: "sup-005",
+    bengkelId: "bengkel-001",
+    nama: "PT Motul Indonesia Energy",
+    kontak: "Dewi Lestari",
+    telepon: "081822334455",
+    email: "orders@motul.co.id",
+    alamat: "Pacific Century Place Lt. 17, SCBD, Jakarta",
+    status: "Aktif",
+  },
+];
+
 const returAwal: ReturSparepart[] = [
   {
-    id: uid(),
+    id: "ret-001",
+    nomorRetur: "RET-2026-001",
+    bengkelId: "bengkel-001",
+    supplierId: "sup-003",
+    supplier: "PT Astra Otoparts",
+    pembelianId: "BL-2026-004",
+    nomorPembelian: "BL-2026-004",
     sparepartId: "sp-004",
+    namaSparepart: "Filter Udara Aspira",
     jumlah: 2,
+    hargaSatuan: 45000,
+    totalNilai: 90000,
     tanggal: "2026-08-16",
-    alasan: "Kemasan filter udara rusak dari supplier",
+    alasan: "Cacat / Rusak Pabrik",
+    alasanDetail: "Kemasan filter udara rusak dan penyok dari supplier",
+    alasanPenolakan: undefined,
+    keterangan: "Barang cacat diterima saat unboxing kiriman",
     status: "Disetujui",
+    stokDikurangi: true,
+    createdAt: "2026-08-16T10:00:00.000Z",
   },
 ];
 
@@ -1136,9 +1259,11 @@ type Store = {
   laporanRingkasanStok: LaporanRingkasanStok[];
   bengkel: Bengkel[];
   mekanik: Mekanik[];
+  supplier: Supplier[];
   simpanPelanggan: (p: Omit<Pelanggan, "id"> & { id?: string }) => void;
   hapusPelanggan: (id: string) => void;
-  simpanKendaraan: (k: Omit<Kendaraan, "id"> & { id?: string }) => void;
+  refreshPelanggan: () => Promise<void>;
+  simpanKendaraan: (k: Omit<Kendaraan, "id"> & { id?: string }) => Promise<void>;
   hapusKendaraan: (id: string) => void;
   simpanServis: (
     s: Omit<Servis, "id" | "nomor" | "total" | "noTransaksi" | "biayaPart" | "sparepart"> & {
@@ -1159,9 +1284,12 @@ type Store = {
   ubahStatusMekanik: (id: string, status: "Aktif" | "Tidak Aktif") => Promise<void>;
   hapusMekanik: (id: string) => Promise<{ success: boolean; message?: string }>;
   refreshMekanik: () => Promise<void>;
+  refreshSupplier: () => Promise<void>;
+  simpanSupplier: (s: Omit<Supplier, "id"> & { id?: string }) => Promise<void>;
   refreshKendaraan: () => Promise<void>;
   refreshBooking: () => Promise<void>;
   refreshServis: () => Promise<void>;
+  refreshRetur: () => Promise<void>;
   buatBooking: (b: Omit<Booking, "id" | "nomor" | "status">) => Booking;
   ubahStatusBooking: (id: string, status: StatusBooking, alasan?: string) => void;
   tugaskanMekanikBooking: (id: string, mekanik: string) => void;
@@ -1174,7 +1302,22 @@ type Store = {
     verifier?: string,
   ) => void;
   catatStokOpname: (so: Omit<StokOpname, "id">) => void;
-  catatReturSparepart: (r: Omit<ReturSparepart, "id">) => void;
+  catatReturSparepart: (
+    r: Omit<ReturSparepart, "id" | "nomorRetur" | "stokDikurangi"> & {
+      id?: string;
+      nomorRetur?: string;
+      stokDikurangi?: boolean;
+    },
+  ) => Promise<ReturSparepart>;
+  ubahStatusRetur: (id: string, status: StatusRetur, alasanPenolakan?: string) => Promise<void>;
+  workshopPaymentAccounts: WorkshopPaymentAccountRow[];
+  simpanPaymentAccount: (acc: Partial<WorkshopPaymentAccountRow> & {
+    workshop_id: string;
+    account_type: PaymentAccountType;
+  }) => Promise<WorkshopPaymentAccountRow>;
+  togglePaymentAccountActive: (id: string, isActive: boolean) => Promise<void>;
+  hapusPaymentAccount: (id: string) => Promise<void>;
+  refreshPaymentAccounts: (workshopId?: string) => Promise<void>;
   tiket: Tiket[];
   buatTiket: (t: Omit<Tiket, "id" | "nomor" | "status" | "tanggal">) => Tiket;
   notifikasi: Notifikasi[];
@@ -1213,6 +1356,68 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
   const [bengkel, setBengkel] = useState<Bengkel[]>(() => bacaData("bengkel", bengkelAwal));
   const [mekanik, setMekanik] = useState<Mekanik[]>(() => bacaData("mekanik", mekanikAwal));
+  const [supplier, setSupplier] = useState<Supplier[]>(() => bacaData("supplier", supplierAwal));
+  const [workshopPaymentAccounts, setWorkshopPaymentAccounts] = useState<WorkshopPaymentAccountRow[]>(() =>
+    getLocalAccounts(),
+  );
+
+  const refreshPaymentAccounts = useCallback(async (workshopId?: string) => {
+    try {
+      const res = await workshopPaymentAccountsService.getAll(workshopId);
+      setWorkshopPaymentAccounts(res);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    refreshPaymentAccounts();
+    const handleAccountsUpdated = () => {
+      refreshPaymentAccounts();
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("appbenk_payment_accounts_updated", handleAccountsUpdated);
+      window.addEventListener("storage", handleAccountsUpdated);
+      return () => {
+        window.removeEventListener("appbenk_payment_accounts_updated", handleAccountsUpdated);
+        window.removeEventListener("storage", handleAccountsUpdated);
+      };
+    }
+  }, []);
+
+  const simpanPaymentAccount = async (acc: Partial<WorkshopPaymentAccountRow> & {
+    workshop_id: string;
+    account_type: PaymentAccountType;
+  }) => {
+    const saved = await workshopPaymentAccountsService.saveAccount(acc);
+    setWorkshopPaymentAccounts((prev) => {
+      if (saved.account_type === "qris") {
+        const wbId = saved.workshop_id || saved.id_bengkel;
+        const withoutQris = prev.filter(
+          (a) => !(a.account_type === "qris" && (a.workshop_id === wbId || a.id_bengkel === wbId))
+        );
+        return [saved, ...withoutQris];
+      }
+      const idx = prev.findIndex((a) => a.id === saved.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = saved;
+        return next;
+      }
+      return [saved, ...prev];
+    });
+    return saved;
+  };
+
+  const togglePaymentAccountActive = async (id: string, isActive: boolean) => {
+    await workshopPaymentAccountsService.toggleActive(id, isActive);
+    setWorkshopPaymentAccounts((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, is_active: isActive } : a)),
+    );
+  };
+
+  const hapusPaymentAccount = async (id: string) => {
+    await workshopPaymentAccountsService.deleteAccount(id);
+    setWorkshopPaymentAccounts((prev) => prev.filter((a) => a.id !== id));
+  };
 
   useEffect(() => {
     window.localStorage.setItem("appbenk.data.pelanggan", JSON.stringify(pelanggan));
@@ -1250,20 +1455,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     window.localStorage.setItem("appbenk.data.mekanik", JSON.stringify(mekanik));
   }, [mekanik]);
+  useEffect(() => {
+    window.localStorage.setItem("appbenk.data.supplier", JSON.stringify(supplier));
+  }, [supplier]);
 
-  const [notifikasi, setNotifikasi] = useState<Notifikasi[]>(() =>
-    bacaData("notifikasi", [
+  const [notifikasi, setNotifikasi] = useState<Notifikasi[]>(() => {
+    const raw = bacaData<Notifikasi[]>("notifikasi", [
       {
         id: "notif-001",
         role: "admin",
         tipe: "pembayaran",
         judul: "Sistem Pembayaran AppBenk",
-        pesan: "Sistem notifikasi pembayaran QRIS dan transfer telah siap menerima konfirmasi pelanggan.",
+        pesan:
+          "Sistem notifikasi pembayaran QRIS dan transfer telah siap menerima konfirmasi pelanggan.",
         waktu: new Date().toISOString(),
         dibaca: false,
       },
-    ]),
-  );
+    ]);
+    return raw.map((n) =>
+      n.statusBooking === "Diterima" || n.judul.toLowerCase().includes("booking diterima")
+        ? { ...n, link: "/pelanggan/status" }
+        : n,
+    );
+  });
 
   useEffect(() => {
     window.localStorage.setItem("appbenk.data.notifikasi", JSON.stringify(notifikasi));
@@ -1314,281 +1528,397 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       mekanikService.getBengkel(),
       mekanikService.getMekanik(),
       supabase().from("detail_servis").select("*"),
+      supplierService.getAll(),
     ])
-      .then(([pRes, kRes, spRes, bkRes, srvRes, pemRes, beliRes, pakaiRes, riwRes, returRes, bklRes, mekRes, detRes]) => {
-        let listPelanggan: Pelanggan[] = [];
-        if (pRes.status === "fulfilled" && pRes.value.length > 0) {
-          listPelanggan = pRes.value.map((p) => ({
-            id: p.id_pelanggan,
-            userId: p.user_id ?? undefined,
-            nama: p.nama,
-            email: p.email,
-            telepon: p.no_hp ?? "",
-            alamat: p.alamat ?? "",
-            kendaraan: "",
-            plat: "",
-          }));
-          setPelanggan(listPelanggan);
-        }
+      .then(
+        ([
+          pRes,
+          kRes,
+          spRes,
+          bkRes,
+          srvRes,
+          pemRes,
+          beliRes,
+          pakaiRes,
+          riwRes,
+          returRes,
+          bklRes,
+          mekRes,
+          detRes,
+          suppRes,
+        ]) => {
+          let listPelanggan: Pelanggan[] = [];
+          if (pRes.status === "fulfilled" && pRes.value.length > 0) {
+            listPelanggan = pRes.value.map((p) => ({
+              id: p.id_pelanggan,
+              userId: p.user_id ?? undefined,
+              nama: p.nama,
+              email: p.email,
+              telepon: p.no_hp ?? "",
+              alamat: p.alamat ?? "",
+              kendaraan: "",
+              plat: "",
+            }));
+            setPelanggan(listPelanggan);
+          }
 
-        let listKendaraan: Kendaraan[] = [];
-        if (kRes.status === "fulfilled" && kRes.value.length > 0) {
-          listKendaraan = kRes.value.map((k) => ({
-            id: k.id_kendaraan,
-            pelangganId: k.id_pelanggan,
-            merk: k.merk,
-            tipe: k.tipe,
-            tahun: k.tahun,
-            plat: k.nopol,
-            kilometer: 0,
-          }));
-          setKendaraan(listKendaraan);
-        }
+          let listKendaraan: Kendaraan[] = [];
+          if (kRes.status === "fulfilled" && kRes.value.length > 0) {
+            listKendaraan = kRes.value.map((k) => ({
+              id: k.id_kendaraan,
+              pelangganId: k.id_pelanggan,
+              merk: k.merk,
+              tipe: k.tipe,
+              tahun: k.tahun,
+              plat: k.nopol,
+              kilometer: k.kilometer || 0,
+            }));
+            setKendaraan(listKendaraan);
+          }
 
-        if (spRes.status === "fulfilled" && spRes.value.length > 0) {
-          setSparepart(
-            spRes.value.map((sp) => {
-              let kat = sp.kategori;
-              if (kat === "Oli") kat = "Pelumas";
-              if (kat === "Rem") kat = "Pengereman";
-              return {
-                id: sp.id_sparepart,
-                kode: sp.id_sparepart,
-                nama: sp.nama_sparepart,
-                kategori: kat,
-                satuan: sp.satuan,
-                harga: Number(sp.harga),
-                stok: sp.stok_tersedia,
-                stokMinimum: sp.stok_minimum,
-                terpakai: 0,
-                tanggalUpdate: sp.tanggal_update ? sp.tanggal_update.slice(0, 10) : hariIni(),
-              };
-            }),
-          );
-        }
-
-        if (bkRes.status === "fulfilled" && bkRes.value.length > 0) {
-          setBooking(
-            bkRes.value.map((b) => {
-              const pel = listPelanggan.find((p) => p.id === b.id_pelanggan);
-              const ken = listKendaraan.find((k) => k.id === b.id_kendaraan);
-              return {
-                id: b.id_booking,
-                nomor: b.nomor_booking,
-                pelanggan: pel?.nama ?? "Pelanggan",
-                customerId: b.id_pelanggan,
-                vehicleId: b.id_kendaraan,
-                bengkelId: b.id_bengkel ?? "bengkel-001",
-                mekanikId: b.id_mekanik ?? undefined,
-                kendaraan: ken?.tipe ?? "Kendaraan",
-                plat: ken?.plat ?? "",
-                jenis: b.jenis_servis,
-                keluhan: b.keluhan,
-                tanggal: b.tanggal_booking,
-                waktu: b.waktu_booking,
-                catatan: "",
-                mekanikDiinginkan: b.mekanik_diinginkan ?? undefined,
-                status:
-                  b.status_booking === "disetujui"
-                    ? "Diterima"
-                    : b.status_booking === "ditolak"
-                      ? "Ditolak"
-                      : "Menunggu Konfirmasi",
-              };
-            }),
-          );
-        }
-
-        if (srvRes.status === "fulfilled" && srvRes.value.length > 0) {
-          const detList: any[] =
-            detRes && detRes.status === "fulfilled" && (detRes.value as any).data
-              ? (detRes.value as any).data
-              : [];
-          const spList: any[] = spRes && spRes.status === "fulfilled" ? (spRes.value as any) : [];
-
-          setServis(
-            srvRes.value.map((s) => {
-              const pel = listPelanggan.find((p) => p.id === s.id_pelanggan);
-              const ken = listKendaraan.find((k) => k.id === s.id_kendaraan);
-              const st: StatusServis =
-                s.status_servis === "diproses"
-                  ? "Diproses"
-                  : s.status_servis === "selesai"
-                    ? "Selesai"
-                    : s.status_servis === "menunggu_pembayaran"
-                      ? "Menunggu Pembayaran"
-                      : s.status_servis === "lunas"
-                        ? "Selesai Dibayar"
-                        : "Menunggu";
-
-              const srvDetails = detList.filter((d: any) => d.id_servis === s.id_servis);
-              const items: ItemPart[] = srvDetails.map((d: any) => {
-                const sp = spList.find((x: any) => x.id_sparepart === d.id_sparepart);
+          if (spRes.status === "fulfilled" && spRes.value.length > 0) {
+            setSparepart(
+              spRes.value.map((sp) => {
+                let kat = sp.kategori;
+                if (kat === "Oli") kat = "Pelumas";
+                if (kat === "Rem") kat = "Pengereman";
                 return {
-                  sparepartId: d.id_sparepart || d.id_detail || d.id_detail_servis,
-                  kode: sp?.id_sparepart || d.id_sparepart || "-",
-                  nama: sp?.nama_sparepart || d.keterangan || "Sparepart",
-                  harga: Number(d.harga || d.harga_satuan || sp?.harga || 0),
-                  jumlah: Number(d.jumlah || d.qty || 1),
+                  id: sp.id_sparepart,
+                  kode: sp.id_sparepart,
+                  nama: sp.nama_sparepart,
+                  kategori: kat,
+                  satuan: sp.satuan,
+                  harga: Number(sp.harga),
+                  stok: sp.stok_tersedia,
+                  stokMinimum: sp.stok_minimum,
+                  terpakai: 0,
+                  tanggalUpdate: sp.tanggal_update ? sp.tanggal_update.slice(0, 10) : hariIni(),
                 };
-              });
-              const ringkas = items.map((i) => `${i.nama} (${i.jumlah}x)`).join(", ");
-              const totalPartCalc = items.reduce((sum, i) => sum + i.harga * i.jumlah, 0);
+              }),
+            );
+          }
 
-              return {
-                id: s.id_servis,
-                nomor: s.nomor_servis,
-                bookingId: s.id_booking ?? undefined,
-                pelanggan: pel?.nama ?? "Pelanggan",
-                kendaraan: ken ? `${ken.merk} ${ken.tipe} ${ken.tahun}`.trim() : "Kendaraan",
-                plat: ken?.plat || "",
-                bengkelId: s.id_bengkel ?? "bengkel-001",
-                mekanikId: s.id_mekanik ?? undefined,
-                jenis: s.jenis_servis ?? "Servis Umum",
-                keluhan: s.keluhan ?? "",
-                pekerjaan: s.pekerjaan || s.catatan || s.jenis_servis || "",
-                mekanik: s.mekanik ?? "Andi",
-                tanggal: s.tanggal_servis || (s.created_at ? s.created_at.slice(0, 10) : hariIni()),
-                status: st,
-                sparepart: ringkas,
-                items: items,
-                catatan: s.catatan ?? "",
-                biayaJasa: Number(s.biaya_jasa || 0),
-                biayaPart: Number(s.biaya_sparepart || totalPartCalc || 0),
-                total: Number(s.total_biaya || 0),
-                noTransaksi: `TRX-${s.nomor_servis.replace("SRV-", "")}`,
-                estimasiBiaya: s.estimasi_biaya ? Number(s.estimasi_biaya) : undefined,
-                estimasiWaktu: s.estimasi_waktu ?? undefined,
-                estimasiSelesai: s.estimasi_selesai ?? undefined,
-                tanggalMulai: s.tanggal_mulai ?? undefined,
-                tanggalSelesai: s.tanggal_selesai ?? undefined,
-              };
-            }),
-          );
-        }
+          if (bkRes.status === "fulfilled" && bkRes.value.length > 0) {
+            setBooking(
+              bkRes.value.map((b) => {
+                const pel = listPelanggan.find((p) => p.id === b.id_pelanggan);
+                const ken = listKendaraan.find((k) => k.id === b.id_kendaraan);
+                return {
+                  id: b.id_booking,
+                  nomor: b.nomor_booking,
+                  pelanggan: pel?.nama ?? "Pelanggan",
+                  customerId: b.id_pelanggan,
+                  vehicleId: b.id_kendaraan,
+                  bengkelId: b.id_bengkel ?? "bengkel-001",
+                  mekanikId: b.id_mekanik ?? undefined,
+                  kendaraan: ken?.tipe ?? "Kendaraan",
+                  plat: ken?.plat ?? "",
+                  jenis: b.jenis_servis,
+                  keluhan: b.keluhan,
+                  tanggal: b.tanggal_booking,
+                  waktu: b.waktu_booking,
+                  catatan: "",
+                  mekanikDiinginkan: b.mekanik_diinginkan ?? undefined,
+                  status:
+                    b.status_booking === "disetujui"
+                      ? "Diterima"
+                      : b.status_booking === "ditolak"
+                        ? "Ditolak"
+                        : "Menunggu Konfirmasi",
+                };
+              }),
+            );
+          }
 
-        if (bklRes.status === "fulfilled" && bklRes.value.length > 0) {
-          setBengkel(
-            bklRes.value.map((b) => ({
-              id: b.id_bengkel,
-              nama: b.nama_bengkel,
-              alamat: b.alamat ?? "",
-              telepon: b.no_telepon ?? "",
-            })),
-          );
-        }
+          if (srvRes.status === "fulfilled" && srvRes.value.length > 0) {
+            const detList: any[] =
+              detRes && detRes.status === "fulfilled" && (detRes.value as any).data
+                ? (detRes.value as any).data
+                : [];
+            const spList: any[] = spRes && spRes.status === "fulfilled" ? (spRes.value as any) : [];
 
-        if (mekRes.status === "fulfilled" && mekRes.value.length > 0) {
-          setMekanik(
-            mekRes.value.map((m) => ({
-              id: m.id_mekanik,
-              bengkelId: m.id_bengkel,
-              nama: m.nama_mekanik,
-              telepon: m.no_telepon ?? "",
-              spesialisasi: m.spesialisasi ?? "Umum",
-              status: m.status,
-              createdAt: m.created_at ? m.created_at.slice(0, 10) : hariIni(),
-            })),
-          );
-        }
+            setServis(
+              srvRes.value.map((s) => {
+                const pel = listPelanggan.find((p) => p.id === s.id_pelanggan);
+                const ken = listKendaraan.find((k) => k.id === s.id_kendaraan);
+                const st: StatusServis =
+                  s.status_servis === "diproses"
+                    ? "Diproses"
+                    : s.status_servis === "selesai"
+                      ? "Selesai"
+                      : s.status_servis === "menunggu_pembayaran"
+                        ? "Menunggu Pembayaran"
+                        : s.status_servis === "lunas"
+                          ? "Selesai Dibayar"
+                          : "Menunggu";
 
-        if (pemRes.status === "fulfilled" && pemRes.value.length > 0) {
-          setPembayaran(
-            pemRes.value.map((p) => {
-              const st =
-                p.status_pembayaran === "lunas"
-                  ? "Lunas"
-                  : p.status_pembayaran === "menunggu_verifikasi"
-                    ? "Menunggu Verifikasi"
-                    : p.status_pembayaran === "ditolak"
-                      ? "Bukti Ditolak"
-                      : "Belum Dibayar";
-              const met: MetodeBayar =
-                p.metode_pembayaran === "qris"
-                  ? "QRIS"
-                  : p.metode_pembayaran === "transfer"
-                    ? "Transfer Bank"
-                    : "Cash";
-              return {
-                id: p.id_pembayaran,
-                servisId: p.id_servis,
-                noTransaksi: p.nomor_transaksi,
-                metode: met,
-                tanggalBayar: p.tanggal_bayar ? p.tanggal_bayar.slice(0, 10) : hariIni(),
-                totalBayar: Number(p.jumlah_bayar || 0),
-                status: st,
-                ...(p.bukti_pembayaran ? { buktiUrl: p.bukti_pembayaran } : {}),
-                ...(p.alasan_penolakan ? { alasanTolak: p.alasan_penolakan } : {}),
-                ...(p.verified_at ? { verifiedAt: p.verified_at } : {}),
-                ...(p.verified_by ? { verifiedBy: p.verified_by } : {}),
-              };
-            }),
-          );
-        }
+                const srvDetails = detList.filter((d: any) => d.id_servis === s.id_servis);
+                const items: ItemPart[] = srvDetails.map((d: any) => {
+                  const sp = spList.find((x: any) => x.id_sparepart === d.id_sparepart);
+                  return {
+                    sparepartId: d.id_sparepart || d.id_detail || d.id_detail_servis,
+                    kode: sp?.id_sparepart || d.id_sparepart || "-",
+                    nama: sp?.nama_sparepart || d.keterangan || "Sparepart",
+                    harga: Number(d.harga || d.harga_satuan || sp?.harga || 0),
+                    jumlah: Number(d.jumlah || d.qty || 1),
+                  };
+                });
+                const ringkas = items.map((i) => `${i.nama} (${i.jumlah}x)`).join(", ");
+                const totalPartCalc = items.reduce((sum, i) => sum + i.harga * i.jumlah, 0);
 
-        if (beliRes.status === "fulfilled" && beliRes.value.length > 0) {
-          setPembelian(
-            beliRes.value.map((b) => ({
+                return {
+                  id: s.id_servis,
+                  nomor: s.nomor_servis,
+                  bookingId: s.id_booking ?? undefined,
+                  pelanggan: pel?.nama ?? "Pelanggan",
+                  kendaraan: ken ? `${ken.merk} ${ken.tipe} ${ken.tahun}`.trim() : "Kendaraan",
+                  plat: ken?.plat || "",
+                  bengkelId: s.id_bengkel ?? "bengkel-001",
+                  mekanikId: s.id_mekanik ?? undefined,
+                  jenis: s.jenis_servis ?? "Servis Umum",
+                  keluhan: s.keluhan ?? "",
+                  pekerjaan: s.pekerjaan || s.catatan || s.jenis_servis || "",
+                  mekanik: s.mekanik ?? "Andi",
+                  tanggal:
+                    s.tanggal_servis || (s.created_at ? s.created_at.slice(0, 10) : hariIni()),
+                  status: st,
+                  sparepart: ringkas,
+                  items: items,
+                  catatan: s.catatan ?? "",
+                  biayaJasa: Number(s.biaya_jasa || 0),
+                  biayaPart: Number(s.biaya_sparepart || totalPartCalc || 0),
+                  total: Number(s.total_biaya || 0),
+                  noTransaksi: `TRX-${s.nomor_servis.replace("SRV-", "")}`,
+                  estimasiBiaya: s.estimasi_biaya ? Number(s.estimasi_biaya) : undefined,
+                  estimasiWaktu: s.estimasi_waktu ?? undefined,
+                  estimasiSelesai: s.estimasi_selesai ?? undefined,
+                  tanggalMulai: s.tanggal_mulai ?? undefined,
+                  tanggalSelesai: s.tanggal_selesai ?? undefined,
+                };
+              }),
+            );
+          }
+
+          if (bklRes.status === "fulfilled" && bklRes.value.length > 0) {
+            setBengkel(
+              bklRes.value.map((b) => ({
+                id: b.id_bengkel,
+                nama: b.nama_bengkel,
+                alamat: b.alamat ?? "",
+                telepon: b.no_telepon ?? "",
+              })),
+            );
+          }
+
+          if (mekRes.status === "fulfilled" && mekRes.value.length > 0) {
+            setMekanik(
+              mekRes.value.map((m) => ({
+                id: m.id_mekanik,
+                bengkelId: m.id_bengkel,
+                nama: m.nama_mekanik,
+                telepon: m.no_telepon ?? "",
+                spesialisasi: m.spesialisasi ?? "Umum",
+                status: m.status,
+                createdAt: m.created_at ? m.created_at.slice(0, 10) : hariIni(),
+              })),
+            );
+          }
+
+          if (pemRes.status === "fulfilled" && pemRes.value.length > 0) {
+            setPembayaran(
+              pemRes.value.map((p) => {
+                const st =
+                  p.status_pembayaran === "lunas"
+                    ? "Lunas"
+                    : p.status_pembayaran === "menunggu_verifikasi"
+                      ? "Menunggu Verifikasi"
+                      : p.status_pembayaran === "ditolak"
+                        ? "Bukti Ditolak"
+                        : "Belum Dibayar";
+                const met: MetodeBayar =
+                  p.metode_pembayaran === "qris"
+                    ? "QRIS"
+                    : p.metode_pembayaran === "transfer"
+                      ? "Transfer Bank"
+                      : "Cash";
+                return {
+                  id: p.id_pembayaran,
+                  servisId: p.id_servis,
+                  noTransaksi: p.nomor_transaksi,
+                  metode: met,
+                  tanggalBayar: p.tanggal_bayar ? p.tanggal_bayar.slice(0, 10) : hariIni(),
+                  totalBayar: Number(p.jumlah_bayar || 0),
+                  status: st,
+                  ...(p.bukti_pembayaran ? { buktiUrl: p.bukti_pembayaran } : {}),
+                  ...(p.alasan_penolakan ? { alasanTolak: p.alasan_penolakan } : {}),
+                  ...(p.verified_at ? { verifiedAt: p.verified_at } : {}),
+                  ...(p.verified_by ? { verifiedBy: p.verified_by } : {}),
+                };
+              }),
+            );
+          }
+
+          if (beliRes.status === "fulfilled" && beliRes.value.length > 0) {
+            const mappedBeli: PembelianSparepart[] = beliRes.value.map((b) => ({
               id: b.id_pembelian_sparepart || (b as any).id_pembelian || uid(),
               nomor: b.nomor_pembelian,
               sparepartId: b.id_sparepart,
+              supplierId: b.id_supplier ?? undefined,
               supplier: b.supplier,
               tanggal: b.tanggal,
               jumlah: b.jumlah,
               harga: Number(b.harga || 0),
               total: Number(b.total || 0),
               status: "Diterima",
-            })),
-          );
-        }
+            }));
+            setPembelian((current) => {
+              const localOnly = current.filter(
+                (loc) => !mappedBeli.some((sb) => sb.id === loc.id || sb.nomor === loc.nomor),
+              );
+              return [...localOnly, ...mappedBeli];
+            });
+          }
 
-        if (riwRes.status === "fulfilled" && riwRes.value.length > 0) {
-          setRiwayatStok(
-            riwRes.value.map((r) => ({
+          if (riwRes.status === "fulfilled" && riwRes.value.length > 0) {
+            const mappedRiw: RiwayatStok[] = riwRes.value.map((r) => ({
               id: r.id_riwayat_stok || (r as any).id_riwayat || uid(),
               sparepartId: r.id_sparepart,
-              jenis: (r.jenis === "keluar" || (r as any).tipe === "keluar") ? "Keluar" : "Masuk",
+              jenis: r.jenis === "keluar" || (r as any).tipe === "keluar" ? "Keluar" : "Masuk",
               jumlah: r.jumlah || (r as any).qty || 1,
               tanggal: r.tanggal ? r.tanggal.slice(0, 10) : hariIni(),
               keterangan: r.keterangan || "",
-            })),
-          );
-        }
+            }));
+            setRiwayatStok((current) => {
+              const localOnly = current.filter((loc) => !mappedRiw.some((sb) => sb.id === loc.id));
+              return [...localOnly, ...mappedRiw];
+            });
+          }
 
-        if (pakaiRes.status === "fulfilled" && pakaiRes.value.length > 0) {
-          setPenggunaan(
-            pakaiRes.value.map((p) => ({
-              id: p.id_penggunaan_sparepart || (p as any).id_penggunaan || uid(),
-              sparepartId: p.id_sparepart,
-              servisId: p.id_servis,
-              servisNomor: p.id_servis,
-              tanggal: p.tanggal,
-              jumlah: p.jumlah || (p as any).qty || 1,
-              mekanik: p.mekanik || "",
-              keterangan: p.keterangan || "",
-            })),
-          );
-        }
+          if (pakaiRes.status === "fulfilled" && pakaiRes.value.length > 0) {
+            setPenggunaan(
+              pakaiRes.value.map((p) => ({
+                id: p.id_penggunaan_sparepart || (p as any).id_penggunaan || uid(),
+                sparepartId: p.id_sparepart,
+                servisId: p.id_servis,
+                servisNomor: p.id_servis,
+                tanggal: p.tanggal,
+                jumlah: p.jumlah || (p as any).qty || 1,
+                mekanik: p.mekanik || "",
+                keterangan: p.keterangan || "",
+              })),
+            );
+          }
 
-        if (returRes.status === "fulfilled" && returRes.value.length > 0) {
-          setReturSparepart(
-            returRes.value.map((r) => ({
-              id: r.id_retur_sparepart,
-              sparepartId: r.id_sparepart,
-              pembelianId: r.id_pembelian_sparepart ?? null,
-              jumlah: r.jumlah,
-              tanggal: r.tanggal,
-              alasan: r.alasan,
-              status:
-                (r.status as string) === "disetujui" || (r.status as string) === "Disetujui"
-                  ? "Disetujui"
-                  : (r.status as string) === "ditolak" || (r.status as string) === "Ditolak"
-                    ? "Ditolak"
-                    : "Diproses",
-            })),
-          );
-        }
-      })
+          if (suppRes.status === "fulfilled" && suppRes.value.length > 0) {
+            setSupplier(
+              suppRes.value.map((s) => ({
+                id: s.id_supplier,
+                bengkelId: s.id_bengkel ?? "bengkel-001",
+                nama: s.nama_supplier ?? s.nama ?? "Supplier",
+                kontak: s.kontak ?? undefined,
+                telepon: s.no_telepon ?? s.telepon ?? undefined,
+                email: s.email ?? undefined,
+                alamat: s.alamat ?? undefined,
+                status: (s.status as "Aktif" | "Tidak Aktif") || "Aktif",
+              })),
+            );
+          }
+
+          if (returRes.status === "fulfilled" && returRes.value.length > 0) {
+            const spList: any[] = spRes && spRes.status === "fulfilled" ? (spRes.value as any) : [];
+            const beliList: any[] =
+              beliRes && beliRes.status === "fulfilled" ? (beliRes.value as any) : [];
+
+            const mappedRetur: ReturSparepart[] = returRes.value.map((r) => {
+              const stRaw = String(r.status || "").toLowerCase();
+              let normalizedStatus: StatusRetur = "Diajukan";
+              if (stRaw === "selesai") normalizedStatus = "Selesai";
+              else if (stRaw === "barang dikirim" || stRaw === "barang_dikirim")
+                normalizedStatus = "Barang Dikirim";
+              else if (stRaw === "disetujui") normalizedStatus = "Disetujui";
+              else if (stRaw === "ditolak") normalizedStatus = "Ditolak";
+              else if (stRaw === "diproses") normalizedStatus = "Diproses";
+              else normalizedStatus = "Diajukan";
+
+              const sp = spList.find(
+                (x) => x.id_sparepart?.toLowerCase() === r.id_sparepart?.toLowerCase(),
+              );
+              const pemb = beliList.find(
+                (b) =>
+                  (b.id_pembelian_sparepart &&
+                    b.id_pembelian_sparepart === r.id_pembelian_sparepart) ||
+                  (b.nomor_pembelian &&
+                    r.nomor_pembelian &&
+                    b.nomor_pembelian.toLowerCase() === r.nomor_pembelian.toLowerCase()),
+              );
+
+              return {
+                id: r.id_retur_sparepart,
+                nomorRetur: r.nomor_retur || `RET-2026-${r.id_retur_sparepart.slice(-3)}`,
+                bengkelId: r.id_bengkel || "bengkel-001",
+                supplierId: r.id_supplier || (pemb as any)?.id_supplier || "sup-001",
+                supplier: r.supplier || pemb?.supplier || "Supplier",
+                pembelianId: r.id_pembelian_sparepart || pemb?.id_pembelian_sparepart || "",
+                nomorPembelian: r.nomor_pembelian || pemb?.nomor_pembelian || "—",
+                sparepartId: r.id_sparepart,
+                namaSparepart: r.nama_sparepart || sp?.nama_sparepart || sp?.nama || "Sparepart",
+                jumlah: Number(r.jumlah || 1),
+                hargaSatuan: Number(r.harga_satuan || pemb?.harga || sp?.harga || 0),
+                totalNilai: Number(
+                  r.total_nilai ||
+                    (r.jumlah || 1) * Number(r.harga_satuan || pemb?.harga || sp?.harga || 0),
+                ),
+                tanggal: r.tanggal ? r.tanggal.slice(0, 10) : hariIni(),
+                alasan: r.alasan || "Cacat / Rusak Pabrik",
+                alasanDetail: r.alasan_detail ?? undefined,
+                alasanPenolakan: r.alasan_penolakan ?? undefined,
+                keterangan: r.keterangan ?? undefined,
+                status: normalizedStatus,
+                stokDikurangi: Boolean(r.stok_dikurangi),
+                riwayatStokId: r.riwayat_stok_id ?? undefined,
+                createdAt: r.created_at,
+              };
+            });
+
+            setReturSparepart((currentLocal) => {
+              const localOnly = currentLocal.filter(
+                (loc) =>
+                  !mappedRetur.some(
+                    (sb) =>
+                      sb.id === loc.id ||
+                      (sb.nomorRetur && loc.nomorRetur && sb.nomorRetur === loc.nomorRetur),
+                  ),
+              );
+              return [...localOnly, ...mappedRetur];
+            });
+
+            // Sinkronisasi retur yang disetujui ke Riwayat Stok (Tab 2)
+            setRiwayatStok((currentRiw) => {
+              const additions: RiwayatStok[] = [];
+              for (const r of mappedRetur) {
+                if (
+                  (r.stokDikurangi ||
+                    r.status === "Disetujui" ||
+                    r.status === "Selesai" ||
+                    r.status === "Barang Dikirim") &&
+                  !currentRiw.some((rw) => rw.keterangan?.includes(r.nomorRetur))
+                ) {
+                  additions.push({
+                    id: r.riwayatStokId || `rw-${r.id}`,
+                    sparepartId: r.sparepartId,
+                    jenis: "Keluar",
+                    jumlah: r.jumlah,
+                    tanggal: r.tanggal,
+                    keterangan: `Retur ${r.nomorRetur} (${r.supplier}) · ${r.alasan}`,
+                  });
+                }
+              }
+              if (additions.length === 0) return currentRiw;
+              return [...additions, ...currentRiw];
+            });
+          }
+        },
+      )
       .catch(() => {});
   }, []);
 
@@ -1622,20 +1952,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       simpanPelanggan: (p) => {
+        const isExisting = Boolean(p.id && pelanggan.some((x) => x.id === p.id));
         const id = p.id || uid();
         setPelanggan((list) =>
-          p.id
+          isExisting
             ? list.map((x) => (x.id === p.id ? ({ ...x, ...p } as Pelanggan) : x))
             : [{ ...p, id } as Pelanggan, ...list],
         );
         if (isSupabaseConfigured()) {
-          if (p.id) {
+          if (isExisting && p.id) {
             pelangganService
-              .update(p.id, { nama: p.nama, email: p.email, no_hp: p.telepon, alamat: p.alamat })
+              .update(p.id, {
+                nama: p.nama,
+                email: p.email,
+                ...(p.telepon ? { no_hp: p.telepon } : {}),
+                ...(p.alamat ? { alamat: p.alamat } : {}),
+              })
               .catch(() => {});
           } else {
             pelangganService
-              .create({ nama: p.nama, email: p.email, no_hp: p.telepon, alamat: p.alamat })
+              .create({
+                ...(p.id ? { id_pelanggan: p.id } : {}),
+                ...(p.userId ? { user_id: p.userId } : {}),
+                nama: p.nama,
+                email: p.email,
+                ...(p.telepon ? { no_hp: p.telepon } : {}),
+                ...(p.alamat ? { alamat: p.alamat } : {}),
+              })
               .catch(() => {});
           }
         }
@@ -1647,7 +1990,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           pelangganService.delete(id).catch(() => {});
         }
       },
-      simpanKendaraan: (k) => {
+      simpanKendaraan: async (k) => {
         const isExisting = Boolean(k.id && kendaraan.some((x) => x.id === k.id));
         const id =
           k.id || `kd-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -1658,17 +2001,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
         if (isSupabaseConfigured()) {
           if (isExisting && k.id) {
-            kendaraanService
-              .update(k.id, {
+            try {
+              await kendaraanService.update(k.id, {
                 merk: k.merk,
                 tipe: k.tipe,
                 tahun: k.tahun,
                 nopol: k.plat,
-              })
-              .catch((err) => console.error("Error updating kendaraan:", err));
+                kilometer: k.kilometer,
+              });
+            } catch (err) {
+              console.error("Error updating kendaraan:", err);
+              throw err;
+            }
           } else {
-            kendaraanService
-              .create({
+            try {
+              const created = await kendaraanService.create({
                 id_kendaraan: id,
                 id_pelanggan: k.pelangganId,
                 merk: k.merk,
@@ -1676,15 +2023,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 tahun: k.tahun,
                 nopol: k.plat,
                 kilometer: k.kilometer,
-              })
-              .then((created) => {
-                if (created?.id_kendaraan && created.id_kendaraan !== id) {
-                  setKendaraan((list) =>
-                    list.map((x) => (x.id === id ? { ...x, id: created.id_kendaraan } : x)),
-                  );
-                }
-              })
-              .catch((err) => console.error("Error creating kendaraan:", err));
+              });
+              if (created?.id_kendaraan && created.id_kendaraan !== id) {
+                setKendaraan((list) =>
+                  list.map((x) => (x.id === id ? { ...x, id: created.id_kendaraan } : x)),
+                );
+              }
+            } catch (err) {
+              // Rollback local state on error
+              setKendaraan((list) => list.filter((x) => x.id !== id));
+              console.error("Error creating kendaraan:", err);
+              throw err;
+            }
           }
         }
       },
@@ -1761,7 +2111,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             jenis: d > 0 ? "Keluar" : "Masuk",
             jumlah: Math.abs(d),
             tanggal: tgl,
-            keterangan: d > 0 ? `Dipakai servis ${finalNomor}` : `Koreksi pemakaian servis ${finalNomor}`,
+            keterangan:
+              d > 0 ? `Dipakai servis ${finalNomor}` : `Koreksi pemakaian servis ${finalNomor}`,
           });
           if (d > 0)
             logPakai.push({
@@ -1786,8 +2137,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               (x) => x.nama.toLowerCase() === s.pelanggan.trim().toLowerCase(),
             );
             if (!p) {
-              const safeSlug =
-                s.pelanggan.toLowerCase().replace(/[^a-z0-9]/g, "_") || "customer";
+              const safeSlug = s.pelanggan.toLowerCase().replace(/[^a-z0-9]/g, "_") || "customer";
               const randomEmail = `${safeSlug}_${Date.now().toString(36)}@appbenk.local`;
               p = await pelangganService.create({
                 nama: s.pelanggan.trim(),
@@ -2108,6 +2458,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               jumlah: p.jumlah,
               harga: p.harga,
               total: p.jumlah * p.harga,
+              id_bengkel: p.bengkelId || "bengkel-001",
+              workshop_id: p.bengkelId || "bengkel-001",
             })
             .catch(() => {});
         }
@@ -2210,9 +2562,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // Rollback stok sparepart (kurangi jumlah yang pernah dibeli)
         setSparepart((list) =>
           list.map((sp) =>
-            sp.id === lama.sparepartId
-              ? { ...sp, stok: Math.max(0, sp.stok - lama.jumlah) }
-              : sp,
+            sp.id === lama.sparepartId ? { ...sp, stok: Math.max(0, sp.stok - lama.jumlah) } : sp,
           ),
         );
 
@@ -2237,9 +2587,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       simpanMekanik: async (m) => {
         if (m.id) {
-          setMekanik((list) =>
-            list.map((x) => (x.id === m.id ? { ...x, ...m } : x)),
-          );
+          setMekanik((list) => list.map((x) => (x.id === m.id ? { ...x, ...m } : x)));
           if (isSupabaseConfigured()) {
             await mekanikService.update(m.id, {
               nama_mekanik: m.nama,
@@ -2279,9 +2627,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       ubahStatusMekanik: async (id, status) => {
-        setMekanik((list) =>
-          list.map((x) => (x.id === id ? { ...x, status } : x)),
-        );
+        setMekanik((list) => list.map((x) => (x.id === id ? { ...x, status } : x)));
         if (isSupabaseConfigured()) {
           await mekanikService.update(id, { status });
         }
@@ -2336,6 +2682,75 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           );
         }
       },
+      refreshSupplier: async () => {
+        if (!isSupabaseConfigured()) return;
+        const res = await supplierService.getAll();
+        if (res.length > 0) {
+          setSupplier(
+            res.map((s) => ({
+              id: s.id_supplier,
+              bengkelId: s.id_bengkel ?? "bengkel-001",
+              nama: s.nama_supplier ?? s.nama ?? "Supplier",
+              kontak: s.kontak ?? undefined,
+              telepon: s.no_telepon ?? s.telepon ?? undefined,
+              email: s.email ?? undefined,
+              alamat: s.alamat ?? undefined,
+              status: (s.status as "Aktif" | "Tidak Aktif") || "Aktif",
+            })),
+          );
+        }
+      },
+      simpanSupplier: async (s) => {
+        const idSupplier =
+          s.id || `sup-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        const baru: Supplier = {
+          ...s,
+          id: idSupplier,
+          bengkelId: s.bengkelId || "bengkel-001",
+          status: s.status || "Aktif",
+        };
+        setSupplier((list) =>
+          s.id ? list.map((x) => (x.id === s.id ? baru : x)) : [baru, ...list],
+        );
+        if (isSupabaseConfigured()) {
+          try {
+            await supplierService.create({
+              id_supplier: idSupplier,
+              ...(baru.bengkelId ? { id_bengkel: baru.bengkelId } : {}),
+              nama_supplier: baru.nama,
+              kontak: baru.kontak || null,
+              no_telepon: baru.telepon || null,
+              email: baru.email || null,
+              alamat: baru.alamat || null,
+              status: baru.status,
+            });
+          } catch (e) {
+            console.error("Gagal simpan supplier ke Supabase:", e);
+          }
+        }
+      },
+      refreshPelanggan: async () => {
+        if (!isSupabaseConfigured()) return;
+        try {
+          const res = await pelangganService.getAll();
+          if (res && res.length > 0) {
+            setPelanggan(
+              res.map((p) => ({
+                id: p.id_pelanggan,
+                userId: p.user_id ?? undefined,
+                nama: p.nama,
+                email: p.email,
+                telepon: p.no_hp ?? "",
+                alamat: p.alamat ?? "",
+                kendaraan: "",
+                plat: "",
+              })),
+            );
+          }
+        } catch (e) {
+          console.error("Gagal refresh pelanggan:", e);
+        }
+      },
       refreshKendaraan: async () => {
         if (!isSupabaseConfigured()) return;
         const res = await kendaraanService.getAll();
@@ -2348,21 +2763,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               tipe: k.tipe,
               tahun: k.tahun,
               plat: k.nopol,
-              kilometer: 0,
+              kilometer: k.kilometer || 0,
             })),
           );
         }
       },
       refreshBooking: async () => {
         if (!isSupabaseConfigured()) return;
-        const [bkRes, pelRes, kenRes] = await Promise.all([
-          bookingService.getAll(),
-          pelangganService.getAll(),
-          kendaraanService.getAll(),
-        ]);
-        if (bkRes.length > 0) {
-          setBooking(
-            bkRes.map((b) => {
+        try {
+          const [bkRes, pelRes, kenRes] = await Promise.all([
+            bookingService.getAll(),
+            pelangganService.getAll(),
+            kendaraanService.getAll(),
+          ]);
+          if (bkRes.length > 0) {
+            const mapped = bkRes.map((b) => {
               const pel = pelRes.find((p) => p.id_pelanggan === b.id_pelanggan);
               const ken = kenRes.find((k) => k.id_kendaraan === b.id_kendaraan);
               return {
@@ -2383,89 +2798,323 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 mekanikDiinginkan: b.mekanik_diinginkan ?? undefined,
                 status:
                   b.status_booking === "disetujui"
-                    ? "Diterima"
+                    ? ("Diterima" as StatusBooking)
                     : b.status_booking === "ditolak"
-                      ? "Ditolak"
-                      : "Menunggu Konfirmasi",
+                      ? ("Ditolak" as StatusBooking)
+                      : ("Menunggu Konfirmasi" as StatusBooking),
                 alasanTolak: b.alasan_penolakan ?? undefined,
               };
-            }),
-          );
+            });
+            setBooking((currentLocal) => {
+              const localOnly = currentLocal.filter(
+                (loc) => !mapped.some((sb) => sb.id === loc.id || sb.nomor === loc.nomor),
+              );
+              return [...localOnly, ...mapped];
+            });
+
+            // Sinkronisasi otomatis notifikasi pelanggan dari data status booking
+            setNotifikasi((prevNotif) => {
+              let updated = [...prevNotif];
+              for (const bk of mapped) {
+                if (bk.status === "Diterima") {
+                  const exists = updated.some(
+                    (n) => n.bookingId === bk.id && n.statusBooking === "Diterima",
+                  );
+                  if (!exists) {
+                    updated.unshift({
+                      id: `notif-bk-terima-${bk.id}`,
+                      role: "pelanggan",
+                      tipe: "booking",
+                      judul: `Booking Diterima (${bk.nomor})`,
+                      pesan: "bookingan diterima silahkan datang ke bengkel",
+                      link: "/pelanggan/status",
+                      waktu: new Date().toISOString(),
+                      dibaca: false,
+                      bookingId: bk.id,
+                      customerId: bk.customerId,
+                      pelanggan: bk.pelanggan,
+                      statusBooking: "Diterima",
+                    });
+                  }
+                } else if (bk.status === "Ditolak") {
+                  const exists = updated.some(
+                    (n) => n.bookingId === bk.id && n.statusBooking === "Ditolak",
+                  );
+                  if (!exists) {
+                    updated.unshift({
+                      id: `notif-bk-tolak-${bk.id}`,
+                      role: "pelanggan",
+                      tipe: "booking",
+                      judul: `Booking Ditolak (${bk.nomor})`,
+                      pesan: bk.alasanTolak || "Tidak ada keterangan dari admin.",
+                      link: "/pelanggan/booking",
+                      waktu: new Date().toISOString(),
+                      dibaca: false,
+                      bookingId: bk.id,
+                      customerId: bk.customerId,
+                      pelanggan: bk.pelanggan,
+                      statusBooking: "Ditolak",
+                    });
+                  }
+                }
+              }
+              return updated;
+            });
+          }
+        } catch (err) {
+          console.error("Gagal refresh booking:", err);
+        }
+      },
+      refreshRetur: async () => {
+        if (!isSupabaseConfigured()) return;
+        try {
+          const [retRes, spRes, beliRes] = await Promise.all([
+            sparepartService.getRetur(),
+            sparepartService.getAll(),
+            sparepartService.getPembelian(),
+          ]);
+          if (retRes.length > 0) {
+            const spList = spRes ?? [];
+            const beliList = beliRes ?? [];
+            const mapped: ReturSparepart[] = retRes.map((r) => {
+              const stRaw = String(r.status || "").toLowerCase();
+              let normalizedStatus: StatusRetur = "Diajukan";
+              if (stRaw === "selesai") normalizedStatus = "Selesai";
+              else if (stRaw === "barang dikirim" || stRaw === "barang_dikirim")
+                normalizedStatus = "Barang Dikirim";
+              else if (stRaw === "disetujui") normalizedStatus = "Disetujui";
+              else if (stRaw === "ditolak") normalizedStatus = "Ditolak";
+              else if (stRaw === "diproses") normalizedStatus = "Diproses";
+              else normalizedStatus = "Diajukan";
+
+              const sp = spList.find((x) => x.id_sparepart === r.id_sparepart);
+              const pemb = beliList.find(
+                (b) =>
+                  b.id_pembelian_sparepart === r.id_pembelian_sparepart ||
+                  b.nomor_pembelian === r.nomor_pembelian,
+              );
+
+              return {
+                id: r.id_retur_sparepart,
+                nomorRetur: r.nomor_retur || `RET-2026-${r.id_retur_sparepart.slice(-3)}`,
+                bengkelId: r.id_bengkel || "bengkel-001",
+                supplierId: r.id_supplier || (pemb as any)?.id_supplier || "sup-001",
+                supplier: r.supplier || pemb?.supplier || "Supplier",
+                pembelianId: r.id_pembelian_sparepart || pemb?.id_pembelian_sparepart || "",
+                nomorPembelian: r.nomor_pembelian || pemb?.nomor_pembelian || "—",
+                sparepartId: r.id_sparepart,
+                namaSparepart: r.nama_sparepart || sp?.nama_sparepart || "Sparepart",
+                jumlah: Number(r.jumlah || 1),
+                hargaSatuan: Number(r.harga_satuan || pemb?.harga || sp?.harga || 0),
+                totalNilai: Number(
+                  r.total_nilai ||
+                    (r.jumlah || 1) * Number(r.harga_satuan || pemb?.harga || sp?.harga || 0),
+                ),
+                tanggal: r.tanggal ? r.tanggal.slice(0, 10) : hariIni(),
+                alasan: r.alasan || "Cacat / Rusak Pabrik",
+                alasanDetail: r.alasan_detail ?? undefined,
+                alasanPenolakan: r.alasan_penolakan ?? undefined,
+                keterangan: r.keterangan ?? undefined,
+                status: normalizedStatus,
+                stokDikurangi: Boolean(r.stok_dikurangi),
+                riwayatStokId: r.riwayat_stok_id ?? undefined,
+                createdAt: r.created_at,
+              };
+            });
+
+            setReturSparepart((currentLocal) => {
+              const localOnly = currentLocal.filter(
+                (loc) =>
+                  !mapped.some(
+                    (sb) =>
+                      sb.id === loc.id ||
+                      (sb.nomorRetur && loc.nomorRetur && sb.nomorRetur === loc.nomorRetur),
+                  ),
+              );
+              return [...localOnly, ...mapped];
+            });
+
+            // Sinkronisasi retur yang disetujui ke Riwayat Stok (Tab 2)
+            setRiwayatStok((currentRiw) => {
+              const additions: RiwayatStok[] = [];
+              for (const r of mapped) {
+                if (
+                  (r.stokDikurangi ||
+                    r.status === "Disetujui" ||
+                    r.status === "Selesai" ||
+                    r.status === "Barang Dikirim") &&
+                  !currentRiw.some((rw) => rw.keterangan?.includes(r.nomorRetur))
+                ) {
+                  additions.push({
+                    id: r.riwayatStokId || `rw-${r.id}`,
+                    sparepartId: r.sparepartId,
+                    jenis: "Keluar",
+                    jumlah: r.jumlah,
+                    tanggal: r.tanggal,
+                    keterangan: `Retur ${r.nomorRetur} (${r.supplier}) · ${r.alasan}`,
+                  });
+                }
+              }
+              if (additions.length === 0) return currentRiw;
+              return [...additions, ...currentRiw];
+            });
+          }
+        } catch (err) {
+          console.error("Gagal refresh retur:", err);
         }
       },
       refreshServis: async () => {
         if (!isSupabaseConfigured()) return;
         try {
-          const [srvRes, pelRes, kenRes, detRes, spRes] = await Promise.all([
+          const [srvRes, pelRes, kenRes, detRes, spRes, bkRes] = await Promise.all([
             servisService.getAll(),
             pelangganService.getAll(),
             kendaraanService.getAll(),
             supabase().from("detail_servis").select("*"),
             sparepartService.getAll(),
+            bookingService.getAll(),
           ]);
-          if (srvRes.length > 0) {
-            const detList: any[] = (detRes && (detRes as any).data) ? (detRes as any).data : [];
-            const spList: any[] = spRes ?? [];
-            const mappedServis: Servis[] = srvRes.map((s: any) => {
-              const pel = pelRes.find((p: any) => p.id_pelanggan === s.id_pelanggan);
-              const ken = kenRes.find((k: any) => k.id_kendaraan === s.id_kendaraan);
-              const st: StatusServis =
-                s.status_servis === "diproses"
-                  ? "Diproses"
-                  : s.status_servis === "selesai"
-                    ? "Selesai"
-                    : s.status_servis === "menunggu_pembayaran"
-                      ? "Menunggu Pembayaran"
-                      : s.status_servis === "lunas"
-                        ? "Selesai Dibayar"
-                        : "Menunggu";
 
-              const srvDetails = detList.filter((d: any) => d.id_servis === s.id_servis);
-              const items: ItemPart[] = srvDetails.map((d: any) => {
-                const sp = spList.find((x: any) => x.id_sparepart === d.id_sparepart);
-                return {
-                  sparepartId: d.id_sparepart || d.id_detail || d.id_detail_servis,
-                  kode: sp?.id_sparepart || d.id_sparepart || "-",
-                  nama: sp?.nama_sparepart || d.keterangan || "Sparepart",
-                  harga: Number(d.harga || d.harga_satuan || sp?.harga || 0),
-                  jumlah: Number(d.jumlah || d.qty || 1),
-                };
-              });
-              const ringkas = items.map((i) => `${i.nama} (${i.jumlah}x)`).join(", ");
-              const totalPartCalc = items.reduce((sum, i) => sum + i.harga * i.jumlah, 0);
+          const detList: any[] = detRes && (detRes as any).data ? (detRes as any).data : [];
+          const spList: any[] = spRes ?? [];
+          const bkList: any[] = bkRes ?? [];
 
+          const mappedServis: Servis[] = (srvRes ?? []).map((s: any) => {
+            const pel = pelRes.find((p: any) => p.id_pelanggan === s.id_pelanggan);
+            const ken = kenRes.find((k: any) => k.id_kendaraan === s.id_kendaraan);
+            const bk = bkList.find((b: any) => b.id_booking === s.id_booking);
+            const namaPelanggan =
+              pel?.nama ||
+              (bk ? pelRes.find((p: any) => p.id_pelanggan === bk.id_pelanggan)?.nama : undefined) ||
+              "Pelanggan";
+            const kenDesc = ken
+              ? `${ken.merk} ${ken.tipe} ${ken.tahun}`.trim()
+              : (bk ? `${bk.jenis_servis || "Kendaraan"}` : "Kendaraan");
+            const plat = ken?.nopol || "";
+
+            const st: StatusServis =
+              s.status_servis === "diproses"
+                ? "Diproses"
+                : s.status_servis === "selesai"
+                  ? "Selesai"
+                  : s.status_servis === "menunggu_pembayaran"
+                    ? "Menunggu Pembayaran"
+                    : s.status_servis === "lunas"
+                      ? "Selesai Dibayar"
+                      : "Menunggu";
+
+            const srvDetails = detList.filter((d: any) => d.id_servis === s.id_servis);
+            const items: ItemPart[] = srvDetails.map((d: any) => {
+              const sp = spList.find((x: any) => x.id_sparepart === d.id_sparepart);
               return {
-                id: s.id_servis,
-                nomor: s.nomor_servis,
-                bookingId: s.id_booking ?? undefined,
-                pelanggan: pel?.nama ?? "Pelanggan",
-                kendaraan: ken ? `${ken.merk} ${ken.tipe} ${ken.tahun}`.trim() : "Kendaraan",
-                plat: ken?.nopol || "",
-                bengkelId: s.id_bengkel ?? "bengkel-001",
-                mekanikId: s.id_mekanik ?? undefined,
-                jenis: s.jenis_servis ?? "Servis Umum",
-                keluhan: s.keluhan ?? "",
-                pekerjaan: s.pekerjaan || s.catatan || s.jenis_servis || "",
-                mekanik: s.mekanik ?? "Andi",
-                tanggal: s.tanggal_servis || (s.created_at ? s.created_at.slice(0, 10) : hariIni()),
-                status: st,
-                sparepart: ringkas,
-                items: items,
-                catatan: s.catatan ?? "",
-                biayaJasa: Number(s.biaya_jasa || 0),
-                biayaPart: Number(s.biaya_sparepart || totalPartCalc || 0),
-                total: Number(s.total_biaya || 0),
-                noTransaksi: `TRX-${s.nomor_servis.replace("SRV-", "")}`,
-                estimasiBiaya: s.estimasi_biaya ? Number(s.estimasi_biaya) : undefined,
-                estimasiWaktu: s.estimasi_waktu ?? undefined,
-                estimasiSelesai: s.estimasi_selesai ?? undefined,
-                tanggalMulai: s.tanggal_mulai ?? undefined,
-                tanggalSelesai: s.tanggal_selesai ?? undefined,
+                sparepartId: d.id_sparepart || d.id_detail || d.id_detail_servis,
+                kode: sp?.id_sparepart || d.id_sparepart || "-",
+                nama: sp?.nama_sparepart || d.keterangan || "Sparepart",
+                harga: Number(d.harga || d.harga_satuan || sp?.harga || 0),
+                jumlah: Number(d.jumlah || d.qty || 1),
               };
             });
+            const ringkas = items.map((i) => `${i.nama} (${i.jumlah}x)`).join(", ");
+            const totalPartCalc = items.reduce((sum, i) => sum + i.harga * i.jumlah, 0);
 
+            return {
+              id: s.id_servis,
+              nomor: s.nomor_servis,
+              bookingId: s.id_booking ?? undefined,
+              pelanggan: namaPelanggan,
+              kendaraan: kenDesc,
+              plat: plat,
+              bengkelId: s.id_bengkel ?? "bengkel-001",
+              mekanikId: s.id_mekanik ?? undefined,
+              jenis: s.jenis_servis ?? "Servis Umum",
+              keluhan: s.keluhan ?? "",
+              pekerjaan: s.pekerjaan || s.catatan || s.jenis_servis || "",
+              mekanik: s.mekanik ?? "Andi",
+              tanggal: s.tanggal_servis || (s.created_at ? s.created_at.slice(0, 10) : hariIni()),
+              status: st,
+              sparepart: ringkas,
+              items: items,
+              catatan: s.catatan ?? "",
+              biayaJasa: Number(s.biaya_jasa || 0),
+              biayaPart: Number(s.biaya_sparepart || totalPartCalc || 0),
+              total: Number(s.total_biaya || 0),
+              noTransaksi: `TRX-${s.nomor_servis.replace("SRV-", "")}`,
+              estimasiBiaya: s.estimasi_biaya ? Number(s.estimasi_biaya) : undefined,
+              estimasiWaktu: s.estimasi_waktu ?? undefined,
+              estimasiSelesai: s.estimasi_selesai ?? undefined,
+              tanggalMulai: s.tanggal_mulai ?? undefined,
+              tanggalSelesai: s.tanggal_selesai ?? undefined,
+            };
+          });
+
+          // Auto-healing: Jika ada booking berstatus 'disetujui' di Supabase yang belum memiliki data servis
+          const approvedBk = bkList.filter((b: any) => b.status_booking === "disetujui");
+          for (const ab of approvedBk) {
+            const alreadyInServis = mappedServis.some((ms) => ms.bookingId === ab.id_booking);
+            if (!alreadyInServis) {
+              try {
+                const nextNomor = generateNextNomorServis(mappedServis);
+                const srvId = `srv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+                const pel = pelRes.find((p: any) => p.id_pelanggan === ab.id_pelanggan);
+                const ken = kenRes.find((k: any) => k.id_kendaraan === ab.id_kendaraan);
+                const namaPel = pel?.nama || "Pelanggan";
+                const descKen = ken ? `${ken.merk} ${ken.tipe} ${ken.tahun}`.trim() : "Kendaraan";
+                const nopol = ken?.nopol || "";
+
+                const created = await servisService.create({
+                  id_servis: srvId,
+                  nomor_servis: nextNomor,
+                  id_booking: ab.id_booking,
+                  id_bengkel: ab.id_bengkel || "bengkel-001",
+                  id_pelanggan: ab.id_pelanggan,
+                  id_kendaraan: ab.id_kendaraan,
+                  id_mekanik: ab.id_mekanik ?? undefined,
+                  mekanik: ab.mekanik_diinginkan || "Andi",
+                  jenis_servis: ab.jenis_servis,
+                  keluhan: ab.keluhan,
+                  pekerjaan: ab.jenis_servis,
+                  status_servis: "menunggu",
+                  tanggal_mulai: ab.tanggal_booking || hariIni(),
+                  estimasi_waktu: "1 - 2 Jam",
+                  catatan: `[Booking ${ab.nomor_booking}] ${ab.keluhan}`,
+                  biaya_jasa: 0,
+                  biaya_sparepart: 0,
+                  total_biaya: 0,
+                });
+
+                if (created) {
+                  mappedServis.unshift({
+                    id: created.id_servis,
+                    nomor: created.nomor_servis,
+                    bookingId: ab.id_booking,
+                    pelanggan: namaPel,
+                    kendaraan: descKen,
+                    plat: nopol,
+                    bengkelId: created.id_bengkel || "bengkel-001",
+                    mekanikId: created.id_mekanik ?? undefined,
+                    jenis: created.jenis_servis || ab.jenis_servis,
+                    keluhan: created.keluhan || ab.keluhan,
+                    pekerjaan: created.pekerjaan || ab.jenis_servis,
+                    mekanik: created.mekanik || "Andi",
+                    tanggal: created.tanggal_servis || ab.tanggal_booking || hariIni(),
+                    status: "Menunggu",
+                    sparepart: "",
+                    items: [],
+                    catatan: created.catatan || "",
+                    biayaJasa: 0,
+                    biayaPart: 0,
+                    total: 0,
+                    noTransaksi: `TRX-${created.nomor_servis.replace("SRV-", "")}`,
+                  });
+                }
+              } catch (healErr) {
+                console.warn("Auto-heal booking to servis failed:", healErr);
+              }
+            }
+          }
+
+          if (mappedServis.length > 0) {
             setServis((currentLocal) => {
-              // Pertahankan servis lokal yang baru dibuat / belum tercakup di response Supabase
               const localOnly = currentLocal.filter(
                 (loc) =>
                   !mappedServis.some(
@@ -2522,6 +3171,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return baru;
       },
       ubahStatusBooking: (id, status, alasan) => {
+        const targetBooking = booking.find((x) => x.id === id);
+
         setBooking((l) =>
           l.map((x) => {
             if (x.id !== id) return x;
@@ -2532,11 +3183,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           }),
         );
 
-        if (status === "Diterima") {
-          const targetBooking = booking.find((x) => x.id === id);
-          if (targetBooking) {
-            // Cek apakah sudah ada servis untuk booking ini (cegah duplikasi)
-            const sudahAda = servis.some((s) => s.bookingId === id);
+        // Notifikasi untuk role pelanggan ketika bookingan diterima / ditolak oleh admin
+        if (targetBooking) {
+          if (status === "Diterima") {
+            tambahNotifikasi({
+              role: "pelanggan",
+              tipe: "booking",
+              judul: `Booking Diterima (${targetBooking.nomor})`,
+              pesan: "bookingan diterima silahkan datang ke bengkel",
+              link: "/pelanggan/status",
+              bookingId: targetBooking.id,
+              customerId: targetBooking.customerId,
+              pelanggan: targetBooking.pelanggan,
+              statusBooking: "Diterima",
+            });
+          } else if (status === "Ditolak") {
+            const keteranganPenolakan = (alasan || targetBooking.alasanTolak || "").trim() || "Tidak ada keterangan dari admin.";
+            tambahNotifikasi({
+              role: "pelanggan",
+              tipe: "booking",
+              judul: `Booking Ditolak (${targetBooking.nomor})`,
+              pesan: keteranganPenolakan,
+              link: "/pelanggan/booking",
+              bookingId: targetBooking.id,
+              customerId: targetBooking.customerId,
+              pelanggan: targetBooking.pelanggan,
+              statusBooking: "Ditolak",
+            });
+          }
+        }
+
+        if (status === "Diterima" && targetBooking) {
+          // Cek apakah sudah ada servis untuk booking ini (cegah duplikasi)
+          const sudahAda = servis.some((s) => s.bookingId === id);
 
             if (!sudahAda) {
               const nomorServis = generateNextNomorServis(servis);
@@ -2593,11 +3272,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               };
 
               // Masukkan langsung ke operasional servis di state lokal & localStorage
-              setServis((prev) => (prev.some((s) => s.bookingId === id) ? prev : [servisBaru, ...prev]));
+              setServis((prev) =>
+                prev.some((s) => s.bookingId === id) ? prev : [servisBaru, ...prev],
+              );
               try {
-                const currentSaved = JSON.parse(window.localStorage.getItem("appbenk.data.servis") || "[]");
-                if (!currentSaved.some((s: any) => s.id === srvId || s.bookingId === targetBooking.id)) {
-                  window.localStorage.setItem("appbenk.data.servis", JSON.stringify([servisBaru, ...currentSaved]));
+                const currentSaved = JSON.parse(
+                  window.localStorage.getItem("appbenk.data.servis") || "[]",
+                );
+                if (
+                  !currentSaved.some((s: any) => s.id === srvId || s.bookingId === targetBooking.id)
+                ) {
+                  window.localStorage.setItem(
+                    "appbenk.data.servis",
+                    JSON.stringify([servisBaru, ...currentSaved]),
+                  );
                 }
               } catch {}
 
@@ -2689,7 +3377,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               }
             }
           }
-        }
 
         if (isSupabaseConfigured()) {
           const dbStatus =
@@ -2708,44 +3395,65 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ajukanPembayaran: (id, metode, buktiUrl) => {
         const target = servis.find((x) => x.id === id);
         if (!target) return;
+
+        // Duplicate payment protection
+        const existingPmb = pembayaran.find((p) => p.servisId === id);
+        if (existingPmb?.status === "Lunas" || target.status === "Selesai Dibayar") {
+          console.warn("Pembayaran untuk servis ini sudah lunas.");
+          return;
+        }
+
         setServis((l) => l.map((x) => (x.id === id ? { ...x, metodeBayar: metode } : x)));
-        if (target)
-          setPembayaran((l) => [
-            {
-              id: uid(),
-              servisId: id,
-              noTransaksi: target.noTransaksi,
-              metode,
-              tanggalBayar: hariIni(),
-              totalBayar: target.total,
-              status: "Menunggu Verifikasi",
-              ...(buktiUrl ? { buktiUrl } : {}),
-            } as Pembayaran,
-            ...l.filter((p) => p.servisId !== id),
-          ]);
 
         const isCashMethod = metode === "Cash";
-        // Kirim Notifikasi Pembayaran ke Admin
+        const cleanBuktiUrl = isCashMethod ? undefined : buktiUrl;
+
+        setPembayaran((l) => [
+          {
+            id: existingPmb?.id || uid(),
+            servisId: id,
+            noTransaksi: target.noTransaksi,
+            metode,
+            tanggalBayar: hariIni(),
+            totalBayar: target.total,
+            status: "Menunggu Verifikasi",
+            ...(cleanBuktiUrl ? { buktiUrl: cleanBuktiUrl } : {}),
+          } as Pembayaran,
+          ...l.filter((p) => p.servisId !== id),
+        ]);
+
+        // Notifikasi ke Admin sesuai format standar AppBenk
+        let notifJudul = "Pembayaran Menunggu Verifikasi";
+        let notifPesan = `Pelanggan ${target.pelanggan} telah mengirim pembayaran untuk transaksi ${target.noTransaksi}.`;
+        if (metode === "QRIS") {
+          notifJudul = "Pembayaran QRIS Menunggu Verifikasi";
+          notifPesan = `Pelanggan ${target.pelanggan} telah mengirim bukti pembayaran QRIS untuk transaksi ${target.noTransaksi}.`;
+        } else if (metode === "Transfer Bank") {
+          notifJudul = "Pembayaran Transfer Menunggu Verifikasi";
+          notifPesan = `Pelanggan ${target.pelanggan} telah mengirim bukti transfer untuk transaksi ${target.noTransaksi}.`;
+        } else if (metode === "Cash") {
+          notifJudul = "Pembayaran Cash Menunggu Verifikasi";
+          notifPesan = `Pelanggan ${target.pelanggan} telah mengonfirmasi pembayaran secara tunai untuk transaksi ${target.noTransaksi}.`;
+        }
+
         tambahNotifikasi({
           role: "admin",
           tipe: "pembayaran",
-          judul: isCashMethod
-            ? `Pembayaran Tunai (Cash) - ${target.noTransaksi}`
-            : `Pembayaran ${metode} Baru Masuk`,
-          pesan: isCashMethod
-            ? `${target.pelanggan} memilih pembayaran tunai di kasir untuk ${target.noTransaksi} (${rupiah(target.total)}). Silakan terima uang tunai di meja kasir dan konfirmasi.`
-            : `${target.pelanggan} telah mengunggah bukti pembayaran ${metode} untuk ${target.noTransaksi} (${rupiah(target.total)}). Silakan periksa dan verifikasi.`,
-          link: `/admin/servis?trx=${target.noTransaksi}`,
+          judul: notifJudul,
+          pesan: notifPesan,
+          link: `/admin/pembayaran?filter=menunggu_verifikasi`,
           servisId: id,
           noTransaksi: target.noTransaksi,
           pelanggan: target.pelanggan,
           total: target.total,
-          buktiUrl,
+          buktiUrl: cleanBuktiUrl,
         });
 
         if (isSupabaseConfigured()) {
           const m = metode === "Cash" ? "cash" : metode === "QRIS" ? "qris" : "transfer";
-          pembayaranService.submitPembayaran(id, m, buktiUrl).catch(() => {});
+          pembayaranService.submitPembayaran(id, m, cleanBuktiUrl).catch((err) => {
+            console.warn("submitPembayaran sync failed:", err);
+          });
         }
       },
       verifikasiPembayaran: (servisId, disetujui, alasan, verifier) => {
@@ -2767,25 +3475,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               return {
                 ...rest,
                 status: "Bukti Ditolak",
-                ...(alasan?.trim() ? { alasanTolak: alasan.trim() } : {}),
+                alasanTolak: alasan?.trim() || "Bukti tidak sesuai",
               } as Pembayaran;
             }
           }),
         );
-        if (disetujui)
+        if (disetujui) {
           setServis((l) =>
             l.map((s) => (s.id === servisId ? { ...s, status: "Selesai Dibayar" } : s)),
           );
+        }
 
-        // Kirim notifikasi status balik ke pelanggan
+        // Kirim notifikasi status balik ke pelanggan sesuai spesifikasi
         if (targetServis) {
           tambahNotifikasi({
             role: "pelanggan",
             tipe: "pembayaran",
-            judul: disetujui ? "Pembayaran Telah Diverifikasi (Lunas)" : "Bukti Pembayaran Ditolak",
+            judul: disetujui ? "Pembayaran Berhasil Diverifikasi" : "Pembayaran Ditolak",
             pesan: disetujui
-              ? `Pembayaran Anda untuk ${targetServis.noTransaksi} telah disetujui admin. Nota resmi kini dapat diunduh.`
-              : `Bukti pembayaran untuk ${targetServis.noTransaksi} ditolak: ${alasan || "Bukti tidak sesuai"}. Silakan upload ulang.`,
+              ? `Pembayaran transaksi ${targetServis.noTransaksi} sebesar ${rupiah(targetServis.total)} telah diverifikasi oleh Admin.`
+              : `Pembayaran transaksi ${targetServis.noTransaksi} ditolak. Alasan: ${alasan?.trim() || "Bukti tidak valid"}. Silakan lakukan pembayaran kembali.`,
             link: `/pelanggan/pembayaran?trx=${targetServis.noTransaksi}`,
             servisId,
             noTransaksi: targetServis.noTransaksi,
@@ -2797,7 +3506,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (isSupabaseConfigured()) {
           pembayaranService
             .verifikasiPembayaran(servisId, disetujui, alasan, verifier)
-            .catch(() => {});
+            .catch((err) => {
+              console.warn("verifikasiPembayaran sync failed:", err);
+            });
         }
       },
       catatStokOpname: (so) => {
@@ -2813,103 +3524,182 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             .catch(() => {});
         }
       },
-      catatReturSparepart: (r) => {
-        let finalPartId = r.sparepartId.trim();
-        const existing = sparepart.find(
-          (sp) =>
-            sp.id.toLowerCase() === finalPartId.toLowerCase() ||
-            sp.kode.toLowerCase() === finalPartId.toLowerCase() ||
-            sp.nama.toLowerCase() === finalPartId.toLowerCase(),
+      catatReturSparepart: async (r) => {
+        const idRetur =
+          r.id || `ret-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        const nextNomor = r.nomorRetur || generateNextNomorRetur(returSparepart);
+        const tgl = r.tanggal || hariIni();
+        const initialStatus: StatusRetur = r.status || "Diajukan";
+        const spObj = sparepart.find(
+          (x) =>
+            x.id.toLowerCase() === r.sparepartId.toLowerCase() ||
+            x.kode.toLowerCase() === r.sparepartId.toLowerCase() ||
+            x.nama.toLowerCase() === r.sparepartId.toLowerCase(),
+        );
+        const finalPartId = spObj ? spObj.id : r.sparepartId;
+        const namaPart = r.namaSparepart || spObj?.nama || "Sparepart";
+        const harga = r.hargaSatuan || spObj?.harga || 0;
+        const total = r.totalNilai || r.jumlah * harga;
+
+        const baru: ReturSparepart = {
+          id: idRetur,
+          nomorRetur: nextNomor,
+          bengkelId: r.bengkelId || "bengkel-001",
+          supplierId: r.supplierId,
+          supplier: r.supplier,
+          pembelianId: r.pembelianId,
+          nomorPembelian: r.nomorPembelian,
+          sparepartId: finalPartId,
+          namaSparepart: namaPart,
+          jumlah: r.jumlah,
+          hargaSatuan: harga,
+          totalNilai: total,
+          tanggal: tgl,
+          alasan: r.alasan,
+          alasanDetail: r.alasanDetail,
+          alasanPenolakan: r.alasanPenolakan,
+          keterangan: r.keterangan,
+          status: initialStatus,
+          stokDikurangi: false,
+          createdAt: new Date().toISOString(),
+        };
+
+        // Simpan ke state retur tanpa langsung mengurangi stok (stok idempoten saat Disetujui/Selesai)
+        setReturSparepart((l) => [baru, ...l]);
+
+        if (isSupabaseConfigured()) {
+          try {
+            await sparepartService.catatRetur({
+              id_retur_sparepart: idRetur,
+              nomor_retur: nextNomor,
+              ...(baru.bengkelId ? { id_bengkel: baru.bengkelId } : {}),
+              id_supplier: baru.supplierId,
+              supplier: baru.supplier,
+              id_pembelian_sparepart: baru.pembelianId,
+              nomor_pembelian: baru.nomorPembelian,
+              id_sparepart: finalPartId,
+              jumlah: baru.jumlah,
+              harga_satuan: baru.hargaSatuan,
+              total_nilai: baru.totalNilai,
+              tanggal: baru.tanggal,
+              alasan: baru.alasan,
+              alasan_detail: baru.alasanDetail ?? null,
+              alasan_penolakan: baru.alasanPenolakan ?? null,
+              keterangan: baru.keterangan ?? null,
+              status: initialStatus,
+              stok_dikurangi: false,
+            });
+          } catch (err) {
+            console.error("Gagal simpan retur ke Supabase:", err);
+          }
+        }
+
+        return baru;
+      },
+      ubahStatusRetur: async (id, statusBaru, alasanPenolakan) => {
+        const target = returSparepart.find((x) => x.id === id);
+        if (!target) return;
+
+        if (statusBaru === "Ditolak" && !alasanPenolakan?.trim()) {
+          throw new Error("Alasan penolakan wajib diisi ketika retur ditolak.");
+        }
+
+        let harusKurangiStok = false;
+        let idRiwayat: string | undefined = undefined;
+
+        // Idempotensi pengurangan stok: hanya jika belum pernah dikurangi dan status mencapai Disetujui, Selesai, atau Barang Dikirim
+        if (
+          (statusBaru === "Disetujui" ||
+            statusBaru === "Selesai" ||
+            statusBaru === "Barang Dikirim") &&
+          !target.stokDikurangi
+        ) {
+          harusKurangiStok = true;
+          idRiwayat = `rw-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        }
+
+        setReturSparepart((list: ReturSparepart[]) =>
+          list.map((r): ReturSparepart => {
+            if (r.id !== id) return r;
+            return {
+              ...r,
+              status: statusBaru,
+              alasanPenolakan:
+                statusBaru === "Ditolak"
+                  ? (alasanPenolakan?.trim() ?? r.alasanPenolakan)
+                  : r.alasanPenolakan,
+              stokDikurangi: harusKurangiStok ? true : r.stokDikurangi,
+              riwayatStokId: idRiwayat ?? r.riwayatStokId,
+            };
+          }),
         );
 
-        if (existing) {
-          finalPartId = existing.id;
-        } else if (finalPartId) {
-          const generatedCode = finalPartId.toUpperCase().startsWith("SP-")
-            ? finalPartId.toUpperCase()
-            : `SP-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-          const newPart: Sparepart = {
-            id: finalPartId,
-            kode: generatedCode,
-            nama: finalPartId,
-            kategori: "Umum",
-            satuan: "Pcs",
-            harga: 0,
-            stok: 0,
-            stokMinimum: 5,
-            terpakai: 0,
-            tanggalUpdate: r.tanggal,
+        if (harusKurangiStok) {
+          const spObj = sparepart.find((x) => x.id === target.sparepartId);
+          const currentStock = spObj ? spObj.stok : 0;
+          const newStock = Math.max(0, currentStock - target.jumlah);
+
+          // Update stok di state
+          setSparepart((list) =>
+            list.map((sp) =>
+              sp.id === target.sparepartId
+                ? { ...sp, stok: newStock, tanggalUpdate: hariIni() }
+                : sp,
+            ),
+          );
+
+          // Catat ke riwayat stok
+          const riwayatEntry: RiwayatStok = {
+            id: idRiwayat!,
+            sparepartId: target.sparepartId,
+            jenis: "Keluar",
+            jumlah: target.jumlah,
+            tanggal: hariIni(),
+            keterangan: `Retur ${target.nomorRetur} (${target.supplier}) · ${target.alasan}`,
           };
-          setSparepart((l) => [newPart, ...l]);
+          setRiwayatStok((list) => [riwayatEntry, ...list]);
+
           if (isSupabaseConfigured()) {
             sparepartService
-              .create({
-                id_sparepart: finalPartId,
-                nama_sparepart: finalPartId,
-                kategori: "Umum",
-                satuan: "Pcs",
-                harga: 0,
-                stok_tersedia: 0,
-                stok_minimum: 5,
-                status_stok: "habis",
-                tanggal_update: new Date().toISOString(),
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              } as any)
+              .catatRiwayatStok({
+                ...(idRiwayat ? { id_riwayat_stok: idRiwayat } : {}),
+                id_sparepart: target.sparepartId,
+                jenis: "Keluar",
+                jumlah: target.jumlah,
+                tanggal: hariIni(),
+                keterangan: `Retur ${target.nomorRetur} (${target.supplier}) · ${target.alasan}`,
+              })
+              .catch(() => {});
+
+            sparepartService
+              .update(target.sparepartId, {
+                stok_tersedia: newStock,
+                status_stok: newStock <= 0 ? "habis" : newStock <= 5 ? "menipis" : "tersedia",
+              })
               .catch(() => {});
           }
         }
 
-        const baru: ReturSparepart = { ...r, sparepartId: finalPartId, id: uid() };
-        setReturSparepart((l) => [baru, ...l]);
-
-        const currentStock = existing ? existing.stok : 0;
-        const newStock = Math.max(0, currentStock - r.jumlah);
-
-        setSparepart((l) =>
-          l.map((sp) =>
-            sp.id === finalPartId
-              ? { ...sp, stok: newStock, tanggalUpdate: r.tanggal }
-              : sp,
-          ),
-        );
-
-        setRiwayatStok((l) => [
-          {
-            id: uid(),
-            sparepartId: finalPartId,
-            jenis: "Keluar",
-            jumlah: r.jumlah,
-            tanggal: r.tanggal,
-            keterangan: `Retur Supplier · ${r.alasan}`,
-          },
-          ...l,
-        ]);
-
         if (isSupabaseConfigured()) {
-          sparepartService
-            .catatRetur({
-              id_sparepart: finalPartId,
-              id_pembelian_sparepart: r.pembelianId ?? null,
-              jumlah: r.jumlah,
-              alasan: r.alasan,
-              status:
-                r.status === "Disetujui"
-                  ? "disetujui"
-                  : r.status === "Ditolak"
-                    ? "ditolak"
-                    : "diproses",
-            })
-            .catch(() => {});
-
-          sparepartService
-            .update(finalPartId, {
-              stok_tersedia: newStock,
-              status_stok: newStock <= 0 ? "habis" : newStock <= 5 ? "menipis" : "tersedia",
-            })
-            .catch(() => {});
+          try {
+            await sparepartService.updateStatusRetur(
+              id,
+              statusBaru,
+              statusBaru === "Ditolak" ? (alasanPenolakan?.trim() ?? null) : undefined,
+              harusKurangiStok ? true : undefined,
+              idRiwayat,
+            );
+          } catch (err) {
+            console.error("Gagal update status retur di Supabase:", err);
+          }
         }
       },
+      supplier,
+      workshopPaymentAccounts,
+      simpanPaymentAccount,
+      togglePaymentAccountActive,
+      hapusPaymentAccount,
+      refreshPaymentAccounts,
       notifikasi,
       tambahNotifikasi,
       tandaiNotifikasiDibaca,
@@ -2924,6 +3714,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       booking,
       tiket,
       pembayaran,
+      workshopPaymentAccounts,
       riwayatStok,
       pembelian,
       penggunaan,
@@ -2932,6 +3723,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       laporanRingkasanStok,
       bengkel,
       mekanik,
+      supplier,
       notifikasi,
     ],
   );
@@ -2952,12 +3744,18 @@ export const rupiah = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
-export const tanggalPanjang = (iso: string) =>
-  new Date(iso + "T00:00:00").toLocaleDateString("id-ID", {
+export const tanggalPanjang = (iso?: string | null) => {
+  if (!iso) return "—";
+  const str = String(iso).trim();
+  const dateStr = str.includes("T") ? str : `${str}T00:00:00`;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return str;
+  return d.toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+};
 
 /** Menghasilkan kode sparepart berurutan otomatis (contoh: SP-001 -> SP-002, SP-004 -> SP-005, SP-008 -> SP-009). */
 export function generateNextKodeSparepart(list: Array<{ kode?: string | null }>): string {
@@ -2992,3 +3790,20 @@ export function generateNextNomorServis(list: Array<{ nomor?: string | null }>):
   return `SRV-2026-${String(nextNum).padStart(4, "0")}`;
 }
 
+/** Menghasilkan nomor retur berurutan otomatis (contoh: RET-2026-001, RET-2026-002, RET-2026-003). */
+export function generateNextNomorRetur(list: Array<{ nomorRetur?: string | null }>): string {
+  let maxNum = 0;
+  for (const item of list) {
+    if (!item.nomorRetur) continue;
+    const match =
+      item.nomorRetur.match(/RET[-_]?\d{4}[-_]?(\d+)/i) || item.nomorRetur.match(/RET[-_]?(\d+)/i);
+    if (match && match[1]) {
+      const num = parseInt(match[1], 10);
+      if (!isNaN(num) && num > maxNum) {
+        maxNum = num;
+      }
+    }
+  }
+  const nextNum = maxNum + 1;
+  return `RET-2026-${String(nextNum).padStart(3, "0")}`;
+}
