@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   CalendarPlus,
   Activity,
@@ -7,6 +8,11 @@ import {
   ArrowRight,
   Receipt,
   Download,
+  Bell,
+  CheckCircle2,
+  AlertCircle,
+  CalendarCheck,
+  CalendarX,
 } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { StatusBadge, BookingBadge } from "@/components/status-badge";
@@ -14,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import { useStore, rupiah, tanggalPanjang } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_shell/pelanggan/dashboard")({
   head: () => ({
@@ -33,16 +40,58 @@ export const Route = createFileRoute("/_shell/pelanggan/dashboard")({
 
 function DashboardPelanggan() {
   const { user } = useAuth();
-  const { servis, booking } = useStore();
-  const nama = user?.pelanggan ?? "";
+  const { servis, booking, notifikasi, refreshBooking } = useStore();
 
-  const servisSaya = servis.filter((s) => s.pelanggan === nama);
-  const bookingSaya = booking.filter((b) => b.pelanggan === nama);
+  useEffect(() => {
+    refreshBooking().catch(() => {});
+  }, [refreshBooking]);
+
+  const userNamaLower = (user?.nama || "").trim().toLowerCase();
+  const userPelangganLower = (user?.pelanggan || "").trim().toLowerCase();
+  const authId = user?.id;
+  const pelangganId = user?.pelangganId;
+
+  const isMilikSaya = (itemPelanggan?: string, itemCustomerId?: string) => {
+    if (itemCustomerId && ((pelangganId && itemCustomerId === pelangganId) || (authId && itemCustomerId === authId))) return true;
+    if (itemPelanggan) {
+      const p = itemPelanggan.trim().toLowerCase();
+      if (userNamaLower && p === userNamaLower) return true;
+      if (userPelangganLower && p === userPelangganLower) return true;
+    }
+    return false;
+  };
+
+  const servisSaya = servis.filter((s) => isMilikSaya(s.pelanggan, (s as any).pelangganId || (s as any).idPelanggan));
+  const bookingSaya = booking.filter((b) => isMilikSaya(b.pelanggan, b.customerId));
   const aktif = servisSaya.filter((s) => !["Selesai Dibayar"].includes(s.status));
   const tagihan = servisSaya.filter((s) => s.status === "Menunggu Pembayaran");
   const pembayaran = servisSaya
     .filter((s) => ["Menunggu Pembayaran", "Selesai Dibayar"].includes(s.status))
     .slice(0, 3);
+
+  // Filter notifikasi khusus untuk pelanggan aktif
+  const notifikasiPelanggan = notifikasi.filter((n) => {
+    if (n.role === "semua") return true;
+    if (n.role === "pelanggan") {
+      if (n.customerId || n.userId || n.pelanggan) {
+        const matchesCustomerId = Boolean(n.customerId && pelangganId && n.customerId === pelangganId);
+        const matchesUserId = Boolean(n.userId && authId && n.userId === authId);
+        const matchesNama = Boolean(
+          n.pelanggan &&
+            ((userNamaLower && n.pelanggan.trim().toLowerCase() === userNamaLower) ||
+              (userPelangganLower && n.pelanggan.trim().toLowerCase() === userPelangganLower)),
+        );
+        return matchesCustomerId || matchesUserId || matchesNama;
+      }
+      return true;
+    }
+    return false;
+  });
+
+  // Booking yang baru diterima atau ditolak oleh admin
+  const bookingPemberitahuan = bookingSaya.filter(
+    (b) => b.status === "Diterima" || b.status === "Ditolak",
+  );
 
   const stats = [
     {
@@ -68,6 +117,67 @@ function DashboardPelanggan() {
         title={`Halo, ${user?.nama}`}
         description="Ringkasan servis kendaraan Anda hari ini."
       />
+
+      {/* Banner Notifikasi Status Booking Terbaru */}
+      {bookingPemberitahuan.length > 0 && (
+        <div className="space-y-3">
+          {bookingPemberitahuan.slice(0, 2).map((b) => (
+            <div
+              key={`banner-${b.id}`}
+              className={cn(
+                "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border p-4 shadow-sm transition-all",
+                b.status === "Diterima"
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-950 dark:text-emerald-100"
+                  : "border-destructive/40 bg-destructive/10 text-destructive-foreground",
+              )}
+            >
+              <div className="flex items-start gap-3">
+                {b.status === "Diterima" ? (
+                  <div className="rounded-full bg-emerald-500/20 p-2 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+                    <CheckCircle2 className="size-5" />
+                  </div>
+                ) : (
+                  <div className="rounded-full bg-destructive/20 p-2 text-destructive shrink-0 mt-0.5">
+                    <AlertCircle className="size-5" />
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-bold text-sm">
+                      {b.status === "Diterima"
+                        ? `Booking ${b.nomor} Diterima Bengkel`
+                        : `Booking ${b.nomor} Ditolak oleh Admin`}
+                    </p>
+                    <BookingBadge status={b.status} />
+                  </div>
+                  {b.status === "Diterima" ? (
+                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                      bookingan diterima silahkan datang ke bengkel
+                    </p>
+                  ) : (
+                    <p className="text-sm font-medium text-destructive">
+                      Alasan: {b.alasanTolak || "Tidak ada keterangan dari admin."}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Kendaraan: {b.kendaraan} ({b.plat}) · Jadwal: {tanggalPanjang(b.tanggal)} {b.waktu}
+                  </p>
+                </div>
+              </div>
+              <Button
+                asChild
+                size="sm"
+                variant={b.status === "Diterima" ? "default" : "outline"}
+                className="shrink-0 sm:self-center"
+              >
+                <Link to={b.status === "Diterima" ? "/pelanggan/status" : "/pelanggan/booking"}>
+                  {b.status === "Diterima" ? "Lihat Booking" : "Kelola Booking"}
+                </Link>
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
@@ -150,6 +260,90 @@ function DashboardPelanggan() {
         </CardContent>
       </Card>
 
+      {/* Bagian Notifikasi Pelanggan */}
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Bell className="size-4 text-primary" /> Notifikasi Pelanggan
+            {notifikasiPelanggan.filter((n) => !n.dibaca).length > 0 && (
+              <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-[11px] font-bold text-red-600">
+                {notifikasiPelanggan.filter((n) => !n.dibaca).length} Baru
+              </span>
+            )}
+          </CardTitle>
+          <Button asChild variant="ghost" size="sm" className="gap-1 text-primary">
+            <Link to="/pelanggan/booking">
+              Lihat Booking <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {notifikasiPelanggan.length === 0 ? (
+            <div className="py-6 text-center text-xs text-muted-foreground">
+              <Bell className="mx-auto size-6 text-muted-foreground/40 mb-1.5" />
+              <p className="font-medium">Belum ada notifikasi baru</p>
+              <p className="text-[11px] text-muted-foreground/70">
+                Pemberitahuan booking servis dan tagihan akan tampil di sini.
+              </p>
+            </div>
+          ) : (
+            notifikasiPelanggan.slice(0, 4).map((n) => (
+              <div
+                key={n.id}
+                className={cn(
+                  "flex items-start justify-between gap-3 rounded-md border p-3 transition-colors",
+                  !n.dibaca ? "border-primary/30 bg-primary/5" : "bg-card",
+                )}
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  {n.tipe === "booking" ? (
+                    n.statusBooking === "Ditolak" || n.judul.toLowerCase().includes("ditolak") ? (
+                      <div className="rounded-full bg-destructive/10 p-1.5 text-destructive shrink-0 mt-0.5">
+                        <CalendarX className="size-4" />
+                      </div>
+                    ) : (
+                      <div className="rounded-full bg-emerald-500/10 p-1.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+                        <CalendarCheck className="size-4" />
+                      </div>
+                    )
+                  ) : (
+                    <div className="rounded-full bg-primary/10 p-1.5 text-primary shrink-0 mt-0.5">
+                      <Bell className="size-4" />
+                    </div>
+                  )}
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className={cn("text-xs font-bold truncate", !n.dibaca ? "text-primary" : "text-foreground")}>
+                        {n.judul}
+                      </p>
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        {new Date(n.waktu).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <p className="text-xs text-foreground font-medium leading-relaxed">
+                      {n.pesan}
+                    </p>
+                  </div>
+                </div>
+                {n.link && (
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-xs shrink-0 gap-1 text-primary">
+                    <Link
+                      to={
+                        (n.statusBooking === "Diterima" || n.judul.toLowerCase().includes("diterima")
+                          ? "/pelanggan/status"
+                          : n.link) as any
+                      }
+                    >
+                      Buka <ArrowRight className="size-3" />
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
@@ -170,17 +364,29 @@ function DashboardPelanggan() {
               bookingSaya.slice(0, 4).map((b) => (
                 <div
                   key={b.id}
-                  className="flex items-center justify-between gap-3 rounded-md border p-3"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 rounded-md border p-3"
                 >
-                  <div className="min-w-0">
+                  <div className="min-w-0 space-y-1">
                     <p className="truncate text-sm font-semibold">
                       {b.nomor} · {b.jenis}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
                       {tanggalPanjang(b.tanggal)} · {b.waktu} · {b.kendaraan}
                     </p>
+                    {b.status === "Diterima" && (
+                      <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        bookingan diterima silahkan datang ke bengkel
+                      </p>
+                    )}
+                    {b.status === "Ditolak" && (
+                      <p className="text-xs font-medium text-destructive">
+                        Alasan: {b.alasanTolak || "Tidak ada keterangan dari admin."}
+                      </p>
+                    )}
                   </div>
-                  <BookingBadge status={b.status} />
+                  <div className="shrink-0 sm:self-center">
+                    <BookingBadge status={b.status} />
+                  </div>
                 </div>
               ))
             )}

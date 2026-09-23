@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
-import { CalendarPlus, Car } from "lucide-react";
+import { CalendarPlus, Car, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { BookingBadge } from "@/components/status-badge";
@@ -31,6 +31,7 @@ import {
   labelKendaraan,
   JENIS_SERVIS,
 } from "@/lib/store";
+import { BengkelMap, DEMO_BENGKEL_LOCATION, type BengkelLocation } from "@/components/bengkel-map";
 
 export const Route = createFileRoute("/_shell/pelanggan/booking")({
   head: () => ({
@@ -76,6 +77,7 @@ function BookingPelanggan() {
     if (!user) return undefined;
     return pelanggan.find(
       (p) =>
+        (user.pelangganId && p.id === user.pelangganId) ||
         (user.id && (p.id === user.id || p.userId === user.id)) ||
         (user.email && p.email?.toLowerCase() === user.email.toLowerCase()) ||
         (user.nama && p.nama?.trim().toLowerCase() === user.nama.trim().toLowerCase()) ||
@@ -84,7 +86,7 @@ function BookingPelanggan() {
   }, [pelanggan, user]);
 
   const kendaraanSaya = useMemo(() => {
-    const pId = profil?.id;
+    const pId = user?.pelangganId || profil?.id;
     const uId = user?.id;
     return kendaraan.filter(
       (k) =>
@@ -154,8 +156,9 @@ function BookingPelanggan() {
     if (Object.keys(next).length) return;
 
     const targetCustomerId =
+      user?.pelangganId ||
       profil?.id ||
-      `pl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+      (user?.id ? `pl-${user.id.slice(0, 8)}` : `pl-${Date.now().toString(36)}`);
 
     if (!profil && user) {
       simpanPelanggan({
@@ -212,6 +215,20 @@ function BookingPelanggan() {
     });
   }, [booking, user, profil]);
 
+  const getBengkelLoc = (bId: string): BengkelLocation => {
+    try {
+      const saved = localStorage.getItem("appbenk_bengkel_location");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    const selectedBengkel = bengkel.find((b) => b.id === bId);
+    return {
+      ...DEMO_BENGKEL_LOCATION,
+      nama: selectedBengkel?.nama || DEMO_BENGKEL_LOCATION.nama,
+      alamat: selectedBengkel?.alamat || DEMO_BENGKEL_LOCATION.alamat,
+      telepon: selectedBengkel?.telepon || DEMO_BENGKEL_LOCATION.telepon,
+    };
+  };
+
   return (
     <>
       <PageHeader
@@ -219,12 +236,13 @@ function BookingPelanggan() {
         description="Ajukan jadwal servis kendaraan Anda ke bengkel."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Form Booking</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+        <div>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Form Booking</CardTitle>
+            </CardHeader>
+            <CardContent>
             {kendaraanSaya.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 px-4 text-center space-y-4">
                 <div className="rounded-full bg-amber-100 p-4 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
@@ -438,6 +456,25 @@ function BookingPelanggan() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Kolom Kanan: Peta Lokasi Bengkel & Di Bawahnya: Booking Saya */}
+      <div className="space-y-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-red-500" />
+              Lokasi Bengkel
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 pb-4 px-4">
+            <BengkelMap
+              bengkel={getBengkelLoc(form.bengkelId)}
+              height={220}
+              showInfo
+            />
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader className="pb-3">
@@ -478,16 +515,23 @@ function BookingPelanggan() {
                         <TableCell>
                           <BookingBadge status={b.status} />
                           {b.status === "Diterima" && (
-                            <span className="mt-1 block text-xs text-muted-foreground">
-                              {b.estimasiSelesai
-                                ? `Estimasi selesai: ${new Date(b.estimasiSelesai).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })} WIB`
-                                : "Estimasi selesai belum ditentukan."}
-                            </span>
+                            <div className="mt-1.5 space-y-0.5">
+                              <span className="block text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                bookingan diterima silahkan datang ke bengkel
+                              </span>
+                              {b.estimasiSelesai && (
+                                <span className="block text-[11px] text-muted-foreground">
+                                  Estimasi selesai: {new Date(b.estimasiSelesai).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })} WIB
+                                </span>
+                              )}
+                            </div>
                           )}
-                          {b.status === "Ditolak" && b.alasanTolak && (
-                            <span className="mt-1 block max-w-56 text-xs text-destructive">
-                              Alasan: {b.alasanTolak}
-                            </span>
+                          {b.status === "Ditolak" && (
+                            <div className="mt-1.5 space-y-0.5">
+                              <span className="block max-w-56 text-xs font-medium text-destructive">
+                                Alasan: {b.alasanTolak || "Tidak ada keterangan dari admin."}
+                              </span>
+                            </div>
                           )}
                         </TableCell>
                       </TableRow>
@@ -499,6 +543,7 @@ function BookingPelanggan() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
+  </>
   );
 }

@@ -19,10 +19,12 @@ import {
   ShoppingCart,
   LifeBuoy,
   Settings2,
+  Building2,
+  ShieldAlert,
   type LucideIcon,
 } from "lucide-react";
 
-export type Role = "pelanggan" | "admin" | "owner";
+export type Role = "pelanggan" | "admin" | "owner" | "super_admin";
 
 export type SessionUser = {
   /** Stable identity. In production this must be Supabase auth.users.id. */
@@ -53,6 +55,7 @@ export const LABEL_ROLE: Record<Role, string> = {
   pelanggan: "Pelanggan",
   admin: "Admin Bengkel",
   owner: "Owner",
+  super_admin: "Super Admin",
 };
 
 export type NavItem = { to: string; label: string; icon: LucideIcon; premium?: boolean };
@@ -101,6 +104,14 @@ export const NAV_ROLE: Record<Role, NavItem[]> = {
     { to: "/admin/cs", label: "Customer Service", icon: LifeBuoy },
     { to: "/profil", label: "Profile", icon: UserCircle2 },
   ],
+
+  super_admin: [
+    { to: "/superadmin/dashboard", label: "Dashboard Utama", icon: LayoutDashboard },
+    { to: "/superadmin/klien", label: "Manajemen Klien", icon: Building2 },
+    { to: "/superadmin/error-log", label: "Monitor Error", icon: ShieldAlert },
+    { to: "/superadmin/cs", label: "Manajemen Tiket", icon: LifeBuoy },
+    { to: "/profil", label: "Profile", icon: UserCircle2 },
+  ],
 };
 
 export type NavGroup = { label?: string; items: NavItem[] };
@@ -147,12 +158,24 @@ export const NAV_GROUPS: Record<Role, NavGroup[]> = {
       ],
     },
   ],
+  super_admin: [
+    {
+      items: [
+        { to: "/superadmin/dashboard", label: "Dashboard Utama", icon: LayoutDashboard },
+        { to: "/superadmin/klien", label: "Manajemen Klien", icon: Building2 },
+        { to: "/superadmin/error-log", label: "Monitor Error", icon: ShieldAlert },
+        { to: "/superadmin/cs", label: "Manajemen Tiket", icon: LifeBuoy },
+        ITEM_PROFIL,
+      ],
+    },
+  ],
 };
 
 export const HOME_ROLE: Record<Role, string> = {
   pelanggan: "/pelanggan/dashboard",
   admin: "/admin/dashboard",
   owner: "/owner/dashboard",
+  super_admin: "/superadmin/dashboard",
 };
 
 /** Prefix rute yang boleh diakses masing-masing role. */
@@ -160,6 +183,7 @@ export const IZIN_ROLE: Record<Role, string[]> = {
   pelanggan: ["/pelanggan", "/profil"],
   admin: ["/admin", "/profil"],
   owner: ["/owner", "/admin", "/profil"],
+  super_admin: ["/superadmin", "/profil"],
 };
 
 
@@ -302,7 +326,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const { data: sessionData } = await client.auth.getUser();
           const metaRole = sessionData?.user?.user_metadata?.["role"] as Role | undefined;
-          if (metaRole === "owner" || metaRole === "admin") {
+          if (metaRole === "owner" || metaRole === "admin" || metaRole === "super_admin") {
             resolvedRole = metaRole;
             const metaBengkel = (sessionData?.user?.user_metadata?.["workshop_id"] ||
               sessionData?.user?.user_metadata?.["id_bengkel"]) as string | undefined;
@@ -371,6 +395,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // Cek status paket bengkel untuk akses premium
+      let isUserPremium = resolvedRole === "super_admin";
+      if (!isUserPremium && activeBengkelId) {
+        try {
+          const { data: bRow } = await client
+            .from("bengkel")
+            .select("paket")
+            .or(`id_bengkel.eq.${activeBengkelId},workshop_id.eq.${activeBengkelId}`)
+            .maybeSingle();
+          if (bRow?.paket === "Premium") {
+            isUserPremium = true;
+          }
+        } catch {}
+      }
+
       const payload: SessionUser = {
         id: data.id,
         nama: displayName,
@@ -379,7 +418,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         bengkelId: activeBengkelId,
         workshopId: activeBengkelId,
         inisial: inisialDari(displayName),
-        premium: false,
+        premium: isUserPremium,
         pelangganId: resolvedPelangganId,
         ...(displayPhone ? { telepon: displayPhone } : {}),
         ...(data.gender ? { gender: data.gender } : {}),
@@ -396,7 +435,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (authUser && authUser.id === id && authUser.email) {
         const rawRole = authUser.user_metadata?.["role"] as Role | undefined;
         let metaRole: Role =
-          rawRole && ["admin", "owner", "pelanggan"].includes(rawRole) ? rawRole : "pelanggan";
+          rawRole && ["admin", "owner", "pelanggan", "super_admin"].includes(rawRole) ? rawRole : "pelanggan";
         let metaName: string =
           authUser.user_metadata?.["full_name"] || authUser.email.split("@")[0] || "User";
         let metaPhone: string | null = authUser.user_metadata?.["phone"] ?? null;

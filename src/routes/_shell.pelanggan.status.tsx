@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Activity, CheckCircle2 } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Activity, CheckCircle2, CreditCard, ArrowRight, Receipt } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { StatusBadge, BookingBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import { useStore, tanggalPanjang, URUTAN_STATUS } from "@/lib/store";
@@ -28,12 +29,33 @@ export const Route = createFileRoute("/_shell/pelanggan/status")({
 function StatusPelanggan() {
   const { user } = useAuth();
   const { servis, booking } = useStore();
-  const nama = user?.pelanggan ?? "";
-  const daftar = servis.filter((s) => s.pelanggan === nama);
+  const userNamaLower = (user?.nama || "").trim().toLowerCase();
+  const userPelangganLower = (user?.pelanggan || "").trim().toLowerCase();
+  const authId = user?.id;
+  const pelangganId = user?.pelangganId;
+
+  const isMilikSaya = (itemPelanggan?: string, itemCustomerId?: string) => {
+    if (itemCustomerId && ((pelangganId && itemCustomerId === pelangganId) || (authId && itemCustomerId === authId))) return true;
+    if (itemPelanggan) {
+      const p = itemPelanggan.trim().toLowerCase();
+      if (userNamaLower && p === userNamaLower) return true;
+      if (userPelangganLower && p === userPelangganLower) return true;
+    }
+    return false;
+  };
+
+  const daftar = servis.filter((s) => {
+    if (isMilikSaya(s.pelanggan, (s as any).pelangganId || (s as any).idPelanggan)) return true;
+    if (s.bookingId) {
+      const bk = booking.find((b) => b.id === s.bookingId);
+      if (bk && isMilikSaya(bk.pelanggan, bk.customerId)) return true;
+    }
+    return false;
+  });
   const bookingMenunggu = booking.filter(
-    (b) => b.pelanggan === nama && b.status === "Menunggu Konfirmasi",
+    (b) => isMilikSaya(b.pelanggan, b.customerId) && b.status === "Menunggu Konfirmasi",
   );
-  const bookingDitolak = booking.filter((b) => b.pelanggan === nama && b.status === "Ditolak");
+  const bookingDitolak = booking.filter((b) => isMilikSaya(b.pelanggan, b.customerId) && b.status === "Ditolak");
 
   return (
     <>
@@ -134,22 +156,42 @@ function StatusPelanggan() {
                       <span className="text-muted-foreground">Pekerjaan:</span> {s.pekerjaan}
                     </p>
                   </div>
-                  <ol className="flex flex-wrap gap-2">
-                    {URUTAN_STATUS.map((st, i) => (
-                      <li
-                        key={st}
-                        className={cn(
-                          "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs",
-                          i <= idx
-                            ? "border-primary/40 bg-primary/10 font-semibold text-primary"
-                            : "text-muted-foreground",
-                        )}
-                      >
-                        {i <= idx && <CheckCircle2 className="size-3.5" />}
-                        {st}
-                      </li>
-                    ))}
-                  </ol>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+                    <ol className="flex flex-wrap gap-2">
+                      {URUTAN_STATUS.map((st, i) => (
+                        <li
+                          key={st}
+                          className={cn(
+                            "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs",
+                            i <= idx
+                              ? "border-primary/40 bg-primary/10 font-semibold text-primary"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {i <= idx && <CheckCircle2 className="size-3.5" />}
+                          {st}
+                        </li>
+                      ))}
+                    </ol>
+                    {s.status === "Menunggu Pembayaran" && (
+                      <div className="flex justify-end shrink-0 sm:self-center">
+                        <Button asChild size="sm" className="gap-1.5 font-semibold shadow-xs">
+                          <Link to="/pelanggan/pembayaran" search={{ trx: s.noTransaksi }}>
+                            <CreditCard className="size-4" /> Detail <ArrowRight className="size-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    )}
+                    {s.status === "Selesai Dibayar" && (
+                      <div className="flex justify-end shrink-0 sm:self-center">
+                        <Button asChild size="sm" variant="outline" className="gap-1.5 font-semibold shadow-xs">
+                          <Link to="/pelanggan/pembayaran" search={{ trx: s.noTransaksi }}>
+                            <Receipt className="size-4" /> Detail <ArrowRight className="size-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );

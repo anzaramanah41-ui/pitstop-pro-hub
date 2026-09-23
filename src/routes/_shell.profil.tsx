@@ -39,6 +39,7 @@ function ProfilPage() {
   const [nama, setNama] = useState(user?.nama ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
   const [telepon, setTelepon] = useState(user?.telepon ?? "0812-3344-5566");
+  const [gender, setGender] = useState(user?.gender ?? "Laki-laki");
   const [konfirmasi, setKonfirmasi] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -47,6 +48,13 @@ function ProfilPage() {
     setIsSaving(true);
     try {
       if (isSupabaseConfigured() && user?.id) {
+        try {
+          await supabase().auth.updateUser({
+            data: { full_name: nama, phone: telepon, gender: gender },
+          });
+        } catch {
+          // ignore metadata update error
+        }
         const { error } = await supabase()
           .from("profiles")
           .update({ full_name: nama, phone: telepon })
@@ -85,6 +93,18 @@ function ProfilPage() {
               <Input id="telepon" value={telepon} onChange={(e) => setTelepon(e.target.value)} />
             </div>
             <div className="space-y-1.5">
+              <Label htmlFor="gender">Jenis Kelamin</Label>
+              <select
+                id="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="Laki-laki">Laki-laki</option>
+                <option value="Perempuan">Perempuan</option>
+              </select>
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
               <Label>Peran</Label>
               <Input readOnly value={user ? LABEL_ROLE[user.role] : ""} className="bg-muted" />
             </div>

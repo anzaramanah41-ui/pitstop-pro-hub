@@ -29,6 +29,11 @@ import type {
   WorkshopPaymentAccountRow,
   PaymentAccountType,
   NotificationLogRow,
+  SystemLogRow,
+  CSTicketRow,
+  CSMessageRow,
+  PaketBengkel,
+  StatusKlien,
 } from "@/types/database";
 
 /**
@@ -2190,3 +2195,683 @@ export const workshopService = {
     return data;
   },
 };
+
+// ----------------------------------------------------------------------------
+// 19. SUPER ADMIN & CLIENT MANAGEMENT SERVICE
+// ----------------------------------------------------------------------------
+const LOCAL_BENGKEL_KEY = "appbenk_bengkel_clients_list";
+const LOCAL_CS_TICKETS_KEY = "appbenk_cs_tickets_list";
+const LOCAL_CS_MESSAGES_KEY = "appbenk_cs_messages_list";
+const LOCAL_SYSTEM_LOGS_KEY = "appbenk_system_logs_list";
+
+export const superAdminService = {
+  async getPlatformStats(): Promise<{
+    totalBengkel: number;
+    totalUser: number;
+    bengkelBasic: number;
+    bengkelPremium: number;
+    tiketBelumSelesai: number;
+    errorHariIni: number;
+  }> {
+    const clients = await this.getAllBengkelClients();
+    const tickets = await customerServiceTicketService.getAllTickets();
+    const logs = await systemLogService.getAllLogs();
+
+    let totalUser = 0;
+    if (isSupabaseConfigured()) {
+      try {
+        const { count } = await supabase()
+          .from("profiles")
+          .select("*", { count: "exact", head: true });
+        totalUser = count || 0;
+      } catch {}
+    }
+
+    if (totalUser === 0) {
+      // Fallback perkiraan
+      totalUser = clients.length * 15 + 24;
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const errorHariIni = logs.filter(
+      (l) => l.created_at && l.created_at.slice(0, 10) === todayStr,
+    ).length;
+
+    const tiketBelumSelesai = tickets.filter((t) => t.status !== "Selesai").length;
+    const bengkelBasic = clients.filter((c) => c.paket !== "Premium").length;
+    const bengkelPremium = clients.filter((c) => c.paket === "Premium").length;
+
+    return {
+      totalBengkel: clients.length,
+      totalUser,
+      bengkelBasic,
+      bengkelPremium,
+      tiketBelumSelesai,
+      errorHariIni,
+    };
+  },
+
+  async getAllBengkelClients(): Promise<BengkelRow[]> {
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase()
+          .from("bengkel")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data && data.length > 0) {
+          try {
+            localStorage.setItem(LOCAL_BENGKEL_KEY, JSON.stringify(data));
+          } catch {}
+          return data as BengkelRow[];
+        }
+      } catch {}
+    }
+
+    // Fallback data lokal / default
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem(LOCAL_BENGKEL_KEY);
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+
+    const defaultBengkel: BengkelRow[] = [
+      {
+        id_bengkel: "bengkel-001",
+        nama_bengkel: "AppBenk Pusat (Bengkel Utama)",
+        alamat: "Jl. Veteran No. 45, Jakarta",
+        no_telepon: "0812-9876-5432",
+        paket: "Premium",
+        status: "Aktif",
+        owner_nama: "Budi Santoso",
+        owner_email: "owner.pusat@gmail.com",
+        created_at: "2026-01-15T08:00:00Z",
+        updated_at: "2026-09-23T10:00:00Z",
+      },
+      {
+        id_bengkel: "bengkel-002",
+        nama_bengkel: "Pitstop Jaya Motor",
+        alamat: "Jl. Diponegoro No. 12, Bandung",
+        no_telepon: "0813-8888-9999",
+        paket: "Basic",
+        status: "Aktif",
+        owner_nama: "Ahmad Wijaya",
+        owner_email: "ahmad.pitstop@gmail.com",
+        created_at: "2026-03-10T09:30:00Z",
+        updated_at: "2026-09-20T11:00:00Z",
+      },
+      {
+        id_bengkel: "bengkel-003",
+        nama_bengkel: "Karya Mandiri Service",
+        alamat: "Jl. Pemuda No. 78, Surabaya",
+        no_telepon: "0819-2233-4455",
+        paket: "Basic",
+        status: "Aktif",
+        owner_nama: "Dewi Lestari",
+        owner_email: "dewi.karyamandiri@gmail.com",
+        created_at: "2026-05-18T14:15:00Z",
+        updated_at: "2026-09-18T16:00:00Z",
+      },
+    ];
+    try {
+      localStorage.setItem(LOCAL_BENGKEL_KEY, JSON.stringify(defaultBengkel));
+    } catch {}
+    return defaultBengkel;
+  },
+
+  async updateBengkelStatus(idBengkel: string, status: StatusKlien): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase()
+          .from("bengkel")
+          .update({ status, updated_at: new Date().toISOString() })
+          .or(`id_bengkel.eq.${idBengkel},workshop_id.eq.${idBengkel}`);
+      } catch {}
+    }
+    // Update local cache
+    if (typeof window !== "undefined") {
+      try {
+        const clients = await this.getAllBengkelClients();
+        const updated = clients.map((c) =>
+          c.id_bengkel === idBengkel || c.workshop_id === idBengkel ? { ...c, status } : c,
+        );
+        localStorage.setItem(LOCAL_BENGKEL_KEY, JSON.stringify(updated));
+      } catch {}
+    }
+    return true;
+  },
+
+  async updateBengkelTier(idBengkel: string, paket: PaketBengkel): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase()
+          .from("bengkel")
+          .update({ paket, updated_at: new Date().toISOString() })
+          .or(`id_bengkel.eq.${idBengkel},workshop_id.eq.${idBengkel}`);
+      } catch {}
+    }
+    // Update local cache
+    if (typeof window !== "undefined") {
+      try {
+        const clients = await this.getAllBengkelClients();
+        const updated = clients.map((c) =>
+          c.id_bengkel === idBengkel || c.workshop_id === idBengkel ? { ...c, paket } : c,
+        );
+        localStorage.setItem(LOCAL_BENGKEL_KEY, JSON.stringify(updated));
+      } catch {}
+    }
+    return true;
+  },
+
+  async createBengkelWithOwner(payload: {
+    namaBengkel: string;
+    alamat: string;
+    telepon: string;
+    ownerNama: string;
+    ownerEmail: string;
+    passwordAwal: string;
+    paket: PaketBengkel;
+  }): Promise<{ ok: boolean; bengkelId?: string; error?: string }> {
+    const newBengkelId = `bengkel-${Date.now().toString().slice(-4)}`;
+    const nowIso = new Date().toISOString();
+
+    const newBengkel: BengkelRow = {
+      id_bengkel: newBengkelId,
+      workshop_id: newBengkelId,
+      nama_bengkel: payload.namaBengkel,
+      alamat: payload.alamat,
+      no_telepon: payload.telepon,
+      paket: payload.paket,
+      status: "Aktif",
+      owner_nama: payload.ownerNama,
+      owner_email: payload.ownerEmail,
+      created_at: nowIso,
+      updated_at: nowIso,
+    };
+
+    if (isSupabaseConfigured()) {
+      try {
+        // 1. Simpan data bengkel ke Supabase
+        await supabase().from("bengkel").insert(newBengkel);
+
+        // 2. Buat akun owner dengan isolated client (agar super admin tidak ter-logout)
+        const url = import.meta.env["VITE_SUPABASE_URL"] as string;
+        const key = import.meta.env["VITE_SUPABASE_ANON_KEY"] as string;
+        if (url && key) {
+          const { createClient } = await import("@supabase/supabase-js");
+          const isolatedAuth = createClient(url, key, {
+            auth: { persistSession: false, autoRefreshToken: false },
+          });
+
+          const { data: signUpData } = await isolatedAuth.auth.signUp({
+            email: payload.ownerEmail,
+            password: payload.passwordAwal,
+            options: {
+              data: {
+                full_name: payload.ownerNama,
+                role: "owner",
+                workshop_id: newBengkelId,
+                id_bengkel: newBengkelId,
+              },
+            },
+          });
+
+          // 3. Masukkan ke tabel public.owner jika user berhasil terdaftar
+          const ownerUserId = signUpData?.user?.id;
+          if (ownerUserId) {
+            await supabase().from("owner").insert({
+              id_owner: `own-${newBengkelId.slice(-4)}`,
+              user_id: ownerUserId,
+              nama: payload.ownerNama,
+              email: payload.ownerEmail,
+              no_hp: payload.telepon,
+              id_bengkel: newBengkelId,
+              workshop_id: newBengkelId,
+            });
+          }
+        }
+      } catch (err: any) {
+        console.warn("Gagal simpan bengkel ke Supabase, fallback lokal:", err?.message);
+      }
+    }
+
+    // Simpan ke local storage
+    if (typeof window !== "undefined") {
+      try {
+        const clients = await this.getAllBengkelClients();
+        localStorage.setItem(LOCAL_BENGKEL_KEY, JSON.stringify([newBengkel, ...clients]));
+      } catch {}
+    }
+
+    return { ok: true, bengkelId: newBengkelId };
+  },
+};
+
+// ----------------------------------------------------------------------------
+// 20. SYSTEM ERROR MONITOR LOGS SERVICE
+// ----------------------------------------------------------------------------
+export const systemLogService = {
+  async getAllLogs(): Promise<SystemLogRow[]> {
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase()
+          .from("system_logs")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data && data.length > 0) {
+          try {
+            localStorage.setItem(LOCAL_SYSTEM_LOGS_KEY, JSON.stringify(data));
+          } catch {}
+          return data as SystemLogRow[];
+        }
+      } catch {}
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem(LOCAL_SYSTEM_LOGS_KEY);
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+
+    const defaultLogs: SystemLogRow[] = [
+      {
+        id: "log-1",
+        bengkel_id: "bengkel-001",
+        bengkel_nama: "AppBenk Pusat",
+        module: "Google Maps",
+        error_message: "Maps API connection timeout (OVER_QUERY_LIMIT)",
+        stack_trace: "Error: Maps Geocoding limit reached\n  at fetchBengkelLocation (bengkel-map.tsx:142)\n  at async loadMap",
+        status: "Open",
+        created_at: new Date(Date.now() - 3600000).toISOString(),
+      },
+      {
+        id: "log-2",
+        bengkel_id: "bengkel-002",
+        bengkel_nama: "Pitstop Jaya Motor",
+        module: "Midtrans / QRIS",
+        error_message: "Webhook callback delay (Response 504 Gateway)",
+        stack_trace: "NetworkError: 504 Gateway Timeout\n  at verifyPaymentStatus (appbenk-service.ts:1310)",
+        status: "Investigasi",
+        created_at: new Date(Date.now() - 7200000).toISOString(),
+      },
+      {
+        id: "log-3",
+        bengkel_id: "bengkel-001",
+        bengkel_nama: "AppBenk Pusat",
+        module: "WhatsApp Gateway",
+        error_message: "Invalid device token authorization",
+        stack_trace: "WablasAPIError: 401 Unauthorized token\n  at sendNotification (whatsapp.ts:88)",
+        status: "Selesai",
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+      },
+    ];
+    try {
+      localStorage.setItem(LOCAL_SYSTEM_LOGS_KEY, JSON.stringify(defaultLogs));
+    } catch {}
+    return defaultLogs;
+  },
+
+  async logError(payload: {
+    bengkelId?: string | null;
+    bengkelNama?: string | null;
+    module: string;
+    errorMessage: string;
+    stackTrace?: string | null;
+  }): Promise<void> {
+    const newLog: SystemLogRow = {
+      id: crypto.randomUUID(),
+      bengkel_id: payload.bengkelId || "bengkel-001",
+      bengkel_nama: payload.bengkelNama || "AppBenk Workshop",
+      module: payload.module,
+      error_message: payload.errorMessage,
+      stack_trace: payload.stackTrace || null,
+      status: "Open",
+      created_at: new Date().toISOString(),
+    };
+
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase().from("system_logs").insert(newLog);
+      } catch {}
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const logs = await this.getAllLogs();
+        localStorage.setItem(LOCAL_SYSTEM_LOGS_KEY, JSON.stringify([newLog, ...logs]));
+      } catch {}
+    }
+  },
+
+  async updateLogStatus(id: string, status: "Open" | "Investigasi" | "Selesai"): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase().from("system_logs").update({ status }).eq("id", id);
+      } catch {}
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const logs = await this.getAllLogs();
+        const updated = logs.map((l) => (l.id === id ? { ...l, status } : l));
+        localStorage.setItem(LOCAL_SYSTEM_LOGS_KEY, JSON.stringify(updated));
+      } catch {}
+    }
+    return true;
+  },
+};
+
+export function logSystemError(
+  module: string,
+  errorMessage: string,
+  stackTrace?: string | null,
+  bengkelId?: string,
+) {
+  systemLogService.logError({
+    module,
+    errorMessage,
+    stackTrace,
+    bengkelId: bengkelId || "bengkel-001",
+  }).catch(() => {});
+}
+
+// ----------------------------------------------------------------------------
+// 21. CUSTOMER SERVICE TICKETS & MESSAGING SERVICE
+// ----------------------------------------------------------------------------
+export const customerServiceTicketService = {
+  async getAllTickets(): Promise<CSTicketRow[]> {
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase()
+          .from("customer_service_tickets")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data && data.length > 0) {
+          try {
+            localStorage.setItem(LOCAL_CS_TICKETS_KEY, JSON.stringify(data));
+          } catch {}
+          return data as CSTicketRow[];
+        }
+      } catch {}
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem(LOCAL_CS_TICKETS_KEY);
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+
+    const defaultTickets: CSTicketRow[] = [
+      {
+        id: "cs-mock-1",
+        ticket_number: "CS-0001",
+        user_id: "usr-demo-1",
+        user_name: "Anzar Amanah F",
+        user_email: "anzar@gmail.com",
+        user_role: "pelanggan",
+        bengkel_id: "bengkel-001",
+        bengkel_nama: "AppBenk Pusat",
+        subjek: "Pembayaran QRIS tidak langsung terverifikasi",
+        kategori: "Pembayaran",
+        pesan: "Halo admin AppBenk, saya sudah upload bukti pembayaran QRIS tapi status masih menunggu verifikasi sejak 1 jam lalu.",
+        status: "Baru",
+        created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+        updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+      },
+      {
+        id: "cs-mock-2",
+        ticket_number: "CS-0002",
+        user_id: "usr-demo-2",
+        user_name: "Ahmad Wijaya",
+        user_email: "ahmad.pitstop@gmail.com",
+        user_role: "owner",
+        bengkel_id: "bengkel-002",
+        bengkel_nama: "Pitstop Jaya Motor",
+        subjek: "Permintaan aktivasi fitur Premium Laporan Keuntungan",
+        kategori: "Premium",
+        pesan: "Kami sudah transfer biaya langganan tahunan untuk bengkel kami. Mohon bantu upgrade ke paket Premium.",
+        status: "Diproses",
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        updated_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+      },
+    ];
+    try {
+      localStorage.setItem(LOCAL_CS_TICKETS_KEY, JSON.stringify(defaultTickets));
+    } catch {}
+    return defaultTickets;
+  },
+
+  async getMyTickets(userId: string, userEmail?: string): Promise<CSTicketRow[]> {
+    if (isSupabaseConfigured() && userId) {
+      try {
+        let q = supabase()
+          .from("customer_service_tickets")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (userEmail) {
+          q = q.or(`user_id.eq.${userId},user_email.ilike.${userEmail}`);
+        } else {
+          q = q.eq("user_id", userId);
+        }
+        const { data, error } = await q;
+        if (!error && data) return data as CSTicketRow[];
+      } catch {}
+    }
+
+    const all = await this.getAllTickets();
+    return all.filter(
+      (t) =>
+        t.user_id === userId ||
+        (userEmail && t.user_email && t.user_email.toLowerCase() === userEmail.toLowerCase()),
+    );
+  },
+
+  async createTicket(payload: {
+    userId: string;
+    userName: string;
+    userEmail: string;
+    userRole: string;
+    bengkelId?: string;
+    bengkelNama?: string;
+    subjek: string;
+    kategori: string;
+    pesan: string;
+  }): Promise<CSTicketRow> {
+    const all = await this.getAllTickets();
+    const nextNum = `CS-${String(all.length + 1).padStart(4, "0")}`;
+    const newId = crypto.randomUUID();
+    const nowIso = new Date().toISOString();
+
+    const newTicket: CSTicketRow = {
+      id: newId,
+      ticket_number: nextNum,
+      user_id: payload.userId,
+      user_name: payload.userName,
+      user_email: payload.userEmail,
+      user_role: payload.userRole,
+      bengkel_id: payload.bengkelId || "bengkel-001",
+      bengkel_nama: payload.bengkelNama || "AppBenk Workshop",
+      subjek: payload.subjek,
+      kategori: payload.kategori,
+      pesan: payload.pesan,
+      status: "Baru",
+      created_at: nowIso,
+      updated_at: nowIso,
+    };
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase()
+          .from("customer_service_tickets")
+          .insert({
+            user_id: payload.userId,
+            user_name: payload.userName,
+            user_email: payload.userEmail,
+            user_role: payload.userRole,
+            bengkel_id: payload.bengkelId || "bengkel-001",
+            bengkel_nama: payload.bengkelNama || "AppBenk Workshop",
+            subjek: payload.subjek,
+            kategori: payload.kategori,
+            pesan: payload.pesan,
+            status: "Baru",
+          })
+          .select()
+          .single();
+        if (!error && data) {
+          // Buat pesan pertama
+          await this.sendMessage({
+            ticketId: data.id,
+            senderUserId: payload.userId,
+            senderRole: payload.userRole as any,
+            senderName: payload.userName,
+            message: payload.pesan,
+          });
+          return data as CSTicketRow;
+        }
+      } catch {}
+    }
+
+    // Fallback lokal
+    try {
+      localStorage.setItem(LOCAL_CS_TICKETS_KEY, JSON.stringify([newTicket, ...all]));
+      // Buat pesan awal di riwayat chat
+      await this.sendMessage({
+        ticketId: newId,
+        senderUserId: payload.userId,
+        senderRole: payload.userRole as any,
+        senderName: payload.userName,
+        message: payload.pesan,
+      });
+    } catch {}
+
+    return newTicket;
+  },
+
+  async getTicketMessages(ticketId: string): Promise<CSMessageRow[]> {
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase()
+          .from("customer_service_messages")
+          .select("*")
+          .eq("ticket_id", ticketId)
+          .order("created_at", { ascending: true });
+        if (!error && data) return data as CSMessageRow[];
+      } catch {}
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem(`${LOCAL_CS_MESSAGES_KEY}_${ticketId}`);
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch {}
+    }
+    return [];
+  },
+
+  async sendMessage(payload: {
+    ticketId: string;
+    senderUserId: string;
+    senderRole: "pelanggan" | "admin" | "owner" | "super_admin";
+    senderName: string;
+    message: string;
+    updateTicketStatusTo?: "Baru" | "Diproses" | "Menunggu Balasan" | "Selesai";
+  }): Promise<CSMessageRow> {
+    const newMsg: CSMessageRow = {
+      id: crypto.randomUUID(),
+      ticket_id: payload.ticketId,
+      sender_user_id: payload.senderUserId,
+      sender_role: payload.senderRole,
+      sender_name: payload.senderName,
+      message: payload.message,
+      created_at: new Date().toISOString(),
+    };
+
+    // Tentukan auto-status: Jika Super Admin membalas -> "Diproses" atau "Menunggu Balasan"
+    let nextStatus = payload.updateTicketStatusTo;
+    if (!nextStatus) {
+      if (payload.senderRole === "super_admin") {
+        nextStatus = "Diproses";
+      } else {
+        nextStatus = "Menunggu Balasan";
+      }
+    }
+
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase().from("customer_service_messages").insert({
+          ticket_id: payload.ticketId,
+          sender_user_id: payload.senderUserId,
+          sender_role: payload.senderRole,
+          sender_name: payload.senderName,
+          message: payload.message,
+        });
+        if (nextStatus) {
+          await supabase()
+            .from("customer_service_tickets")
+            .update({ status: nextStatus, updated_at: new Date().toISOString() })
+            .eq("id", payload.ticketId);
+        }
+      } catch {}
+    }
+
+    // Update lokal
+    if (typeof window !== "undefined") {
+      try {
+        const existing = await this.getTicketMessages(payload.ticketId);
+        localStorage.setItem(
+          `${LOCAL_CS_MESSAGES_KEY}_${payload.ticketId}`,
+          JSON.stringify([...existing, newMsg]),
+        );
+        if (nextStatus) {
+          const all = await this.getAllTickets();
+          const updated = all.map((t) =>
+            t.id === payload.ticketId
+              ? { ...t, status: nextStatus!, updated_at: new Date().toISOString() }
+              : t,
+          );
+          localStorage.setItem(LOCAL_CS_TICKETS_KEY, JSON.stringify(updated));
+        }
+      } catch {}
+    }
+
+    return newMsg;
+  },
+
+  async updateTicketStatus(
+    ticketId: string,
+    status: "Baru" | "Diproses" | "Menunggu Balasan" | "Selesai",
+  ): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase()
+          .from("customer_service_tickets")
+          .update({ status, updated_at: new Date().toISOString() })
+          .eq("id", ticketId);
+      } catch {}
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const all = await this.getAllTickets();
+        const updated = all.map((t) =>
+          t.id === ticketId ? { ...t, status, updated_at: new Date().toISOString() } : t,
+        );
+        localStorage.setItem(LOCAL_CS_TICKETS_KEY, JSON.stringify(updated));
+      } catch {}
+    }
+    return true;
+  },
+};
+

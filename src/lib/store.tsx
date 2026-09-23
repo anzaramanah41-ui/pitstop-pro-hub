@@ -20,6 +20,11 @@ export type Bengkel = {
   nama: string;
   alamat: string;
   telepon: string;
+  paket?: "Basic" | "Premium";
+  status?: "Aktif" | "Nonaktif";
+  ownerNama?: string;
+  ownerEmail?: string;
+  tanggalBergabung?: string;
 };
 
 export type Mekanik = {

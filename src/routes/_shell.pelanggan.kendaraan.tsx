@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Car, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { pelangganService } from "@/services/appbenk-service";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
@@ -50,12 +51,29 @@ export const Route = createFileRoute("/_shell/pelanggan/kendaraan")({
 
 function KendaraanPelanggan() {
   const { user } = useAuth();
-  const { pelanggan, kendaraan, simpanKendaraan, hapusKendaraan, simpanPelanggan } = useStore();
+  const {
+    pelanggan,
+    kendaraan,
+    simpanKendaraan,
+    hapusKendaraan,
+    simpanPelanggan,
+    refreshKendaraan,
+    refreshPelanggan,
+  } = useStore();
+
+  // Sinkronkan data pelanggan dan kendaraan terbaru saat user aktif
+  useEffect(() => {
+    if (user?.id) {
+      refreshPelanggan().catch(() => {});
+      refreshKendaraan().catch(() => {});
+    }
+  }, [user?.id]);
 
   const profil = useMemo(() => {
     if (!user) return undefined;
     return pelanggan.find(
       (p) =>
+        (user.pelangganId && p.id === user.pelangganId) ||
         (user.id && (p.id === user.id || p.userId === user.id)) ||
         (user.email && p.email?.toLowerCase() === user.email.toLowerCase()) ||
         (user.nama && p.nama?.trim().toLowerCase() === user.nama.trim().toLowerCase()) ||
@@ -64,7 +82,7 @@ function KendaraanPelanggan() {
   }, [pelanggan, user]);
 
   const milikSaya = useMemo(() => {
-    const pId = profil?.id;
+    const pId = user?.pelangganId || profil?.id;
     const uId = user?.id;
     return kendaraan.filter(
       (k) =>
@@ -78,38 +96,65 @@ function KendaraanPelanggan() {
   const [edit, setEdit] = useState<Kendaraan | null>(null);
   const [open, setOpen] = useState(false);
   const [hapus, setHapus] = useState<Kendaraan | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const simpan = (e: React.FormEvent) => {
+  const simpan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.merk.trim() || !form.tipe.trim() || !form.plat.trim()) {
       toast.error("Merk, tipe, dan nomor polisi wajib diisi.");
       return;
     }
 
-    const targetPelangganId =
-      profil?.id ||
-      `pl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-
-    if (!profil && user) {
-      simpanPelanggan({
-        id: targetPelangganId,
-        userId: user.id,
-        nama: user.nama || user.email.split("@")[0] || "Pelanggan",
-        email: user.email,
-        telepon: user.telepon ?? "",
-        alamat: "",
-        kendaraan: `${form.merk} ${form.tipe} ${form.tahun}`,
-        plat: form.plat,
-      });
+    if (!user) {
+      toast.error("Sesi pengguna tidak valid. Silakan login kembali.");
+      return;
     }
 
-    simpanKendaraan(
-      edit
-        ? { ...form, pelangganId: targetPelangganId, id: edit.id }
-        : { ...form, pelangganId: targetPelangganId },
-    );
-    toast.success(edit ? "Kendaraan diperbarui" : "Kendaraan ditambahkan");
-    setOpen(false);
+    setSubmitting(true);
+
+    try {
+      // 1. Tentukan id_pelanggan resmi dari akun login
+      let officialPelangganId = user.pelangganId || profil?.id;
+
+      if (!officialPelangganId) {
+        // Query langsung ke database jika state lokal belum ter-update
+        const pelDb = await pelangganService.getByUserId(user.id);
+        if (pelDb?.id_pelanggan) {
+          officialPelangganId = pelDb.id_pelanggan;
+        } else {
+          // Buat entitas resmi di public.pelanggan jika belum ada
+          const officialId = `pl-${user.id.slice(0, 8)}`;
+          const created = await pelangganService.create({
+            id_pelanggan: officialId,
+            user_id: user.id,
+            nama: user.nama || user.email.split("@")[0] || "Pelanggan",
+            email: user.email,
+            no_hp: user.telepon || "-",
+            alamat: "Pendaftaran akun pelanggan AppBenk",
+          });
+          officialPelangganId = created.id_pelanggan;
+        }
+        await refreshPelanggan();
+      }
+
+      // 2. Simpan kendaraan ke Supabase & state lokal
+      await simpanKendaraan(
+        edit
+          ? { ...form, pelangganId: officialPelangganId, id: edit.id }
+          : { ...form, pelangganId: officialPelangganId },
+      );
+
+      // 3. Refresh data kendaraan agar tampilan selalu tersinkron
+      await refreshKendaraan();
+
+      toast.success(edit ? "Kendaraan berhasil diperbarui" : "Kendaraan berhasil ditambahkan");
+      setOpen(false);
+    } catch (err: any) {
+      console.error("Gagal menyimpan kendaraan:", err);
+      toast.error(err?.message || "Gagal menyimpan kendaraan. Pastikan koneksi internet stabil.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -243,10 +288,12 @@ function KendaraanPelanggan() {
               />
             </div>
             <DialogFooter className="sm:col-span-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
                 Batal
               </Button>
-              <Button type="submit">Simpan</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Menyimpan..." : "Simpan"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

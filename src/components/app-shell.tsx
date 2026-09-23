@@ -197,6 +197,7 @@ function NotificationBell() {
   // Filter notifikasi sesuai role user aktif
   const listNotif = notifikasi.filter((n) => {
     if (n.role === "semua") return true;
+    if (user.role === "super_admin" && (n.role === "super_admin" || n.role === "semua")) return true;
     if (user.role === "admin" && n.role === "admin") return true;
     if (user.role === "owner" && (n.role === "owner" || n.role === "admin")) return true;
     if (user.role === "pelanggan" && n.role === "pelanggan") {
@@ -220,7 +221,15 @@ function NotificationBell() {
   const handleKlikNotif = (id: string, link?: string, statusBooking?: string, judul?: string) => {
     tandaiNotifikasiDibaca(id);
     let target = link;
-    if (user.role === "admin" || user.role === "owner") {
+    if (user.role === "super_admin") {
+      if (judul && (judul.toLowerCase().includes("tiket") || judul.toLowerCase().includes("cs") || judul.toLowerCase().includes("customer service"))) {
+        target = "/superadmin/cs";
+      } else if (judul && (judul.toLowerCase().includes("error") || judul.toLowerCase().includes("log"))) {
+        target = "/superadmin/error-log";
+      } else if (judul && (judul.toLowerCase().includes("bengkel") || judul.toLowerCase().includes("klien"))) {
+        target = "/superadmin/klien";
+      }
+    } else if (user.role === "admin" || user.role === "owner") {
       if (judul && (judul.toLowerCase().includes("pembayaran") || judul.toLowerCase().includes("qris") || judul.toLowerCase().includes("transfer") || judul.toLowerCase().includes("cash"))) {
         target = "/admin/pembayaran?filter=menunggu_verifikasi";
       } else if (judul && (judul.toLowerCase().includes("booking") || judul.toLowerCase().includes("servis masuk"))) {
@@ -292,7 +301,7 @@ function NotificationBell() {
           </div>
           {unreadCount > 0 && (
             <button
-              onClick={() => tandaiSemuaNotifikasiDibaca(user.role === "owner" ? undefined : user.role)}
+              onClick={() => tandaiSemuaNotifikasiDibaca(user.role === "owner" || user.role === "super_admin" ? undefined : user.role)}
               className="flex items-center gap-1 text-[11px] font-medium text-primary hover:underline cursor-pointer"
             >
               <CheckCheck className="size-3" /> Tandai dibaca

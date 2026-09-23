@@ -36,6 +36,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { useStore, tanggalPanjang, type Booking, type StatusBooking } from "@/lib/store";
 import { Input } from "@/components/ui/input";
+import { notifikasiEvent } from "@/lib/whatsapp";
 
 const STATUS: StatusBooking[] = ["Menunggu Konfirmasi", "Diterima", "Ditolak"];
 
@@ -59,7 +60,7 @@ function BookingAdmin() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const bengkelAktifId = user?.bengkelId || "bengkel-001";
-  const { booking, mekanik, ubahStatusBooking, tugaskanMekanikBooking, aturEstimasiBooking, refreshBooking } = useStore();
+  const { booking, mekanik, pelanggan, ubahStatusBooking, tugaskanMekanikBooking, aturEstimasiBooking, refreshBooking } = useStore();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"semua" | StatusBooking>("semua");
   const [detail, setDetail] = useState<Booking | null>(null);
@@ -76,10 +77,27 @@ function BookingAdmin() {
         onClick: () => navigate({ to: "/admin/servis" }),
       },
     });
+
+    const targetPelanggan = pelanggan.find(
+      (p) => (b.customerId && p.id === b.customerId) || p.nama.toLowerCase() === b.pelanggan.toLowerCase(),
+    );
+    if (targetPelanggan?.telepon) {
+      notifikasiEvent("booking_confirmed", targetPelanggan.telepon, {
+        namaPelanggan: b.pelanggan,
+        namaKendaraan: b.kendaraan,
+        platNomor: b.plat,
+        namaBengkel: "AppBenk",
+        tanggalBooking: `${tanggalPanjang(b.tanggal)} (${b.waktu})`,
+      }).catch(() => {});
+    }
   };
 
   useEffect(() => {
     refreshBooking().catch(() => {});
+    const interval = setInterval(() => {
+      refreshBooking().catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
   }, [refreshBooking]);
 
   const mekanikBengkelAktif = useMemo(() => {
@@ -106,14 +124,30 @@ function BookingAdmin() {
 
   const konfirmasiTolak = () => {
     if (!tolak) return;
-    if (!alasan.trim()) {
+    const alasanTrimmed = alasan.trim();
+    if (!alasanTrimmed) {
       setErrAlasan("Alasan penolakan wajib diisi.");
       return;
     }
-    ubahStatusBooking(tolak.id, "Ditolak", alasan.trim());
+    ubahStatusBooking(tolak.id, "Ditolak", alasanTrimmed);
     if (detail?.id === tolak.id)
-      setDetail({ ...detail, status: "Ditolak", alasanTolak: alasan.trim() });
+      setDetail({ ...detail, status: "Ditolak", alasanTolak: alasanTrimmed });
     toast.info(`Booking ${tolak.nomor} ditolak`);
+
+    const targetPelanggan = pelanggan.find(
+      (p) => (tolak.customerId && p.id === tolak.customerId) || p.nama.toLowerCase() === tolak.pelanggan.toLowerCase(),
+    );
+    if (targetPelanggan?.telepon) {
+      notifikasiEvent("booking_rejected", targetPelanggan.telepon, {
+        namaPelanggan: tolak.pelanggan,
+        namaKendaraan: tolak.kendaraan,
+        platNomor: tolak.plat,
+        namaBengkel: "AppBenk",
+        tanggalBooking: `${tanggalPanjang(tolak.tanggal)} (${tolak.waktu})`,
+        alasanPenolakan: alasanTrimmed,
+      }).catch(() => {});
+    }
+
     setTolak(null);
     setAlasan("");
   };

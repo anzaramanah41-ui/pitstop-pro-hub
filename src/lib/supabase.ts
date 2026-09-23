@@ -17,13 +17,15 @@ export function supabase(): SupabaseClient {
   return client;
 }
 
-export type AppRole = "admin" | "pelanggan" | "owner";
+export type AppRole = "admin" | "pelanggan" | "owner" | "super_admin";
 export type Profile = {
   id: string;
   full_name: string;
   email: string;
   phone: string | null;
+  gender?: string | null;
+  avatar_url?: string | null;
   role: AppRole;
   id_bengkel?: string | null;
+  workshop_id?: string | null;
 };
-

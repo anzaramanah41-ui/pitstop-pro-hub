@@ -11,14 +11,21 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShellRouteImport } from './routes/_shell'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as VerifyResetCodeRouteImport } from './routes/verify-reset-code'
 import { Route as ShellProfilRouteImport } from './routes/_shell.profil'
+import { Route as ResetPasswordNewRouteImport } from './routes/reset-password.new'
 import { Route as ShellAdminBookingRouteImport } from './routes/_shell.admin.booking'
 import { Route as ShellAdminCsRouteImport } from './routes/_shell.admin.cs'
 import { Route as ShellAdminDashboardRouteImport } from './routes/_shell.admin.dashboard'
 import { Route as ShellAdminLaporanRouteImport } from './routes/_shell.admin.laporan'
 import { Route as ShellAdminMekanikRouteImport } from './routes/_shell.admin.mekanik'
+import { Route as ShellAdminPembayaranRouteImport } from './routes/_shell.admin.pembayaran'
+import { Route as ShellAdminPengaturanRouteImport } from './routes/_shell.admin.pengaturan'
 import { Route as ShellAdminServisRouteImport } from './routes/_shell.admin.servis'
 import { Route as ShellAdminSparepartRouteImport } from './routes/_shell.admin.sparepart'
 import { Route as ShellAdminStokRouteImport } from './routes/_shell.admin.stok'
@@ -35,6 +42,10 @@ import { Route as ShellPelangganKendaraanRouteImport } from './routes/_shell.pel
 import { Route as ShellPelangganPembayaranRouteImport } from './routes/_shell.pelanggan.pembayaran'
 import { Route as ShellPelangganRiwayatRouteImport } from './routes/_shell.pelanggan.riwayat'
 import { Route as ShellPelangganStatusRouteImport } from './routes/_shell.pelanggan.status'
+import { Route as ShellSuperadminCsRouteImport } from './routes/_shell.superadmin.cs'
+import { Route as ShellSuperadminDashboardRouteImport } from './routes/_shell.superadmin.dashboard'
+import { Route as ShellSuperadminErrorLogRouteImport } from './routes/_shell.superadmin.error-log'
+import { Route as ShellSuperadminKlienRouteImport } from './routes/_shell.superadmin.klien'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -43,6 +54,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -55,10 +71,30 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyResetCodeRoute = VerifyResetCodeRouteImport.update({
+  id: '/verify-reset-code',
+  path: '/verify-reset-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShellProfilRoute = ShellProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
   getParentRoute: () => ShellRoute,
+} as any)
+const ResetPasswordNewRoute = ResetPasswordNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => ResetPasswordRoute,
 } as any)
 const ShellAdminBookingRoute = ShellAdminBookingRouteImport.update({
   id: '/admin/booking',
@@ -83,6 +119,16 @@ const ShellAdminLaporanRoute = ShellAdminLaporanRouteImport.update({
 const ShellAdminMekanikRoute = ShellAdminMekanikRouteImport.update({
   id: '/admin/mekanik',
   path: '/admin/mekanik',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellAdminPembayaranRoute = ShellAdminPembayaranRouteImport.update({
+  id: '/admin/pembayaran',
+  path: '/admin/pembayaran',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellAdminPengaturanRoute = ShellAdminPengaturanRouteImport.update({
+  id: '/admin/pengaturan',
+  path: '/admin/pengaturan',
   getParentRoute: () => ShellRoute,
 } as any)
 const ShellAdminServisRoute = ShellAdminServisRouteImport.update({
@@ -166,17 +212,45 @@ const ShellPelangganStatusRoute = ShellPelangganStatusRouteImport.update({
   path: '/pelanggan/status',
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellSuperadminCsRoute = ShellSuperadminCsRouteImport.update({
+  id: '/superadmin/cs',
+  path: '/superadmin/cs',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellSuperadminDashboardRoute =
+  ShellSuperadminDashboardRouteImport.update({
+    id: '/superadmin/dashboard',
+    path: '/superadmin/dashboard',
+    getParentRoute: () => ShellRoute,
+  } as any)
+const ShellSuperadminErrorLogRoute = ShellSuperadminErrorLogRouteImport.update({
+  id: '/superadmin/error-log',
+  path: '/superadmin/error-log',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellSuperadminKlienRoute = ShellSuperadminKlienRouteImport.update({
+  id: '/superadmin/klien',
+  path: '/superadmin/klien',
+  getParentRoute: () => ShellRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRouteWithChildren
+  '/verify-email': typeof VerifyEmailRoute
+  '/verify-reset-code': typeof VerifyResetCodeRoute
   '/profil': typeof ShellProfilRoute
+  '/reset-password/new': typeof ResetPasswordNewRoute
   '/admin/booking': typeof ShellAdminBookingRoute
   '/admin/cs': typeof ShellAdminCsRoute
   '/admin/dashboard': typeof ShellAdminDashboardRoute
   '/admin/laporan': typeof ShellAdminLaporanRoute
   '/admin/mekanik': typeof ShellAdminMekanikRoute
+  '/admin/pembayaran': typeof ShellAdminPembayaranRoute
+  '/admin/pengaturan': typeof ShellAdminPengaturanRoute
   '/admin/servis': typeof ShellAdminServisRoute
   '/admin/sparepart': typeof ShellAdminSparepartRoute
   '/admin/stok': typeof ShellAdminStokRoute
@@ -193,17 +267,28 @@ export interface FileRoutesByFullPath {
   '/pelanggan/pembayaran': typeof ShellPelangganPembayaranRoute
   '/pelanggan/riwayat': typeof ShellPelangganRiwayatRoute
   '/pelanggan/status': typeof ShellPelangganStatusRoute
+  '/superadmin/cs': typeof ShellSuperadminCsRoute
+  '/superadmin/dashboard': typeof ShellSuperadminDashboardRoute
+  '/superadmin/error-log': typeof ShellSuperadminErrorLogRoute
+  '/superadmin/klien': typeof ShellSuperadminKlienRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRouteWithChildren
+  '/verify-email': typeof VerifyEmailRoute
+  '/verify-reset-code': typeof VerifyResetCodeRoute
   '/profil': typeof ShellProfilRoute
+  '/reset-password/new': typeof ResetPasswordNewRoute
   '/admin/booking': typeof ShellAdminBookingRoute
   '/admin/cs': typeof ShellAdminCsRoute
   '/admin/dashboard': typeof ShellAdminDashboardRoute
   '/admin/laporan': typeof ShellAdminLaporanRoute
   '/admin/mekanik': typeof ShellAdminMekanikRoute
+  '/admin/pembayaran': typeof ShellAdminPembayaranRoute
+  '/admin/pengaturan': typeof ShellAdminPengaturanRoute
   '/admin/servis': typeof ShellAdminServisRoute
   '/admin/sparepart': typeof ShellAdminSparepartRoute
   '/admin/stok': typeof ShellAdminStokRoute
@@ -220,19 +305,30 @@ export interface FileRoutesByTo {
   '/pelanggan/pembayaran': typeof ShellPelangganPembayaranRoute
   '/pelanggan/riwayat': typeof ShellPelangganRiwayatRoute
   '/pelanggan/status': typeof ShellPelangganStatusRoute
+  '/superadmin/cs': typeof ShellSuperadminCsRoute
+  '/superadmin/dashboard': typeof ShellSuperadminDashboardRoute
+  '/superadmin/error-log': typeof ShellSuperadminErrorLogRoute
+  '/superadmin/klien': typeof ShellSuperadminKlienRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_shell': typeof ShellRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRouteWithChildren
+  '/verify-email': typeof VerifyEmailRoute
+  '/verify-reset-code': typeof VerifyResetCodeRoute
   '/_shell/profil': typeof ShellProfilRoute
+  '/reset-password/new': typeof ResetPasswordNewRoute
   '/_shell/admin/booking': typeof ShellAdminBookingRoute
   '/_shell/admin/cs': typeof ShellAdminCsRoute
   '/_shell/admin/dashboard': typeof ShellAdminDashboardRoute
   '/_shell/admin/laporan': typeof ShellAdminLaporanRoute
   '/_shell/admin/mekanik': typeof ShellAdminMekanikRoute
+  '/_shell/admin/pembayaran': typeof ShellAdminPembayaranRoute
+  '/_shell/admin/pengaturan': typeof ShellAdminPengaturanRoute
   '/_shell/admin/servis': typeof ShellAdminServisRoute
   '/_shell/admin/sparepart': typeof ShellAdminSparepartRoute
   '/_shell/admin/stok': typeof ShellAdminStokRoute
@@ -249,19 +345,30 @@ export interface FileRoutesById {
   '/_shell/pelanggan/pembayaran': typeof ShellPelangganPembayaranRoute
   '/_shell/pelanggan/riwayat': typeof ShellPelangganRiwayatRoute
   '/_shell/pelanggan/status': typeof ShellPelangganStatusRoute
+  '/_shell/superadmin/cs': typeof ShellSuperadminCsRoute
+  '/_shell/superadmin/dashboard': typeof ShellSuperadminDashboardRoute
+  '/_shell/superadmin/error-log': typeof ShellSuperadminErrorLogRoute
+  '/_shell/superadmin/klien': typeof ShellSuperadminKlienRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forgot-password'
     | '/login'
     | '/register'
+    | '/reset-password'
+    | '/verify-email'
+    | '/verify-reset-code'
     | '/profil'
+    | '/reset-password/new'
     | '/admin/booking'
     | '/admin/cs'
     | '/admin/dashboard'
     | '/admin/laporan'
     | '/admin/mekanik'
+    | '/admin/pembayaran'
+    | '/admin/pengaturan'
     | '/admin/servis'
     | '/admin/sparepart'
     | '/admin/stok'
@@ -278,17 +385,28 @@ export interface FileRouteTypes {
     | '/pelanggan/pembayaran'
     | '/pelanggan/riwayat'
     | '/pelanggan/status'
+    | '/superadmin/cs'
+    | '/superadmin/dashboard'
+    | '/superadmin/error-log'
+    | '/superadmin/klien'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/forgot-password'
     | '/login'
     | '/register'
+    | '/reset-password'
+    | '/verify-email'
+    | '/verify-reset-code'
     | '/profil'
+    | '/reset-password/new'
     | '/admin/booking'
     | '/admin/cs'
     | '/admin/dashboard'
     | '/admin/laporan'
     | '/admin/mekanik'
+    | '/admin/pembayaran'
+    | '/admin/pengaturan'
     | '/admin/servis'
     | '/admin/sparepart'
     | '/admin/stok'
@@ -305,18 +423,29 @@ export interface FileRouteTypes {
     | '/pelanggan/pembayaran'
     | '/pelanggan/riwayat'
     | '/pelanggan/status'
+    | '/superadmin/cs'
+    | '/superadmin/dashboard'
+    | '/superadmin/error-log'
+    | '/superadmin/klien'
   id:
     | '__root__'
     | '/'
     | '/_shell'
+    | '/forgot-password'
     | '/login'
     | '/register'
+    | '/reset-password'
+    | '/verify-email'
+    | '/verify-reset-code'
     | '/_shell/profil'
+    | '/reset-password/new'
     | '/_shell/admin/booking'
     | '/_shell/admin/cs'
     | '/_shell/admin/dashboard'
     | '/_shell/admin/laporan'
     | '/_shell/admin/mekanik'
+    | '/_shell/admin/pembayaran'
+    | '/_shell/admin/pengaturan'
     | '/_shell/admin/servis'
     | '/_shell/admin/sparepart'
     | '/_shell/admin/stok'
@@ -333,13 +462,21 @@ export interface FileRouteTypes {
     | '/_shell/pelanggan/pembayaran'
     | '/_shell/pelanggan/riwayat'
     | '/_shell/pelanggan/status'
+    | '/_shell/superadmin/cs'
+    | '/_shell/superadmin/dashboard'
+    | '/_shell/superadmin/error-log'
+    | '/_shell/superadmin/klien'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ShellRoute: typeof ShellRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRouteWithChildren
+  VerifyEmailRoute: typeof VerifyEmailRoute
+  VerifyResetCodeRoute: typeof VerifyResetCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -358,6 +495,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -372,12 +516,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-reset-code': {
+      id: '/verify-reset-code'
+      path: '/verify-reset-code'
+      fullPath: '/verify-reset-code'
+      preLoaderRoute: typeof VerifyResetCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_shell/profil': {
       id: '/_shell/profil'
       path: '/profil'
       fullPath: '/profil'
       preLoaderRoute: typeof ShellProfilRouteImport
       parentRoute: typeof ShellRoute
+    }
+    '/reset-password/new': {
+      id: '/reset-password/new'
+      path: '/new'
+      fullPath: '/reset-password/new'
+      preLoaderRoute: typeof ResetPasswordNewRouteImport
+      parentRoute: typeof ResetPasswordRoute
     }
     '/_shell/admin/booking': {
       id: '/_shell/admin/booking'
@@ -412,6 +584,20 @@ declare module '@tanstack/react-router' {
       path: '/admin/mekanik'
       fullPath: '/admin/mekanik'
       preLoaderRoute: typeof ShellAdminMekanikRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/admin/pembayaran': {
+      id: '/_shell/admin/pembayaran'
+      path: '/admin/pembayaran'
+      fullPath: '/admin/pembayaran'
+      preLoaderRoute: typeof ShellAdminPembayaranRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/admin/pengaturan': {
+      id: '/_shell/admin/pengaturan'
+      path: '/admin/pengaturan'
+      fullPath: '/admin/pengaturan'
+      preLoaderRoute: typeof ShellAdminPengaturanRouteImport
       parentRoute: typeof ShellRoute
     }
     '/_shell/admin/servis': {
@@ -526,6 +712,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellPelangganStatusRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/_shell/superadmin/cs': {
+      id: '/_shell/superadmin/cs'
+      path: '/superadmin/cs'
+      fullPath: '/superadmin/cs'
+      preLoaderRoute: typeof ShellSuperadminCsRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/superadmin/dashboard': {
+      id: '/_shell/superadmin/dashboard'
+      path: '/superadmin/dashboard'
+      fullPath: '/superadmin/dashboard'
+      preLoaderRoute: typeof ShellSuperadminDashboardRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/superadmin/error-log': {
+      id: '/_shell/superadmin/error-log'
+      path: '/superadmin/error-log'
+      fullPath: '/superadmin/error-log'
+      preLoaderRoute: typeof ShellSuperadminErrorLogRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/superadmin/klien': {
+      id: '/_shell/superadmin/klien'
+      path: '/superadmin/klien'
+      fullPath: '/superadmin/klien'
+      preLoaderRoute: typeof ShellSuperadminKlienRouteImport
+      parentRoute: typeof ShellRoute
+    }
   }
 }
 
@@ -536,6 +750,8 @@ interface ShellRouteChildren {
   ShellAdminDashboardRoute: typeof ShellAdminDashboardRoute
   ShellAdminLaporanRoute: typeof ShellAdminLaporanRoute
   ShellAdminMekanikRoute: typeof ShellAdminMekanikRoute
+  ShellAdminPembayaranRoute: typeof ShellAdminPembayaranRoute
+  ShellAdminPengaturanRoute: typeof ShellAdminPengaturanRoute
   ShellAdminServisRoute: typeof ShellAdminServisRoute
   ShellAdminSparepartRoute: typeof ShellAdminSparepartRoute
   ShellAdminStokRoute: typeof ShellAdminStokRoute
@@ -552,6 +768,10 @@ interface ShellRouteChildren {
   ShellPelangganPembayaranRoute: typeof ShellPelangganPembayaranRoute
   ShellPelangganRiwayatRoute: typeof ShellPelangganRiwayatRoute
   ShellPelangganStatusRoute: typeof ShellPelangganStatusRoute
+  ShellSuperadminCsRoute: typeof ShellSuperadminCsRoute
+  ShellSuperadminDashboardRoute: typeof ShellSuperadminDashboardRoute
+  ShellSuperadminErrorLogRoute: typeof ShellSuperadminErrorLogRoute
+  ShellSuperadminKlienRoute: typeof ShellSuperadminKlienRoute
 }
 
 const ShellRouteChildren: ShellRouteChildren = {
@@ -561,6 +781,8 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellAdminDashboardRoute: ShellAdminDashboardRoute,
   ShellAdminLaporanRoute: ShellAdminLaporanRoute,
   ShellAdminMekanikRoute: ShellAdminMekanikRoute,
+  ShellAdminPembayaranRoute: ShellAdminPembayaranRoute,
+  ShellAdminPengaturanRoute: ShellAdminPengaturanRoute,
   ShellAdminServisRoute: ShellAdminServisRoute,
   ShellAdminSparepartRoute: ShellAdminSparepartRoute,
   ShellAdminStokRoute: ShellAdminStokRoute,
@@ -577,15 +799,35 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellPelangganPembayaranRoute: ShellPelangganPembayaranRoute,
   ShellPelangganRiwayatRoute: ShellPelangganRiwayatRoute,
   ShellPelangganStatusRoute: ShellPelangganStatusRoute,
+  ShellSuperadminCsRoute: ShellSuperadminCsRoute,
+  ShellSuperadminDashboardRoute: ShellSuperadminDashboardRoute,
+  ShellSuperadminErrorLogRoute: ShellSuperadminErrorLogRoute,
+  ShellSuperadminKlienRoute: ShellSuperadminKlienRoute,
 }
 
 const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
 
+interface ResetPasswordRouteChildren {
+  ResetPasswordNewRoute: typeof ResetPasswordNewRoute
+}
+
+const ResetPasswordRouteChildren: ResetPasswordRouteChildren = {
+  ResetPasswordNewRoute: ResetPasswordNewRoute,
+}
+
+const ResetPasswordRouteWithChildren = ResetPasswordRoute._addFileChildren(
+  ResetPasswordRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ShellRoute: ShellRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRouteWithChildren,
+  VerifyEmailRoute: VerifyEmailRoute,
+  VerifyResetCodeRoute: VerifyResetCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

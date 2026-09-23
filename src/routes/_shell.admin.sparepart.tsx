@@ -32,7 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useStore,
   rupiah,
@@ -75,7 +74,6 @@ const kosong = {
 
 function SparepartAdmin() {
   const { sparepart, simpanSparepart, hapusSparepart } = useStore();
-  const [tab, setTab] = useState<"katalog" | "pricelist">("katalog");
   const [q, setQ] = useState("");
   const [kat, setKat] = useState("semua");
   const [statusFilter, setStatusFilter] = useState("semua");
@@ -182,291 +180,224 @@ function SparepartAdmin() {
         }
       />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList>
-            <TabsTrigger value="katalog" className="gap-2">
-              <Package className="size-4" /> Katalog Sparepart ({sparepart.length})
-            </TabsTrigger>
-            <TabsTrigger value="pricelist" className="gap-2">
-              <Tag className="size-4" /> Pricelist / Daftar Harga
-            </TabsTrigger>
-          </TabsList>
-          {isFiltered && (
-            <span className="text-xs text-muted-foreground">
-              Menampilkan {data.length} dari {sparepart.length} sparepart
-            </span>
-          )}
-        </div>
-
-        {tab === "pricelist" && (
-          <div className="grid gap-3 sm:grid-cols-4">
-            <Card className="border-l-4 border-l-primary">
-              <CardContent className="p-4">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Item</span>
-                <p className="mt-1 text-xl font-bold">{statsPricelist.total} sparepart</p>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-success">
-              <CardContent className="p-4">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Harga Terendah</span>
-                <p className="mt-1 text-xl font-bold text-success">{rupiah(statsPricelist.minHarga)}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-primary">
-              <CardContent className="p-4">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rata-Rata Harga</span>
-                <p className="mt-1 text-xl font-bold">{rupiah(statsPricelist.avgHarga)}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-amber-500">
-              <CardContent className="p-4">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Harga Tertinggi</span>
-                <p className="mt-1 text-xl font-bold text-amber-600">{rupiah(statsPricelist.maxHarga)}</p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        <Card>
-          <CardContent className="space-y-4 p-4">
-            {/* Filter Bar */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="min-w-[240px] flex-1">
-                <SearchBar
-                  value={q}
-                  onChange={setQ}
-                  placeholder="Cari nama, kode (misal SP-009), atau kategori..."
-                />
-              </div>
-
-              {/* Filter Kategori */}
-              <Select value={kat} onValueChange={setKat}>
-                <SelectTrigger className="w-44 bg-card">
-                  <SelectValue placeholder="Kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="semua">Semua Kategori</SelectItem>
-                  {KATEGORI_PART.map((k) => (
-                    <SelectItem key={k} value={k}>
-                      {k}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Filter Status Stok */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40 bg-card">
-                  <SelectValue placeholder="Status Stok" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="semua">Semua Status</SelectItem>
-                  <SelectItem value="Aman">Tersedia (Aman)</SelectItem>
-                  <SelectItem value="Menipis">Stok Menipis</SelectItem>
-                  <SelectItem value="Habis">Stok Habis</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Filter Urutan / Sort */}
-              <Select value={sortFilter} onValueChange={setSortFilter}>
-                <SelectTrigger className="w-44 bg-card">
-                  <SelectValue placeholder="Urutkan" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">Urutan Ditambahkan (Standar)</SelectItem>
-                  <SelectItem value="nama_asc">Nama (A — Z)</SelectItem>
-                  <SelectItem value="nama_desc">Nama (Z — A)</SelectItem>
-                  <SelectItem value="harga_asc">Harga Terendah</SelectItem>
-                  <SelectItem value="harga_desc">Harga Tertinggi</SelectItem>
-                  <SelectItem value="stok_desc">Stok Terbanyak</SelectItem>
-                  <SelectItem value="stok_asc">Stok Tersedikit</SelectItem>
-                  <SelectItem value="terbaru">Update Terbaru</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Tombol Reset Filter */}
-              {isFiltered && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={resetFilter}
-                  className="gap-1.5 border-dashed text-muted-foreground hover:text-foreground"
-                >
-                  <RotateCcw className="size-3.5" /> Reset Filter
-                </Button>
-              )}
-            </div>
-
-            {/* Konten Tab Katalog */}
-            <TabsContent value="katalog" className="m-0">
-              {data.length === 0 ? (
-                <EmptyState
-                  icon={<Package className="size-8" />}
-                  title="Sparepart tidak ditemukan"
-                  description={
-                    isFiltered
-                      ? "Tidak ada sparepart yang sesuai dengan filter. Coba ubah atau reset filter."
-                      : "Belum ada sparepart terdaftar. Silakan klik Tambah Sparepart."
-                  }
-                  action={
-                    isFiltered ? (
-                      <Button variant="outline" size="sm" onClick={resetFilter} className="gap-2">
-                        <RotateCcw className="size-3.5" /> Kembalikan Semua Data
-                      </Button>
-                    ) : undefined
-                  }
-                />
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Kode</TableHead>
-                        <TableHead>Nama Sparepart</TableHead>
-                        <TableHead>Kategori</TableHead>
-                        <TableHead>Satuan</TableHead>
-                        <TableHead className="text-right">Harga Jual</TableHead>
-                        <TableHead className="text-right">Stok</TableHead>
-                        <TableHead>Status Stok</TableHead>
-                        <TableHead>Update</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.map((p) => (
-                        <TableRow key={p.id}>
-                          <TableCell className="font-mono text-xs font-semibold text-primary">{p.kode}</TableCell>
-                          <TableCell className="font-medium">{p.nama}</TableCell>
-                          <TableCell className="text-muted-foreground">{p.kategori}</TableCell>
-                          <TableCell className="text-muted-foreground">{p.satuan}</TableCell>
-                          <TableCell className="text-right font-semibold">{rupiah(p.harga)}</TableCell>
-                          <TableCell className="text-right">
-                            <span
-                              className={
-                                p.stok <= p.stokMinimum ? "font-semibold text-destructive" : ""
-                              }
-                            >
-                              {p.stok} {p.satuan}
-                            </span>
-                            <span className="block text-xs text-muted-foreground">
-                              min. {p.stokMinimum}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={
-                                statusStok(p) === "Habis"
-                                  ? "inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive"
-                                  : statusStok(p) === "Menipis"
-                                    ? "inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600"
-                                    : "inline-flex items-center rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-semibold text-success"
-                              }
-                            >
-                              {statusStok(p)}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {tanggalPanjang(p.tanggalUpdate)}
-                          </TableCell>
-
-                          <TableCell>
-                            <div className="flex justify-end gap-1">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                aria-label="Ubah"
-                                onClick={() => {
-                                  setEdit(p);
-                                  setForm({ ...kosong, ...p });
-                                  setOpen(true);
-                                }}
-                              >
-                                <Pencil className="size-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                aria-label="Hapus"
-                                onClick={() => setHapus(p)}
-                              >
-                                <Trash2 className="size-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </TabsContent>
-
-            {/* Konten Tab Pricelist */}
-            <TabsContent value="pricelist" className="m-0">
-              {data.length === 0 ? (
-                <EmptyState
-                  icon={<Tag className="size-8" />}
-                  title="Pricelist tidak ditemukan"
-                  description="Coba ubah kata kunci atau reset filter."
-                  action={
-                    isFiltered ? (
-                      <Button variant="outline" size="sm" onClick={resetFilter} className="gap-2">
-                        <RotateCcw className="size-3.5" /> Kembalikan Semua Data
-                      </Button>
-                    ) : undefined
-                  }
-                />
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Kode Part</TableHead>
-                        <TableHead>Nama Komponen / Sparepart</TableHead>
-                        <TableHead>Kategori</TableHead>
-                        <TableHead>Satuan</TableHead>
-                        <TableHead className="text-right">Harga Resmi (Pricelist)</TableHead>
-                        <TableHead className="text-right">Stok Tersedia</TableHead>
-                        <TableHead>Kondisi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.map((p) => (
-                        <TableRow key={p.id}>
-                          <TableCell className="font-mono text-xs font-semibold text-primary">{p.kode}</TableCell>
-                          <TableCell className="font-medium">{p.nama}</TableCell>
-                          <TableCell className="text-muted-foreground">{p.kategori}</TableCell>
-                          <TableCell className="text-muted-foreground">{p.satuan}</TableCell>
-                          <TableCell className="text-right font-display text-base font-bold text-foreground">
-                            {rupiah(p.harga)}
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {p.stok} {p.satuan}
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={
-                                statusStok(p) === "Habis"
-                                  ? "inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive"
-                                  : statusStok(p) === "Menipis"
-                                    ? "inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600"
-                                    : "inline-flex items-center rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-semibold text-success"
-                              }
-                            >
-                              {statusStok(p)}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </TabsContent>
+      {/* Ringkasan Harga & Katalog (Pricelist & Stok Insights) */}
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Card className="border-l-4 border-l-primary">
+          <CardContent className="p-4">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Item</span>
+            <p className="mt-1 text-xl font-bold">{statsPricelist.total} sparepart</p>
           </CardContent>
         </Card>
-      </Tabs>
+        <Card className="border-l-4 border-l-success">
+          <CardContent className="p-4">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Harga Terendah</span>
+            <p className="mt-1 text-xl font-bold text-success">{rupiah(statsPricelist.minHarga)}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-primary">
+          <CardContent className="p-4">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rata-Rata Harga</span>
+            <p className="mt-1 text-xl font-bold">{rupiah(statsPricelist.avgHarga)}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-amber-500">
+          <CardContent className="p-4">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Harga Tertinggi</span>
+            <p className="mt-1 text-xl font-bold text-amber-600">{rupiah(statsPricelist.maxHarga)}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardContent className="space-y-4 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
+            <div className="flex items-center gap-2">
+              <Package className="size-5 text-primary" />
+              <h3 className="font-semibold text-base">Katalog & Pricelist Sparepart</h3>
+              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                {sparepart.length} item
+              </span>
+            </div>
+            {isFiltered && (
+              <span className="text-xs text-muted-foreground">
+                Menampilkan {data.length} dari {sparepart.length} sparepart
+              </span>
+            )}
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-[240px] flex-1">
+              <SearchBar
+                value={q}
+                onChange={setQ}
+                placeholder="Cari nama, kode (misal SP-009), atau kategori..."
+              />
+            </div>
+
+            {/* Filter Kategori */}
+            <Select value={kat} onValueChange={setKat}>
+              <SelectTrigger className="w-44 bg-card">
+                <SelectValue placeholder="Kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="semua">Semua Kategori</SelectItem>
+                {KATEGORI_PART.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {k}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Filter Status Stok */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40 bg-card">
+                <SelectValue placeholder="Status Stok" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="semua">Semua Status</SelectItem>
+                <SelectItem value="Aman">Tersedia (Aman)</SelectItem>
+                <SelectItem value="Menipis">Stok Menipis</SelectItem>
+                <SelectItem value="Habis">Stok Habis</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Filter Urutan / Sort */}
+            <Select value={sortFilter} onValueChange={setSortFilter}>
+              <SelectTrigger className="w-44 bg-card">
+                <SelectValue placeholder="Urutkan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Urutan Ditambahkan (Standar)</SelectItem>
+                <SelectItem value="nama_asc">Nama (A — Z)</SelectItem>
+                <SelectItem value="nama_desc">Nama (Z — A)</SelectItem>
+                <SelectItem value="harga_asc">Harga Terendah</SelectItem>
+                <SelectItem value="harga_desc">Harga Tertinggi</SelectItem>
+                <SelectItem value="stok_desc">Stok Terbanyak</SelectItem>
+                <SelectItem value="stok_asc">Stok Tersedikit</SelectItem>
+                <SelectItem value="terbaru">Update Terbaru</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Tombol Reset Filter */}
+            {isFiltered && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={resetFilter}
+                className="gap-1.5 border-dashed text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="size-3.5" /> Reset Filter
+              </Button>
+            )}
+          </div>
+
+          {/* Tabel Katalog & Pricelist Terpadu */}
+          {data.length === 0 ? (
+            <EmptyState
+              icon={<Package className="size-8" />}
+              title="Sparepart tidak ditemukan"
+              description={
+                isFiltered
+                  ? "Tidak ada sparepart yang sesuai dengan filter. Coba ubah atau reset filter."
+                  : "Belum ada sparepart terdaftar. Silakan klik Tambah Sparepart."
+              }
+              action={
+                isFiltered ? (
+                  <Button variant="outline" size="sm" onClick={resetFilter} className="gap-2">
+                    <RotateCcw className="size-3.5" /> Kembalikan Semua Data
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kode Part</TableHead>
+                    <TableHead>Nama Sparepart / Komponen</TableHead>
+                    <TableHead>Kategori</TableHead>
+                    <TableHead>Satuan</TableHead>
+                    <TableHead className="text-right">Harga Resmi (Pricelist)</TableHead>
+                    <TableHead className="text-right">Stok</TableHead>
+                    <TableHead>Status Stok</TableHead>
+                    <TableHead>Update</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-mono text-xs font-semibold text-primary">{p.kode}</TableCell>
+                      <TableCell className="font-medium">{p.nama}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.kategori}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.satuan}</TableCell>
+                      <TableCell className="text-right font-display text-base font-bold text-foreground">
+                        {rupiah(p.harga)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span
+                          className={
+                            p.stok <= p.stokMinimum ? "font-semibold text-destructive" : "font-medium"
+                          }
+                        >
+                          {p.stok} {p.satuan}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          min. {p.stokMinimum}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={
+                            statusStok(p) === "Habis"
+                              ? "inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive"
+                              : statusStok(p) === "Menipis"
+                                ? "inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600"
+                                : "inline-flex items-center rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-semibold text-success"
+                          }
+                        >
+                          {statusStok(p)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {tanggalPanjang(p.tanggalUpdate)}
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label="Ubah"
+                            onClick={() => {
+                              setEdit(p);
+                              setForm({ ...kosong, ...p });
+                              setOpen(true);
+                            }}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label="Hapus"
+                            onClick={() => setHapus(p)}
+                          >
+                            <Trash2 className="size-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-lg">

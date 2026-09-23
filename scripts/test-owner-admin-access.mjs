@@ -76,3 +76,4 @@ if (!allPermitted) {
 console.log("\n======================================================================");
 console.log("🎉 VERIFIKASI BERHASIL 100%! OWNER MEMILIKI AKSES LENGKAP SEMUA FITUR ADMIN");
 console.log("======================================================================");
+

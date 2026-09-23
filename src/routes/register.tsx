@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { HOME_ROLE, useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/register")({
   ssr: false,
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/register")({
 });
 
 type Err = Partial<
-  Record<"nama" | "email" | "telepon" | "password" | "konfirmasi" | "setuju", string>
+  Record<"nama" | "email" | "telepon" | "gender" | "password" | "konfirmasi" | "setuju", string>
 >;
 
 function RegisterPage() {
@@ -47,6 +48,7 @@ function RegisterPage() {
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
   const [telepon, setTelepon] = useState("");
+  const [gender, setGender] = useState<"Laki-laki" | "Perempuan" | "">("Laki-laki");
   const [password, setPassword] = useState("");
   const [konfirmasi, setKonfirmasi] = useState("");
   const [lihat1, setLihat1] = useState(false);
@@ -74,7 +76,10 @@ function RegisterPage() {
     if (!email.trim()) next.email = "Email wajib diisi.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       next.email = "Format email tidak valid.";
+    else if (!email.trim().toLowerCase().endsWith("@gmail.com"))
+      next.email = "Hanya alamat email @gmail.com yang diperbolehkan.";
     if (!telepon.trim()) next.telepon = "No. handphone wajib diisi.";
+    if (!gender) next.gender = "Jenis kelamin wajib dipilih.";
     if (!password) next.password = "Kata sandi wajib diisi.";
     else if (password.length < 8) next.password = "Kata sandi minimal 8 karakter.";
     if (konfirmasi !== password) next.konfirmasi = "Konfirmasi kata sandi tidak sama.";
@@ -84,37 +89,53 @@ function RegisterPage() {
     if (Object.keys(next).length) return;
 
     setLoading(true);
-    const hasil = await daftar({ nama, email, telepon, password });
+    const hasil = await daftar({ nama, email, telepon, gender, password });
     setLoading(false);
     if (!hasil.ok) {
       let pesan = hasil.error ?? "Pendaftaran gagal.";
       if (pesan.toLowerCase().includes("user already registered")) {
         pesan = "Email ini sudah terdaftar. Silakan gunakan email lain atau login.";
-      } else if (pesan.toLowerCase().includes("email address") && pesan.toLowerCase().includes("invalid")) {
-        pesan = "Format alamat email tidak diterima oleh penyedia auth. Gunakan domain email umum (misal: @gmail.com).";
+      } else if (
+        pesan.toLowerCase().includes("email address") &&
+        pesan.toLowerCase().includes("invalid")
+      ) {
+        pesan =
+          "Format alamat email tidak diterima oleh penyedia auth. Gunakan domain email umum (misal: @gmail.com).";
       }
       setError(pesan);
       return;
     }
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("appbenk_pending_email", email.trim());
+    }
+
+    if (hasil.unconfirmed) {
+      toast.success("Akun berhasil dibuat! Silakan verifikasi email Anda.");
+      navigate({ to: "/verify-email", replace: true });
+      return;
+    }
+
     setSukses(true);
-    toast.success("Akun berhasil dibuat. Periksa email bila verifikasi akun diaktifkan.");
+    toast.success("Akun berhasil dibuat! Silakan masuk dengan akun Anda.");
   };
 
   if (sukses) {
     return (
       <AuthLayout aksi="masuk">
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center shadow-sm">
-          <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-success/10 text-success">
+          <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
             <CheckCircle2 className="size-8" />
           </span>
           <h1 className="mt-4 font-display text-2xl font-bold tracking-tight">
             Akun Berhasil Dibuat
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Akun Anda berhasil dibuat. Silakan login untuk melanjutkan.
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            Akun pelanggan Anda telah berhasil terdaftar. Silakan login untuk mulai menjadwalkan
+            servis dan mengelola kendaraan.
           </p>
           <Button asChild className="mt-6 h-11 w-full text-base font-semibold">
-            <Link to="/login">Kembali ke Login</Link>
+            <Link to="/login">Masuk ke Akun</Link>
           </Button>
         </div>
       </AuthLayout>
@@ -130,12 +151,12 @@ function RegisterPage() {
           </span>
           <h1 className="mt-4 font-display text-3xl font-bold tracking-tight">Daftar Akun</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Buat akun untuk mengakses semua layanan
+            Daftar sebagai pelanggan untuk memesan servis dan memantau kendaraan
           </p>
         </div>
 
         <form onSubmit={submit} className="mt-7 space-y-4" autoComplete="off">
-          {/* Decoy inputs to prevent browser password managers from auto-filling saved accounts (e.g. amato@gmail.com) */}
+          {/* Decoy inputs to prevent aggressive password manager autofill */}
           <input
             type="text"
             name="fake_user_remembered"
@@ -162,43 +183,92 @@ function RegisterPage() {
             error={err.nama}
             autoComplete="off"
           />
+
           <Field
             id="reg_email"
             name="reg_email"
             label="Email"
             type="email"
             icon={<Mail className="size-4" />}
-            placeholder="Masukkan email aktif Anda"
+            placeholder="nama@email.com"
             value={email}
             onChange={setEmail}
             error={err.email}
             autoComplete="new-password"
           />
+
           <Field
             id="reg_telepon"
             name="reg_telepon"
-            label="No. Handphone"
+            label="No. Handphone / WhatsApp"
             type="tel"
             icon={<Phone className="size-4" />}
-            placeholder="Masukkan nomor handphone Anda"
+            placeholder="081234567890"
             value={telepon}
             onChange={setTelepon}
             error={err.telepon}
             autoComplete="off"
           />
+
+          {/* Jenis Kelamin Radio Group */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">Jenis Kelamin</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <label
+                className={cn(
+                  "flex cursor-pointer items-center justify-center gap-2 rounded-lg border p-2.5 text-sm font-medium transition-colors",
+                  gender === "Laki-laki"
+                    ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
+                    : "border-input hover:bg-muted/40 text-muted-foreground",
+                )}
+              >
+                <input
+                  type="radio"
+                  name="reg_gender"
+                  value="Laki-laki"
+                  checked={gender === "Laki-laki"}
+                  onChange={() => setGender("Laki-laki")}
+                  className="sr-only"
+                />
+                <span>Laki-laki</span>
+              </label>
+
+              <label
+                className={cn(
+                  "flex cursor-pointer items-center justify-center gap-2 rounded-lg border p-2.5 text-sm font-medium transition-colors",
+                  gender === "Perempuan"
+                    ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
+                    : "border-input hover:bg-muted/40 text-muted-foreground",
+                )}
+              >
+                <input
+                  type="radio"
+                  name="reg_gender"
+                  value="Perempuan"
+                  checked={gender === "Perempuan"}
+                  onChange={() => setGender("Perempuan")}
+                  className="sr-only"
+                />
+                <span>Perempuan</span>
+              </label>
+            </div>
+            {err.gender && <p className="text-xs text-destructive">{err.gender}</p>}
+          </div>
+
           <Field
             id="reg_password"
             name="reg_password"
             label="Kata Sandi"
             type={lihat1 ? "text" : "password"}
             icon={<Lock className="size-4" />}
-            placeholder="Buat kata sandi"
+            placeholder="Minimal 8 karakter"
             value={password}
             onChange={setPassword}
             error={err.password}
             autoComplete="new-password"
             toggle={{ on: lihat1, set: () => setLihat1((v) => !v) }}
           />
+
           <Field
             id="reg_konfirmasi"
             name="reg_konfirmasi"
@@ -213,8 +283,8 @@ function RegisterPage() {
             toggle={{ on: lihat2, set: () => setLihat2((v) => !v) }}
           />
 
-          <div className="space-y-1">
-            <label className="flex items-start gap-2 text-xs text-muted-foreground">
+          <div className="space-y-1 pt-1">
+            <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={setuju}
@@ -226,7 +296,8 @@ function RegisterPage() {
                 <span className="font-medium text-foreground underline">
                   Syarat &amp; Ketentuan
                 </span>{" "}
-                dan <span className="font-medium text-foreground underline">Kebijakan Privasi</span>
+                dan <span className="font-medium text-foreground underline">Kebijakan Privasi</span>{" "}
+                AppBenk.
               </span>
             </label>
             {err.setuju && <p className="text-xs text-destructive">{err.setuju}</p>}
@@ -238,14 +309,18 @@ function RegisterPage() {
             </p>
           )}
 
-          <Button type="submit" className="h-11 w-full text-base font-semibold" disabled={loading}>
+          <Button
+            type="submit"
+            className="h-11 w-full text-base font-semibold"
+            disabled={loading}
+          >
             {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
             {loading ? "Membuat Akun..." : "Daftar"}
           </Button>
 
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs text-muted-foreground pt-1">
             Registrasi publik otomatis terdaftar sebagai{" "}
-            <span className="font-semibold">Pelanggan</span>.
+            <span className="font-semibold text-foreground">Pelanggan</span>.
           </p>
 
           <p className="text-center text-sm text-muted-foreground">
@@ -300,7 +375,7 @@ function Field({
           name={name || id}
           type={type}
           autoComplete={autoComplete}
-          className={toggle ? "h-11 pl-9 pr-10" : "h-11 pl-9"}
+          className={cn("h-11 pl-9", toggle && "pr-10")}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -309,7 +384,7 @@ function Field({
           <button
             type="button"
             onClick={toggle.set}
-            aria-label={toggle.on ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+            aria-label={toggle.on ? "Sembunyikan password" : "Tampilkan password"}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
           >
             {toggle.on ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
