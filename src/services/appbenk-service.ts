@@ -1199,6 +1199,20 @@ export const workshopPaymentAccountsService = {
         } catch {}
         return data as WorkshopPaymentAccountRow[];
       }
+      // Supabase kosong untuk workshopId ini — coba ambil SEMUA akun (cross-workshop fallback)
+      if (workshopId) {
+        const { data: allData, error: allErr } = await supabase()
+          .from("workshop_payment_accounts")
+          .select("*")
+          .order("updated_at", { ascending: false });
+        if (!allErr && allData && allData.length > 0) {
+          try {
+            localStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify(allData));
+          } catch {}
+          return allData as WorkshopPaymentAccountRow[];
+        }
+      }
+      // Fallback ke localStorage (gabungkan dengan data lokal yang ada)
       return getLocalAccounts(workshopId);
     } catch {
       return getLocalAccounts(workshopId);

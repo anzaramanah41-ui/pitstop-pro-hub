@@ -262,62 +262,6 @@ function PembayaranPelanggan() {
     // Kumpulkan seluruh kandidat akun QRIS dari semua layer data
     const candidates: (WorkshopPaymentAccountRow & { _source?: string })[] = [];
 
-    // 1. Cek dari workshopPaymentAccounts di store (scoped ke targetWorkshopId jika ada)
-    const storeAccounts = (workshopPaymentAccounts || []).filter(
-      (a) =>
-        a.account_type === "qris" &&
-        (!targetWorkshopId || a.workshop_id === targetWorkshopId || a.id_bengkel === targetWorkshopId),
-    );
-    candidates.push(...storeAccounts.map((a) => ({ ...a, _source: "store" })));
-
-    // 2. Cek dari localStorage appbenk_workshop_payment_accounts
-    if (typeof window !== "undefined") {
-      try {
-        const rawList = localStorage.getItem("appbenk_workshop_payment_accounts");
-        if (rawList) {
-          const parsed = JSON.parse(rawList);
-          if (Array.isArray(parsed)) {
-            const localQris = parsed.filter(
-              (a: any) =>
-                a.account_type === "qris" &&
-                (!targetWorkshopId || a.workshop_id === targetWorkshopId || a.id_bengkel === targetWorkshopId),
-            );
-            candidates.push(...localQris.map((c: any) => ({ ...c, _source: "localList" })));
-          }
-        }
-      } catch {}
-    }
-
-    // 3. Cek direct workshop-scoped keys di localStorage
-    let fallbackImage: string | null = null;
-    if (typeof window !== "undefined") {
-      try {
-        if (targetWorkshopId) {
-          const wsRaw = localStorage.getItem(`appbenk_qris_active_${targetWorkshopId}`);
-          if (wsRaw) {
-            const parsed = JSON.parse(wsRaw);
-            candidates.push({ ...parsed, _source: "directWorkshop" });
-          }
-          fallbackImage = localStorage.getItem(`appbenk_qris_image_data_${targetWorkshopId}`);
-        }
-        const globalRaw = localStorage.getItem("appbenk_qris_active");
-        if (globalRaw) {
-          const parsed = JSON.parse(globalRaw);
-          if (
-            !targetWorkshopId ||
-            !parsed.workshop_id ||
-            parsed.workshop_id === targetWorkshopId ||
-            parsed.id_bengkel === targetWorkshopId
-          ) {
-            candidates.push({ ...parsed, _source: "directGlobal" });
-          }
-        }
-        if (!fallbackImage) {
-          fallbackImage = localStorage.getItem("appbenk_qris_image_data");
-        }
-      } catch {}
-    }
-
     const getTime = (item: any) => {
       if (!item) return 0;
       const t = item.updated_at || item.created_at;
@@ -326,12 +270,74 @@ function PembayaranPelanggan() {
       return isNaN(parsed) ? 0 : parsed;
     };
 
+    // Helper: ambil QRIS dari array, coba match workshopId, fallback ke semua jika kosong
+    const addFromArray = (arr: any[], source: string) => {
+      if (!arr || !arr.length) return;
+      const qrisAll = arr.filter((a: any) => a.account_type === "qris");
+      const matched = targetWorkshopId
+        ? qrisAll.filter(
+            (a: any) =>
+              a.workshop_id === targetWorkshopId || a.id_bengkel === targetWorkshopId,
+          )
+        : qrisAll;
+      // Kalau ada yang cocok pakai itu, kalau tidak pakai semua (fallback lintas workshop)
+      const toAdd = matched.length > 0 ? matched : qrisAll;
+      candidates.push(...toAdd.map((c: any) => ({ ...c, _source: source })));
+    };
+
+    // 1. Dari store
+    addFromArray(workshopPaymentAccounts || [], "store");
+
+    // 2. Dari localStorage list
+    if (typeof window !== "undefined") {
+      try {
+        const rawList = localStorage.getItem("appbenk_workshop_payment_accounts");
+        if (rawList) {
+          const parsed = JSON.parse(rawList);
+          if (Array.isArray(parsed)) addFromArray(parsed, "localList");
+        }
+      } catch {}
+    }
+
+    // 3. Direct localStorage keys — SELALU sertakan tanpa filter workshopId (final fallback)
+    let fallbackImage: string | null = null;
+    if (typeof window !== "undefined") {
+      try {
+        // Key ber-scope workshop
+        if (targetWorkshopId) {
+          const wsRaw = localStorage.getItem(`appbenk_qris_active_${targetWorkshopId}`);
+          if (wsRaw) {
+            const parsed = JSON.parse(wsRaw);
+            candidates.push({ ...parsed, _source: "directWorkshop" });
+          }
+          fallbackImage = localStorage.getItem(`appbenk_qris_image_data_${targetWorkshopId}`);
+        }
+        // Key global — SELALU sertakan tanpa filter, sebagai last resort
+        const globalRaw = localStorage.getItem("appbenk_qris_active");
+        if (globalRaw) {
+          const parsed = JSON.parse(globalRaw);
+          candidates.push({ ...parsed, _source: "directGlobal" });
+        }
+        if (!fallbackImage) {
+          fallbackImage = localStorage.getItem("appbenk_qris_image_data");
+        }
+      } catch {}
+    }
+
     // Urutkan kandidat berdasarkan updated_at DESC (paling baru di paling depan)
     candidates.sort((a, b) => getTime(b) - getTime(a));
 
+    // Deduplicate by id
+    const seen = new Set<string>();
+    const unique = candidates.filter((c) => {
+      if (!c.id || seen.has(c.id)) return false;
+      seen.add(c.id);
+      return true;
+    });
+
     // Prioritaskan kandidat paling baru yang memiliki qr_image_url valid
-    const bestWithImage = candidates.find((c) => Boolean(c.qr_image_url && c.qr_image_url.trim().length > 0));
-    const best = bestWithImage || candidates[0];
+    const bestWithImage = unique.find((c) => Boolean(c.qr_image_url && c.qr_image_url.trim().length > 0));
+    const best = bestWithImage || unique[0];
 
     if (!best && !fallbackImage) return null;
 
